@@ -1,0 +1,349 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #0f1923;
+    color: #dde8c8;
+    touch-action: manipulation;
+    /* Prevent double-tap zoom everywhere */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button {
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  .lab-panel {
+    @apply bg-[#162030] rounded-2xl border border-[#1e3050];
+  }
+
+  .btn-primary {
+    @apply font-display text-xl bg-green-500 hover:bg-green-400 active:bg-green-600
+           text-white rounded-2xl px-6 py-4 transition-colors duration-100
+           shadow-lg active:shadow-sm active:translate-y-px
+           min-h-[56px] min-w-[56px];
+  }
+
+  .btn-secondary {
+    @apply font-body font-bold text-base bg-[#162030] hover:bg-[#1e2f55] active:bg-[#0f172a]
+           text-[#94a3b8] rounded-xl px-4 py-3 transition-colors duration-100
+           border border-[#1e3050]
+           min-h-[48px];
+  }
+
+  /* Keypad button — large tap targets */
+  .keypad-btn {
+    @apply font-display text-3xl text-lab-chalk
+           bg-[#1e3050] hover:bg-[#2a4070] active:bg-[#152840]
+           rounded-2xl transition-colors duration-75
+           flex items-center justify-center
+           min-h-[72px] min-w-[72px]
+           shadow-md active:shadow-sm active:translate-y-px
+           select-none;
+  }
+
+  .keypad-btn-action {
+    @apply keypad-btn text-2xl;
+  }
+
+  .keypad-btn-confirm {
+    @apply keypad-btn bg-green-600 hover:bg-green-500 active:bg-green-700 text-white;
+  }
+}
+
+/* Slime splat blobs — custom animation with CSS vars */
+.slime-blob {
+  animation: slime-splat 1200ms ease-out forwards;
+  animation-delay: var(--delay, 0ms);
+}
+
+@keyframes slime-splat {
+  0% {
+    transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(0);
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Stink wave lines */
+.stink-line {
+  animation: stink-rise 1500ms ease-out forwards;
+  animation-delay: var(--delay, 0ms);
+}
+
+@keyframes stink-rise {
+  0% {
+    transform: translateY(0) scaleX(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-100px) scaleX(1.4);
+    opacity: 0;
+  }
+}
+
+/* ─── Beaker payoff glow wrapper ───────────────────────── */
+.beaker-payoff-glow {
+  animation: beaker-glow 1.2s ease-in-out infinite;
+}
+
+/* Overflow drips from beaker top */
+.overflow-drip {
+  animation: overflow-drip 1.6s ease-in infinite;
+  animation-delay: var(--delay, 0ms);
+}
+
+@keyframes overflow-drip {
+  0%   { transform: translateY(0) scaleY(1); opacity: 0.9; }
+  100% { transform: translateY(48px) scaleY(2.5); opacity: 0; }
+}
+
+/* ─── Universal burst-from-beaker keyframes ─────────────── */
+/*
+ * All payoff particles are positioned at the beaker centre with
+ *   position: absolute; top: <oy>px; left: <ox>px
+ * and use translate(-50%,-50%) so (0,0) is the beaker centre.
+ * --dx / --dy are the final pixel offsets from that centre.
+ * --scale is the final scale factor.
+ * --rot   is the final rotation (fuzz only).
+ */
+
+@keyframes cloud-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 1;
+  }
+  20% { opacity: 0.95; }
+  100% {
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px)))
+               scale(var(--scale, 4));
+    opacity: 0;
+  }
+}
+
+@keyframes slime-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.15);
+    opacity: 1;
+    border-radius: 50%;
+  }
+  50% { opacity: 0.85; }
+  100% {
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px)))
+               scale(var(--scale, 2));
+    opacity: 0;
+  }
+}
+
+@keyframes fuzz-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px)))
+               scale(1) rotate(var(--rot, 360deg));
+    opacity: 0;
+  }
+}
+
+/* Full-screen colour wash */
+@keyframes colour-wash {
+  0%   { opacity: 0; }
+  10%  { opacity: var(--peak, 0.2); }
+  70%  { opacity: calc(var(--peak, 0.2) * 0.4); }
+  100% { opacity: 0; }
+}
+
+/* ── Correct-answer hearts ──────────────────────────── */
+@keyframes heart-float {
+  0%   { transform: translateY(0)      scale(1)    rotate(0deg);   opacity: 1; }
+  30%  { transform: translateY(-40px)  scale(1.15) rotate(-8deg);  opacity: 1; }
+  70%  { transform: translateY(-100px) scale(0.9)  rotate(10deg);  opacity: 0.7; }
+  100% { transform: translateY(-160px) scale(0.6)  rotate(-5deg);  opacity: 0; }
+}
+
+/* ── Confetti explosion (FuzzBomb SVG particles) ────── */
+@keyframes confetti-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.05) rotate(0deg);
+    opacity: 1;
+  }
+  8%  { opacity: 1; }
+  100% {
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px)))
+               scale(1) rotate(var(--rot, 360deg));
+    opacity: 0;
+  }
+}
+
+/* ── Disgust pop-in (FartBomb accent emojis) ─────────── */
+@keyframes disgust-pop {
+  0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+  28%  { transform: scale(1.25) rotate(6deg); opacity: 1; }
+  45%  { transform: scale(0.92) rotate(-2deg); opacity: 1; }
+  60%  { transform: scale(1) rotate(0deg); opacity: 1; }
+  85%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── Slime glob travelling from beaker to screen ────────
+   --tx / --ty: pixel offset from beaker to landing spot   */
+@keyframes slime-travel {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+  5%  { opacity: 0.92; }
+  62% {
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.78);
+    opacity: 0.88;
+  }
+  80% {
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.1, 0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.85);
+    opacity: 0;
+  }
+}
+
+/* ── Slime screen-hit splat ──────────────────────────── */
+@keyframes slime-hit {
+  0%   { transform: translate(-50%, -50%) scale(0, 0); opacity: 1; }
+  18%  { transform: translate(-50%, -50%) scale(1.3, 0.75); opacity: 1; }
+  32%  { transform: translate(-50%, -50%) scale(0.95, 1.05); opacity: 1; }
+  75%  { opacity: 0.85; }
+  100% { transform: translate(-50%, -50%) scale(1, 1); opacity: 0; }
+}
+
+/* ── Slime drip sliding down the glass ───────────────── */
+@keyframes slime-drip-grow {
+  0%   { transform: translateX(-50%) scaleY(0); opacity: 0.9; }
+  20%  { opacity: 0.9; }
+  75%  { opacity: 0.7; }
+  100% { transform: translateX(-50%) scaleY(1); opacity: 0; }
+}
+
+/* ── Wrong-answer red pulse ─────────────────────────── */
+@keyframes wrong-pulse {
+  0%   { opacity: 0; }
+  12%  { opacity: 0.45; }
+  45%  { opacity: 0.28; }
+  100% { opacity: 0; }
+}
+.animate-wrong-pulse {
+  animation: wrong-pulse 1.6s ease-out forwards;
+}
+
+/* ── Wrong-answer 😵 face ───────────────────────────── */
+@keyframes wrong-face {
+  0%   { transform: scale(0.2) rotate(-15deg); opacity: 0; }
+  18%  { transform: scale(1.25) rotate(6deg);  opacity: 1; }
+  65%  { transform: scale(1.1)  rotate(-3deg); opacity: 1; }
+  100% { transform: scale(0.9)  rotate(2deg);  opacity: 0; }
+}
+.animate-wrong-face {
+  animation: wrong-face 2s ease-out forwards;
+}
+
+/* ── Smoke bomb — individual cloud puff ──────────────
+   --fx / --fy: final pixel drift from beaker centre
+   --sc:        final scale factor
+   --op:        peak opacity                            */
+@keyframes smoke-puff {
+  0%   { transform: translate(-50%, -50%) scale(0.05); opacity: 0; }
+  12%  { opacity: var(--op, 0.75); }
+  80%  { opacity: 0.28; }
+  100% {
+    transform: translate(
+      calc(-50% + var(--fx, 0px)),
+      calc(-50% + var(--fy, -80px))
+    ) scale(var(--sc, 5));
+    opacity: 0;
+  }
+}
+
+/* ── Smoke bomb — progressive full-screen fill ────────
+   --peak: opacity at maximum billow
+   --hold: opacity as it lingers before fading          */
+@keyframes smoke-fill {
+  0%   { opacity: 0; }
+  25%  { opacity: var(--peak, 0.5); }
+  80%  { opacity: var(--hold, 0.4); }
+  100% { opacity: 0; }
+}
+
+/* ── Toilet attack — emoji falling with tilt ──────────
+   --r0: starting rotation
+   --r1: ending rotation
+   --op: peak opacity (varies by depth layer)           */
+@keyframes toilet-fall {
+  0%   { transform: translateY(-80px) rotate(var(--r0, 0deg)); opacity: 0; }
+  8%   { opacity: var(--op, 1); }
+  90%  { opacity: var(--op, 1); }
+  100% { transform: translateY(115vh) rotate(var(--r1, 15deg)); opacity: 0; }
+}
+
+/* ── Smoke bomb — vector fog layer fade-in ────────────────
+   Layer fades from invisible to full opacity; SVG gradient
+   controls fog density at each height within the layer.   */
+@keyframes fog-appear {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ── Smoke bomb — slow horizontal fog drift (ping-pong) ───
+   --drift: pixel offset to oscillate toward (neg = leftward) */
+@keyframes fog-drift {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(var(--drift, 28px)); }
+}
+
+/* ── Smoke bomb — detonation: 💣 cherry bomb pop-in ──────── */
+@keyframes bomb-show {
+  0%   { transform: translate(-50%, -50%) scale(0);    opacity: 0; }
+  14%  { transform: translate(-50%, -50%) scale(1.28); opacity: 1; }
+  30%  { transform: translate(-50%, -50%) scale(1.0);  opacity: 1; }
+  72%  { transform: translate(-50%, -50%) scale(1.0);  opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0.7);  opacity: 0; }
+}
+
+/* ── Smoke bomb — detonation: 💥 explosion flash + expand ── */
+@keyframes explosion-burst {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  12%  { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(8);   opacity: 0; }
+}
+
+/* ── Toilet attack — background image: slow drift + fade ────
+   --op: peak opacity
+   --dx: final horizontal offset (positive = right, neg = left) */
+@keyframes img-drift {
+  0%   { opacity: 0; transform: translateX(0); }
+  12%  { opacity: var(--op, 0.75); }
+  82%  { opacity: var(--op, 0.75); }
+  100% { opacity: 0; transform: translateX(var(--dx, 0px)); }
+}
