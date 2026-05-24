@@ -28,7 +28,7 @@ export default function SpeechBubble({ text, type = 'reaction', side = 'down', o
       <div
         className={[
           'rounded-2xl px-4 py-3 shadow-lg',
-          'font-body text-base font-bold leading-snug',
+          'font-body text-lg font-bold leading-snug',
           isHint
             ? 'bg-[#fef08a] text-[#1a1a00]'
             : 'bg-white text-[#1a1a2e]',
@@ -36,7 +36,7 @@ export default function SpeechBubble({ text, type = 'reaction', side = 'down', o
         style={{ border: borderStyle }}
       >
         {isHint && (
-          <div className="text-[10px] font-extrabold text-[#b08000] mb-1 tracking-wide uppercase">
+          <div className="text-[12px] font-extrabold text-[#b08000] mb-1 tracking-wide uppercase">
             Lab Note
           </div>
         )}

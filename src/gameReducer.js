@@ -521,7 +521,7 @@ function handleRoundComplete(state) {
 
   return {
     ...state,
-    screen: 'payoff',
+    screen: 'brewing',           // brief anticipation screen before payoff
     progression: newProgression,
     question: null,
     pudgeState: highAccuracy ? PUDGE.IMPRESSED : PUDGE.DISGUSTED,

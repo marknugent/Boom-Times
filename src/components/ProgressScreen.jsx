@@ -1,9 +1,13 @@
 /**
  * Progress screen — 12-table grid showing locked / in-progress / mastered status.
+ * A segmented control at the top lets you browse any player's stats without
+ * affecting the active game session.
  */
+import { useState, useMemo } from 'react';
 import { A } from '../gameReducer.js';
-import { TABLE_GROUPS } from '../progression.js';
-import { getFactIdsForTable, isFactMastered } from '../srs.js';
+import { TABLE_GROUPS, loadProgression } from '../progression.js';
+import { getFactIdsForTable, isFactMastered, loadSRSState } from '../srs.js';
+import { PLAYERS } from '../players.js';
 
 // All 12 table numbers in display order
 const ALL_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -81,17 +85,27 @@ function TableCell({ tableNum, status, confidence }) {
 }
 
 export default function ProgressScreen({ state, dispatch }) {
-  const { progression, srsState } = state;
+  const { currentPlayer } = state;
+
+  // Which player's stats are being viewed (defaults to the active player,
+  // or the first in the list if the active player is the test profile)
+  const defaultViewed = PLAYERS.includes(currentPlayer) ? currentPlayer : PLAYERS[0];
+  const [viewedPlayer, setViewedPlayer] = useState(defaultViewed);
+
+  // Load viewed player's data fresh from localStorage each time they switch.
+  // localStorage is always in sync (every answer + round-end saves immediately).
+  const viewedSrsState   = useMemo(() => loadSRSState(viewedPlayer),   [viewedPlayer]);
+  const viewedProgression = useMemo(() => loadProgression(viewedPlayer), [viewedPlayer]);
 
   // Overall mastery: percentage of all 144 facts mastered
-  const totalFacts   = 144;
-  const masteredCount = Object.entries(srsState)
-    .filter(([, rec]) => isFactMastered(rec))
+  const totalFacts    = 144;
+  const masteredCount = Object.values(viewedSrsState)
+    .filter(rec => isFactMastered(rec))
     .length;
-  const overallPct   = Math.round((masteredCount / totalFacts) * 100);
+  const overallPct    = Math.round((masteredCount / totalFacts) * 100);
 
   // Current active group label
-  const { unlockedGroupIndex } = progression;
+  const { unlockedGroupIndex } = viewedProgression;
   const currentGroupTables = unlockedGroupIndex < TABLE_GROUPS.length
     ? TABLE_GROUPS[unlockedGroupIndex]
     : null;
@@ -109,6 +123,24 @@ export default function ProgressScreen({ state, dispatch }) {
         </button>
         <h2 className="font-display text-xl text-lab-chalk">Blueprint 📊</h2>
         <div className="w-16" /> {/* spacer */}
+      </div>
+
+      {/* Player selector — segmented control */}
+      <div className="flex gap-1 bg-lab-border/20 rounded-xl p-1 shrink-0">
+        {PLAYERS.map(name => (
+          <button
+            key={name}
+            className={[
+              'flex-1 py-1.5 rounded-lg font-body text-sm transition-colors duration-150',
+              viewedPlayer === name
+                ? 'bg-lab-panel text-lab-chalk border border-lab-green/25 shadow-sm'
+                : 'text-lab-chalk/40 hover:text-lab-chalk/60',
+            ].join(' ')}
+            onClick={() => setViewedPlayer(name)}
+          >
+            {name}
+          </button>
+        ))}
       </div>
 
       {/* Overall progress */}
@@ -139,9 +171,9 @@ export default function ProgressScreen({ state, dispatch }) {
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="grid grid-cols-4 gap-2">
           {ALL_TABLES.map(tableNum => {
-            const status     = getTableStatus(tableNum, progression, srsState);
+            const status     = getTableStatus(tableNum, viewedProgression, viewedSrsState);
             const confidence = status === 'active'
-              ? getConfidencePct(tableNum, progression, srsState)
+              ? getConfidencePct(tableNum, viewedProgression, viewedSrsState)
               : status === 'mastered' ? 100 : 0;
 
             return (

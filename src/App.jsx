@@ -4,6 +4,7 @@ import { unlockAudio } from './sounds.js';
 
 import HomeScreen     from './components/HomeScreen.jsx';
 import QuestionScreen from './components/QuestionScreen.jsx';
+import BrewingScreen  from './components/BrewingScreen.jsx';
 import PayoffScreen   from './components/PayoffScreen.jsx';
 import ProgressScreen from './components/ProgressScreen.jsx';
 import DevScreen      from './components/DevScreen.jsx';
@@ -69,6 +70,7 @@ export default function App() {
     >
       {state.screen === 'home'     && <HomeScreen     state={state} dispatch={dispatch} />}
       {state.screen === 'question' && <QuestionScreen state={state} dispatch={dispatch} />}
+      {state.screen === 'brewing'  && <BrewingScreen  state={state} dispatch={dispatch} />}
       {state.screen === 'payoff'   && <PayoffScreen   state={state} dispatch={dispatch} />}
       {state.screen === 'progress' && <ProgressScreen state={state} dispatch={dispatch} />}
       {state.screen === 'dev'      && <DevScreen      dispatch={dispatch} />}

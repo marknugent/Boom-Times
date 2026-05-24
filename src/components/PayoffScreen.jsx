@@ -144,7 +144,9 @@ export default function PayoffScreen({ state, dispatch }) {
               {correct} / {total}
             </div>
             <div className="font-body text-sm text-lab-chalk/60 mt-1">
-              {highAcc
+              {pct === 100
+                ? `PERFECT BATCH! ⭐`
+                : highAcc
                 ? `${pct}% — almost perfect batch!`
                 : `${pct}% — we'll do better next time.`}
             </div>

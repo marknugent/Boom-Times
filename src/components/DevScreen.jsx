@@ -11,11 +11,23 @@ import { A }        from '../gameReducer.js';
 import { playSound } from '../sounds.js';
 import Beaker       from './Beaker.jsx';
 import DancingCat   from './DancingCat.jsx';
+import BrewingScreen           from './BrewingScreen.jsx';
 import FartBombAnimation       from './FartBombAnimation.jsx';
 import SlimeExplosionAnimation from './SlimeExplosionAnimation.jsx';
 import FuzzBombAnimation       from './FuzzBombAnimation.jsx';
 import SmokeBombAnimation      from './SmokeBombAnimation.jsx';
 import ToiletAttackAnimation   from './ToiletAttackAnimation.jsx';
+
+// Fake round state for the brewing preview
+const MOCK_BREWING_STATE = {
+  round: {
+    experiment: {
+      ingredient:    '🧪',
+      brewingLabel:  'Unstable Compound #7',
+    },
+    firstAttemptCorrect: 13, // ~87 % fill — realistic mid-high score
+  },
+};
 
 const EXPERIMENTS = [
   { id: 'fart-bomb',       label: 'FART BOMB 💨',       Anim: FartBombAnimation       },
@@ -23,6 +35,7 @@ const EXPERIMENTS = [
   { id: 'fuzz-bomb',       label: 'FUZZ BOMB 🧶',       Anim: FuzzBombAnimation       },
   { id: 'smoke-bomb',      label: 'SMOKE BOMB 🌫️',      Anim: SmokeBombAnimation      },
   { id: 'toilet-attack',   label: 'TOILET ATTACK 🚽',   Anim: ToiletAttackAnimation   },
+  { id: 'brewing',         label: 'BREWING... 🧫',       isBrewing: true               },
 ];
 
 export default function DevScreen({ dispatch }) {
@@ -33,6 +46,7 @@ export default function DevScreen({ dispatch }) {
   function launch(exp) {
     setPlaying(exp);
     setPlayKey(k => k + 1);
+    if (exp.isBrewing) return; // no dedicated sound for brewing
     if (exp.id === 'toilet-attack') {
       playSound(exp.id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
     } else {
@@ -40,7 +54,46 @@ export default function DevScreen({ dispatch }) {
     }
   }
 
+  // Shared controls bar used in both preview modes
+  function Controls({ label }) {
+    return (
+      <div className="absolute bottom-8 inset-x-0 flex flex-col items-center gap-3 z-50 pointer-events-none">
+        <div className="font-display text-white/60 text-sm tracking-widest uppercase">
+          {label}
+        </div>
+        <div className="flex gap-3 pointer-events-auto">
+          <button className="btn-secondary text-sm" onClick={() => setPlaying(null)}>
+            ← experiments
+          </button>
+          <button className="btn-secondary text-sm" onClick={() => launch(playing)}>
+            ↺ replay
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (playing) {
+
+    // ── Brewing anticipation preview ──────────────────────────────────
+    // BrewingScreen is self-contained (owns its beaker + text).
+    // Intercept the auto-navigate so it just returns to the list.
+    if (playing.isBrewing) {
+      return (
+        <div className="w-full h-full relative bg-lab-bg overflow-hidden">
+          <BrewingScreen
+            key={playKey}
+            state={MOCK_BREWING_STATE}
+            dispatch={(action) => {
+              if (action.type === A.NAVIGATE) setPlaying(null);
+            }}
+          />
+          <Controls label={playing.label} />
+        </div>
+      );
+    }
+
+    // ── Payoff animation preview ──────────────────────────────────────
     const { Anim, label } = playing;
     return (
       <div className="w-full h-full relative bg-lab-bg overflow-hidden">
@@ -58,26 +111,7 @@ export default function DevScreen({ dispatch }) {
           <DancingCat size={280} />
         </div>
 
-        {/* Controls — sit above everything */}
-        <div className="absolute bottom-8 inset-x-0 flex flex-col items-center gap-3 z-50 pointer-events-none">
-          <div className="font-display text-white/60 text-sm tracking-widest uppercase">
-            {label}
-          </div>
-          <div className="flex gap-3 pointer-events-auto">
-            <button
-              className="btn-secondary text-sm"
-              onClick={() => setPlaying(null)}
-            >
-              ← experiments
-            </button>
-            <button
-              className="btn-secondary text-sm"
-              onClick={() => launch(playing)}
-            >
-              ↺ replay
-            </button>
-          </div>
-        </div>
+        <Controls label={label} />
       </div>
     );
   }

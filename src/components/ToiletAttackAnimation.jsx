@@ -9,10 +9,15 @@
  * the emoji layers — they fade in, drift slowly across the screen, and
  * fade out over ~6 s.
  *
+ * Toilet vortex — two overlaid SVG swirls (thick arcs centered on a
+ * drain hole) spin at different rates, simulating looking down at a
+ * flushing toilet.
+ *
  * Layer 1 — Foreground  (20 items, 68–88 px, 1.6–2.2 s fall, z=30)
  * Layer 2 — Middle      (20 items, 40–52 px, 2.4–3.0 s fall, z=20)
  * Layer 3 — Background  (15 items, 20–29 px, 3.4–4.6 s fall, z=10)
  * Images   — z=5 / z=3  (behind all emoji layers)
+ * Vortex   — z=1 / z=2  (deepest background)
  */
 
 const EMOJIS = ['🚽', '💩', '🚽', '💩', '🧻', '🚽', '💩', '💦'];
@@ -51,6 +56,78 @@ const LAYER3 = makeLayer(15, 20, 3,  3400, 400, 150, 10, 0.52, 1);
 
 const ALL = [...LAYER1, ...LAYER2, ...LAYER3];
 
+// ── Toilet vortex SVG ──────────────────────────────────────────────────
+//
+// Old approach (stroked arcs only) left dark "gutters" between rings
+// because the background showed through the gaps.
+//
+// New approach:
+//   1. Fill the ENTIRE water disc with a solid blue — no gaps possible.
+//   2. Overlay a radial depth gradient to darken toward the drain.
+//   3. Draw swirl arms as subtle LIGHTER highlights on top of the fill —
+//      they describe surface swirl without creating ring gutters.
+//
+// Each SVG instance gets a unique gradient ID (uid prop) so the two
+// spinning instances don't share / clobber each other's <defs>.
+//
+function VortexSVG({ uid = 0, size, spinDur, spinDelay = '0s', opacity = 1, zIndex }) {
+  const gid = `vortexDepth${uid}`;
+  return (
+    <div
+      className="absolute pointer-events-none"
+      style={{
+        left: '50%', top: '45%',
+        width: size, height: size,
+        transform: 'translate(-50%, -50%)',
+        zIndex,
+      }}
+    >
+      <svg
+        viewBox="0 0 400 400"
+        width={size}
+        height={size}
+        style={{
+          display: 'block',
+          opacity,
+          animation: `vortex-spin ${spinDur}s linear ${spinDelay} infinite`,
+        }}
+      >
+        <defs>
+          {/* Radial gradient: opaque dark at centre (drain depth), transparent at rim */}
+          <radialGradient id={gid} cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor="#050d1a" stopOpacity="0.70" />
+            <stop offset="30%"  stopColor="#050d1a" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#050d1a" stopOpacity="0"    />
+          </radialGradient>
+        </defs>
+
+        {/* ── 1. Continuous water fill — covers the whole disc, no gutters ── */}
+        <circle cx="200" cy="200" r="185" fill="#1e40af" opacity="0.55" />
+
+        {/* ── 2. Depth overlay — darkens toward the drain ── */}
+        <circle cx="200" cy="200" r="185" fill={`url(#${gid})`} />
+
+        {/* ── 3. Swirl arm highlights — surface crests on the water ── */}
+        {/* Outer: 300° CW at r=165 */}
+        <path d="M 365,200 A 165,165 0 1,1 283,57"
+          stroke="#93c5fd" strokeWidth="42" fill="none"
+          strokeLinecap="round" opacity="0.28" />
+        {/* Mid: 240° CW at r=105 (offset 60°) */}
+        <path d="M 253,291 A 105,105 0 1,1 253,109"
+          stroke="#bfdbfe" strokeWidth="34" fill="none"
+          strokeLinecap="round" opacity="0.25" />
+        {/* Inner tail: 180° CW at r=48 */}
+        <path d="M 200,248 A 48,48 0 0,1 200,152"
+          stroke="#dbeafe" strokeWidth="20" fill="none"
+          strokeLinecap="round" opacity="0.22" />
+
+        {/* ── 4. Drain hole ── */}
+        <circle cx="200" cy="200" r="26" fill="#050d1a" />
+      </svg>
+    </div>
+  );
+}
+
 export default function ToiletAttackAnimation() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -60,6 +137,13 @@ export default function ToiletAttackAnimation() {
       <div className="absolute inset-0 bg-yellow-900" style={{ animation: 'colour-wash 0.8s ease-out 0.8s forwards', '--peak': 0.22 }} />
       <div className="absolute inset-0 bg-amber-900"  style={{ animation: 'colour-wash 0.8s ease-out 1.7s forwards', '--peak': 0.18 }} />
       <div className="absolute inset-0 bg-yellow-800" style={{ animation: 'colour-wash 0.9s ease-out 2.6s forwards', '--peak': 0.15 }} />
+
+      {/* ── Toilet vortex — two swirls spinning at different rates ──
+          z=1 / z=2 keeps them below everything else.
+          Second instance starts 30% into its cycle (animationDelay -1.4s)
+          so the arms are offset and create an interference pattern.      */}
+      <VortexSVG uid={1} size={700} spinDur={7.5}                   opacity={0.50} zIndex={1} />
+      <VortexSVG uid={2} size={700} spinDur={4.6} spinDelay="-1.4s" opacity={0.32} zIndex={2} />
 
       {/* ── Background drifting images — behind all emoji layers ──
           img-drift: fades in → holds visible → slowly drifts → fades.
@@ -75,7 +159,7 @@ export default function ToiletAttackAnimation() {
           top:       '22%',
           zIndex:    5,
           '--op':    0.88,
-          '--dx':    '30px',
+          '--dx':    '120px',
           animation: 'img-drift 6000ms ease-in-out 300ms both',
         }}
       />
@@ -90,7 +174,7 @@ export default function ToiletAttackAnimation() {
           top:       '32%',
           zIndex:    3,
           '--op':    0.80,
-          '--dx':    '-26px',
+          '--dx':    '-104px',
           animation: 'img-drift 6000ms ease-in-out 700ms both',
         }}
       />

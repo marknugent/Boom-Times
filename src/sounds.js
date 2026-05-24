@@ -21,6 +21,8 @@ const SOUNDS = {
   'fuzz-bomb':       new Audio('/poof.mp3'),
   'smoke-bomb':      new Audio('/poof.mp3'),    // billowing cloud
   'toilet-attack':   new Audio('/toilet.mp3'),  // dedicated toilet sound
+  'success':         new Audio('/success.mp3'), // correct answer chime
+  'wrong':           new Audio('/wrong.mp3'),   // wrong answer sting
 };
 
 // Pre-load so they're buffered before they're needed

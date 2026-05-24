@@ -13,6 +13,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { A } from '../gameReducer.js';
+import { playSound } from '../sounds.js';
 import Keypad       from './Keypad.jsx';
 import Beaker       from './Beaker.jsx';
 import Pudge        from './Pudge.jsx';
@@ -36,6 +37,12 @@ export default function QuestionScreen({ state, dispatch }) {
 
   const feedbackTimerRef = useRef(null);
   const hintTimerRef     = useRef(null);
+
+  // Play correct / wrong sound as soon as feedback lands
+  useEffect(() => {
+    if (!question?.feedback) return;
+    playSound(question.feedback.correct ? 'success' : 'wrong');
+  }, [question?.feedback]);
 
   // Auto-advance after feedback delay
   useEffect(() => {
