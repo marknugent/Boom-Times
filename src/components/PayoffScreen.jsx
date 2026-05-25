@@ -8,11 +8,13 @@ import { A }             from '../gameReducer.js';
 import { playSound, stopSound } from '../sounds.js';
 import Beaker            from './Beaker.jsx';
 import DancingCat        from './DancingCat.jsx';
+import DanceCat          from './DanceCat.jsx';
 import FartBombAnimation       from './FartBombAnimation.jsx';
 import SlimeExplosionAnimation from './SlimeExplosionAnimation.jsx';
 import FuzzBombAnimation       from './FuzzBombAnimation.jsx';
 import SmokeBombAnimation      from './SmokeBombAnimation.jsx';
 import ToiletAttackAnimation   from './ToiletAttackAnimation.jsx';
+import DancePartyAnimation     from './DancePartyAnimation.jsx';
 import { TABLE_GROUPS }  from '../progression.js';
 
 const ANIMATION_MAP = {
@@ -21,6 +23,7 @@ const ANIMATION_MAP = {
   'fuzz-bomb':       FuzzBombAnimation,
   'smoke-bomb':      SmokeBombAnimation,
   'toilet-attack':   ToiletAttackAnimation,
+  'dance-party':     DancePartyAnimation,
 };
 
 const TRIPLE_TAP_MS = 600;
@@ -76,10 +79,12 @@ export default function PayoffScreen({ state, dispatch }) {
   }
 
   // Play experiment SFX on mount and on replay (animKey bump).
+  // Dance-party has no separate SFX — its music IS the payoff sound.
   // Toilet attack fades out after 7 s so it doesn't blare forever.
   useEffect(() => {
     if (!round) return;
     const id = round.experiment.id;
+    if (id === 'dance-party') return;
     if (id === 'toilet-attack') {
       playSound(id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
     } else {
@@ -87,11 +92,13 @@ export default function PayoffScreen({ state, dispatch }) {
     }
   }, [animKey, round?.experiment.id]);
 
-  // Play background music on mount; fade it out after 10 s so it
-  // doesn't bleed into the next screen. Stop immediately on unmount.
+  // Background music — use the experiment's bgMusic track if specified,
+  // otherwise default to pounce-pop-parade. Stop on unmount.
   useEffect(() => {
-    playSound('pounce-pop-parade');
-    return () => stopSound('pounce-pop-parade');
+    if (!round) return;
+    const track = round.experiment.bgMusic ?? 'pounce-pop-parade';
+    playSound(track);
+    return () => stopSound(track);
   }, []);
 
   if (!round) return null;
@@ -117,9 +124,9 @@ export default function PayoffScreen({ state, dispatch }) {
         <Beaker fillPercent={100} glow />
       </div>
 
-      {/* ── Dancing cat — bottom-right, 50 px above the very edge ── */}
-      <div className="absolute right-3 z-50 pointer-events-none" style={{ bottom: 62 }}>
-        <DancingCat size={280} />
+      {/* ── Dancing cat — bottom-right, ~100 px above the very edge ── */}
+      <div className="absolute right-3 z-50 pointer-events-none" style={{ bottom: 102 }}>
+        {experiment.danceCat ? <DanceCat size={280} /> : <DancingCat size={280} />}
       </div>
 
       {/* ── Overlay content (z-30) ── */}

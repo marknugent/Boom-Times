@@ -17,6 +17,8 @@ import SlimeExplosionAnimation from './SlimeExplosionAnimation.jsx';
 import FuzzBombAnimation       from './FuzzBombAnimation.jsx';
 import SmokeBombAnimation      from './SmokeBombAnimation.jsx';
 import ToiletAttackAnimation   from './ToiletAttackAnimation.jsx';
+import DancePartyAnimation     from './DancePartyAnimation.jsx';
+import DanceCat                from './DanceCat.jsx';
 
 // Fake round state for the brewing preview
 const MOCK_BREWING_STATE = {
@@ -35,7 +37,8 @@ const EXPERIMENTS = [
   { id: 'fuzz-bomb',       label: 'FUZZ BOMB 🧶',       Anim: FuzzBombAnimation       },
   { id: 'smoke-bomb',      label: 'SMOKE BOMB 🌫️',      Anim: SmokeBombAnimation      },
   { id: 'toilet-attack',   label: 'TOILET ATTACK 🚽',   Anim: ToiletAttackAnimation   },
-  { id: 'brewing',         label: 'BREWING... 🧫',       isBrewing: true               },
+  { id: 'dance-party',     label: 'DANCE PARTY 🪩',       Anim: DancePartyAnimation, bgMusic: 'dance-party', danceCat: true },
+  { id: 'brewing',         label: 'BREWING... 🧫',        isBrewing: true               },
 ];
 
 export default function DevScreen({ dispatch }) {
@@ -46,13 +49,18 @@ export default function DevScreen({ dispatch }) {
   function launch(exp) {
     setPlaying(exp);
     setPlayKey(k => k + 1);
-    if (exp.isBrewing) return; // no dedicated sound for brewing
-    if (exp.id === 'toilet-attack') {
-      playSound(exp.id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
-    } else {
-      playSound(exp.id);
+    if (exp.isBrewing) return;
+    // Experiment SFX (dance-party uses its bgMusic track instead)
+    if (exp.id !== 'dance-party') {
+      if (exp.id === 'toilet-attack') {
+        playSound(exp.id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
+      } else {
+        playSound(exp.id);
+      }
     }
-    playSound('pounce-pop-parade');
+    // Background music
+    const track = exp.bgMusic ?? 'pounce-pop-parade';
+    playSound(track);
   }
 
   // Shared controls bar used in both preview modes
@@ -63,7 +71,7 @@ export default function DevScreen({ dispatch }) {
           {label}
         </div>
         <div className="flex gap-3 pointer-events-auto">
-          <button className="btn-secondary text-sm" onClick={() => { stopSound('pounce-pop-parade'); setPlaying(null); }}>
+          <button className="btn-secondary text-sm" onClick={() => { stopSound(playing.bgMusic ?? 'pounce-pop-parade'); setPlaying(null); }}>
             ← experiments
           </button>
           <button className="btn-secondary text-sm" onClick={() => launch(playing)}>
@@ -107,9 +115,9 @@ export default function DevScreen({ dispatch }) {
           <Beaker fillPercent={100} glow />
         </div>
 
-        {/* Dancing cat — matches PayoffScreen exactly */}
-        <div className="absolute right-3 z-40 pointer-events-none" style={{ bottom: 62 }}>
-          <DancingCat size={280} />
+        {/* Dancing cat — swap for DanceCat on dance-party */}
+        <div className="absolute right-3 z-40 pointer-events-none" style={{ bottom: 102 }}>
+          {playing.danceCat ? <DanceCat size={280} /> : <DancingCat size={280} />}
         </div>
 
         <Controls label={label} />

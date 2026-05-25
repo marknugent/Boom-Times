@@ -44,6 +44,16 @@ export const EXPERIMENTS = [
     ingredient: '🚽',
     emoji: '💩',
   },
+  {
+    id: 'dance-party',
+    name: 'DANCE PARTY',
+    brewingLabel: 'Brewing: DANCE PARTY 🎉',
+    payoffText: 'DANCE PARTY!',
+    ingredient: '🎉',
+    emoji: '🪩',
+    bgMusic:  'dance-party',  // replaces pounce-pop-parade on payoff screen
+    danceCat: true,           // use DanceCat frame loop instead of DancingCat
+  },
 ];
 
 /** Pick a random experiment, re-rolling once if it matches the previous round. */

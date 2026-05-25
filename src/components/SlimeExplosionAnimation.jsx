@@ -171,12 +171,12 @@ export default function SlimeExplosionAnimation() {
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
 
       {/* Pulsing green washes — staggered so the screen throbs */}
-      <div className="absolute inset-0 bg-green-600"   style={{ animation: 'colour-wash 0.8s ease-out 0.0s forwards', '--peak': 0.45 }} />
-      <div className="absolute inset-0 bg-lime-400"    style={{ animation: 'colour-wash 0.7s ease-out 0.9s forwards', '--peak': 0.35 }} />
-      <div className="absolute inset-0 bg-green-500"   style={{ animation: 'colour-wash 0.7s ease-out 1.7s forwards', '--peak': 0.28 }} />
-      <div className="absolute inset-0 bg-emerald-500" style={{ animation: 'colour-wash 0.8s ease-out 2.5s forwards', '--peak': 0.22 }} />
-      <div className="absolute inset-0 bg-lime-500"    style={{ animation: 'colour-wash 0.9s ease-out 3.3s forwards', '--peak': 0.16 }} />
-      <div className="absolute inset-0 bg-green-400"   style={{ animation: 'colour-wash 0.9s ease-out 4.2s forwards', '--peak': 0.10 }} />
+      <div className="absolute inset-0 bg-green-600"   style={{ animation: 'colour-wash 0.8s ease-out 0.0s both', '--peak': 0.45 }} />
+      <div className="absolute inset-0 bg-lime-400"    style={{ animation: 'colour-wash 0.7s ease-out 0.9s both', '--peak': 0.35 }} />
+      <div className="absolute inset-0 bg-green-500"   style={{ animation: 'colour-wash 0.7s ease-out 1.7s both', '--peak': 0.28 }} />
+      <div className="absolute inset-0 bg-emerald-500" style={{ animation: 'colour-wash 0.8s ease-out 2.5s both', '--peak': 0.22 }} />
+      <div className="absolute inset-0 bg-lime-500"    style={{ animation: 'colour-wash 0.9s ease-out 3.3s both', '--peak': 0.16 }} />
+      <div className="absolute inset-0 bg-green-400"   style={{ animation: 'colour-wash 0.9s ease-out 4.2s both', '--peak': 0.10 }} />
 
       {/* ── 40 flying blobs burst from beaker ────────────────────── */}
       {BLOBS.map((b, i) => (
