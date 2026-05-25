@@ -7,7 +7,7 @@ import { useState, useMemo } from 'react';
 import { A } from '../gameReducer.js';
 import { TABLE_GROUPS, loadProgression } from '../progression.js';
 import { getFactIdsForTable, isFactMastered, loadSRSState } from '../srs.js';
-import { PLAYERS } from '../players.js';
+import { PLAYERS, TEST_PLAYER } from '../players.js';
 import { getLevelFromPct } from '../levels.js';
 
 // All 12 table numbers in display order
@@ -127,23 +127,39 @@ export default function ProgressScreen({ state, dispatch }) {
         <div className="w-16" /> {/* spacer */}
       </div>
 
-      {/* Player selector — segmented control */}
-      <div className="flex gap-1 bg-lab-border/20 rounded-xl p-1 shrink-0">
-        {PLAYERS.map(name => (
+      {/* Player selector — segmented control OR "Test User" heading */}
+      {viewedPlayer === TEST_PLAYER ? (
+        <div className="flex items-center gap-3 shrink-0">
           <button
-            key={name}
-            className={[
-              'flex-1 py-1.5 rounded-lg font-body text-sm transition-colors duration-150',
-              viewedPlayer === name
-                ? 'bg-lab-panel text-lab-chalk border border-lab-green/25 shadow-sm'
-                : 'text-lab-chalk/40 hover:text-lab-chalk/60',
-            ].join(' ')}
-            onClick={() => setViewedPlayer(name)}
+            className="font-body text-xs text-lab-chalk/40 hover:text-lab-chalk/70 transition-colors"
+            onClick={() => setViewedPlayer(defaultViewed)}
           >
-            {name}
+            ← kids
           </button>
-        ))}
-      </div>
+          <span className="font-display text-base text-lab-chalk/70 tracking-widest uppercase flex-1 text-center">
+            Test User
+          </span>
+          {/* spacer to balance the back link */}
+          <div className="w-10" />
+        </div>
+      ) : (
+        <div className="flex gap-1 bg-lab-border/20 rounded-xl p-1 shrink-0">
+          {PLAYERS.map(name => (
+            <button
+              key={name}
+              className={[
+                'flex-1 py-1.5 rounded-lg font-body text-sm transition-colors duration-150',
+                viewedPlayer === name
+                  ? 'bg-lab-panel text-lab-chalk border border-lab-green/25 shadow-sm'
+                  : 'text-lab-chalk/40 hover:text-lab-chalk/60',
+              ].join(' ')}
+              onClick={() => setViewedPlayer(name)}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Level badge */}
       <div className="lab-panel px-4 py-3 flex items-center gap-3 shrink-0">
@@ -202,6 +218,16 @@ export default function ProgressScreen({ state, dispatch }) {
           })}
         </div>
       </div>
+
+      {/* Test User link — only shown when viewing kids */}
+      {viewedPlayer !== TEST_PLAYER && (
+        <button
+          className="font-body text-xs text-lab-chalk/25 hover:text-lab-chalk/50 transition-colors shrink-0 py-1 text-center"
+          onClick={() => setViewedPlayer(TEST_PLAYER)}
+        >
+          Test User
+        </button>
+      )}
     </div>
   );
 }
