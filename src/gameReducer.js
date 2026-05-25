@@ -35,6 +35,7 @@ import {
 import { getRandomExperiment } from './experiments.js';
 import { shouldShowHint, getHintText } from './hints.js';
 import { pudge, PUDGE } from './pudge.js';
+import { getLevelFromSrs } from './levels.js';
 
 // ─────────────────────────────────────────────
 // Action type constants
@@ -51,6 +52,7 @@ export const A = {
   DISMISS_HINT:    'DISMISS_HINT',
   DISMISS_SPEECH:  'DISMISS_SPEECH',
   CLEAR_UNLOCK:    'CLEAR_UNLOCK',
+  CLEAR_LEVEL_UP:  'CLEAR_LEVEL_UP',
 };
 
 // ─────────────────────────────────────────────
@@ -117,6 +119,12 @@ export function createInitialState() {
      * null | { groupIndex: number, tables: number[] }
      */
     newUnlock: null,
+
+    /**
+     * Set when the player levels up during a round, cleared after they
+     * acknowledge the banner. null | { level: number, name: string, emoji: string }
+     */
+    levelUp: null,
   };
 }
 
@@ -249,6 +257,7 @@ export function gameReducer(state, action) {
         answeredCorrectly:   [],
         firstAttemptFacts:   [firstFactId],
         firstAttemptCorrect: 0,
+        levelAtRoundStart:   getLevelFromSrs(updatedSrsState).level,
       };
 
       const question = buildQuestion(
@@ -300,6 +309,7 @@ export function gameReducer(state, action) {
         answeredCorrectly: [],        // facts answered correctly this round
         firstAttemptFacts: [],        // facts presented at least once (for first-attempt tracking)
         firstAttemptCorrect: 0,       // score used for beaker & payoff
+        levelAtRoundStart: getLevelFromSrs(updatedSrsState).level,
       };
 
       // 5. Build first question (use updatedSrsState so hint logic sees presets)
@@ -491,6 +501,11 @@ export function gameReducer(state, action) {
       return { ...state, newUnlock: null };
     }
 
+    // ── Clear level-up banner ───────────────
+    case A.CLEAR_LEVEL_UP: {
+      return { ...state, levelUp: null };
+    }
+
     default:
       return state;
   }
@@ -512,16 +527,19 @@ function handleRoundComplete(state) {
   if (unlocked && newGroupIndex !== null) {
     newUnlock = {
       groupIndex: newGroupIndex,
-      // TABLE_GROUPS[newGroupIndex] = the group that just became available
       tables: TABLE_GROUPS[newGroupIndex] ?? [],
     };
   }
+
+  // Detect level-up: compare level at round start with level now
+  const newLevelObj = getLevelFromSrs(state.srsState);
+  const levelUp = newLevelObj.level > round.levelAtRoundStart ? newLevelObj : null;
 
   const highAccuracy = total > 0 && correct / total >= 0.8;
 
   return {
     ...state,
-    screen: 'brewing',           // brief anticipation screen before payoff
+    screen: 'brewing',
     progression: newProgression,
     question: null,
     pudgeState: highAccuracy ? PUDGE.IMPRESSED : PUDGE.DISGUSTED,
@@ -530,6 +548,7 @@ function handleRoundComplete(state) {
       type: 'reaction',
     },
     newUnlock,
-    hintsShownThisSession: [],  // reset for next round
+    levelUp,
+    hintsShownThisSession: [],
   };
 }

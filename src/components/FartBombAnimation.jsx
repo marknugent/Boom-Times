@@ -60,14 +60,14 @@ export default function FartBombAnimation() {
       <div
         className="absolute inset-0 bg-green-500"
         style={{
-          animation: 'colour-wash 5.2s ease-out 0.3s forwards',
+          animation: 'colour-wash 5.2s ease-out 0.3s both',
           '--peak': 0.18,
         }}
       />
       <div
         className="absolute inset-0 bg-green-400"
         style={{
-          animation: 'colour-wash 4.4s ease-out 1.4s forwards',
+          animation: 'colour-wash 4.4s ease-out 1.4s both',
           '--peak': 0.12,
         }}
       />

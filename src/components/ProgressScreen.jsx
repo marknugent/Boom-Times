@@ -8,6 +8,7 @@ import { A } from '../gameReducer.js';
 import { TABLE_GROUPS, loadProgression } from '../progression.js';
 import { getFactIdsForTable, isFactMastered, loadSRSState } from '../srs.js';
 import { PLAYERS } from '../players.js';
+import { getLevelFromPct } from '../levels.js';
 
 // All 12 table numbers in display order
 const ALL_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -103,6 +104,7 @@ export default function ProgressScreen({ state, dispatch }) {
     .filter(rec => isFactMastered(rec))
     .length;
   const overallPct    = Math.round((masteredCount / totalFacts) * 100);
+  const currentLevel  = getLevelFromPct(overallPct);
 
   // Current active group label
   const { unlockedGroupIndex } = viewedProgression;
@@ -141,6 +143,19 @@ export default function ProgressScreen({ state, dispatch }) {
             {name}
           </button>
         ))}
+      </div>
+
+      {/* Level badge */}
+      <div className="lab-panel px-4 py-3 flex items-center gap-3 shrink-0">
+        <span style={{ fontSize: '2rem', lineHeight: 1 }}>{currentLevel.emoji}</span>
+        <div>
+          <div className="font-body text-xs text-lab-chalk/40 uppercase tracking-widest leading-none mb-0.5">
+            Level {currentLevel.level}
+          </div>
+          <div className="font-display text-base text-lab-chalk leading-tight">
+            {currentLevel.name}
+          </div>
+        </div>
       </div>
 
       {/* Overall progress */}

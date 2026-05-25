@@ -46,7 +46,14 @@ export const EXPERIMENTS = [
   },
 ];
 
-/** Pick a random experiment for the upcoming round. */
+/** Pick a random experiment, re-rolling once if it matches the previous round. */
+let lastExperimentId = null;
+
 export function getRandomExperiment() {
-  return EXPERIMENTS[Math.floor(Math.random() * EXPERIMENTS.length)];
+  let pick = EXPERIMENTS[Math.floor(Math.random() * EXPERIMENTS.length)];
+  if (pick.id === lastExperimentId && EXPERIMENTS.length > 1) {
+    pick = EXPERIMENTS[Math.floor(Math.random() * EXPERIMENTS.length)];
+  }
+  lastExperimentId = pick.id;
+  return pick;
 }

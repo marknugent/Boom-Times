@@ -40,15 +40,21 @@ const CORRECT = [
   "Took you long enough.",
   "Correct. Don't make it weird.",
   "Acceptable.",
+  "Correct. Pudge remains unimpressed.",
+  "Sure. Whatever. Good job.",
+  "...Hm. Not terrible.",
+  "Adequate.",
 ];
 
 const WRONG = [
   "Hmm. No.",
   "That was a bold guess.",
-  "Try again. I'll wait.",
   "Really. Really.",
   "Nope.",
   "Pudge is disappointed. Again.",
+  "Bold strategy. Wrong, but bold.",
+  "Even worse than Pudge expected.",
+  "Did you even try?",
 ];
 
 const ROUND_START = [

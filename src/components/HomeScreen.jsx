@@ -4,6 +4,14 @@ import { PLAYERS, TEST_PLAYER } from '../players.js';
 import Pudge          from './Pudge.jsx';
 import SpeechBubble   from './SpeechBubble.jsx';
 import { PUDGE }      from '../pudge.js';
+import { getLevelFromSrs } from '../levels.js';
+import { loadSRSState }    from '../srs.js';
+
+// Load each player's current level once at render time.
+// localStorage reads are synchronous so this is safe outside a hook.
+function getPlayerLevel(name) {
+  return getLevelFromSrs(loadSRSState(name));
+}
 
 const TRIPLE_TAP_MS = 600;
 
@@ -74,15 +82,22 @@ export default function HomeScreen({ state, dispatch }) {
           Run Experiment
         </div>
         <div className="flex flex-col gap-3 w-full">
-          {PLAYERS.map(name => (
-            <button
-              key={name}
-              className="btn-primary w-full text-xl py-4"
-              onClick={() => selectPlayer(name)}
-            >
-              {name}
-            </button>
-          ))}
+          {PLAYERS.map(name => {
+            const lvl = getPlayerLevel(name);
+            return (
+              <button
+                key={name}
+                className="btn-primary w-full text-xl py-4 flex items-center justify-between px-5"
+                onClick={() => selectPlayer(name)}
+              >
+                <span>{name}</span>
+                <span className="flex items-center gap-1.5 text-base opacity-80">
+                  <span>{lvl.emoji}</span>
+                  <span className="font-body text-sm">Lv {lvl.level}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -93,7 +93,7 @@ export default function QuestionScreen({ state, dispatch }) {
           {/* 😵 face */}
           <div
             className="fixed inset-0 flex items-center justify-center pointer-events-none"
-            style={{ zIndex: 201, paddingBottom: '35vh' }}
+            style={{ zIndex: 201, paddingBottom: '3vh' }}
           >
             <div className="select-none animate-wrong-face" style={{ fontSize: '7rem', lineHeight: 1 }}>
               😵
@@ -125,8 +125,8 @@ export default function QuestionScreen({ state, dispatch }) {
         </div>
 
         {/* Question — upper-right, right-aligned, no "= ?" */}
-        <div className="absolute top-6 right-4 z-10 text-right pointer-events-none">
-          <div className={`font-display leading-none select-none text-6xl sm:text-7xl ${questionColor}`}>
+        <div className="absolute top-16 right-16 z-10 text-right pointer-events-none">
+          <div className={`font-display leading-none select-none text-[5.5rem] sm:text-7xl ${questionColor}`}>
             {question.a} × {question.b}
           </div>
           {/* Wrong-answer reveal sits right below the question */}
@@ -168,7 +168,7 @@ export default function QuestionScreen({ state, dispatch }) {
             portrait-oriented images that overflow the main area height.
             Pinned to a safe absolute position; tail points down toward Pudge. */}
         {speechBubble && !showHintOverlay && (
-          <div className="absolute bottom-[36%] right-4 z-40 animate-pop-in max-w-[260px]">
+          <div className="absolute bottom-[36%] right-12 z-40 animate-pop-in max-w-[260px]">
             <SpeechBubble
               text={speechBubble.text}
               type={speechBubble.type}
@@ -195,9 +195,18 @@ export default function QuestionScreen({ state, dispatch }) {
         )}
 
         {/* Pudge — lower-left. Portrait-orientation poses may extend above the
-            main area top; that's fine — his body stays visible at the bottom. */}
-        <div className="absolute bottom-3 left-[8%] z-30">
-          <Pudge state={pudgeState} size="md" />
+            main area top; that's fine — his body stays visible at the bottom.
+            On correct answers (impressed) he's nudged 12 px left and scaled
+            down 7 % so the wider pose doesn't crowd the layout. */}
+        <div
+          className="absolute bottom-3 z-30"
+          style={{ left: pudgeState === 'impressed' ? 'calc(8% - 12px)' : '8%' }}
+        >
+          <Pudge
+            state={pudgeState}
+            size="md"
+            widthPx={pudgeState === 'impressed' ? 335 : undefined}
+          />
         </div>
       </div>
 

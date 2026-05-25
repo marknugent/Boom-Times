@@ -133,10 +133,10 @@ export default function ToiletAttackAnimation() {
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
 
       {/* Amber/brown "toilet water" tint washes */}
-      <div className="absolute inset-0 bg-amber-950"  style={{ animation: 'colour-wash 0.7s ease-out 0.0s forwards', '--peak': 0.28 }} />
-      <div className="absolute inset-0 bg-yellow-900" style={{ animation: 'colour-wash 0.8s ease-out 0.8s forwards', '--peak': 0.22 }} />
-      <div className="absolute inset-0 bg-amber-900"  style={{ animation: 'colour-wash 0.8s ease-out 1.7s forwards', '--peak': 0.18 }} />
-      <div className="absolute inset-0 bg-yellow-800" style={{ animation: 'colour-wash 0.9s ease-out 2.6s forwards', '--peak': 0.15 }} />
+      <div className="absolute inset-0 bg-amber-950"  style={{ animation: 'colour-wash 0.7s ease-out 0.0s both', '--peak': 0.28 }} />
+      <div className="absolute inset-0 bg-yellow-900" style={{ animation: 'colour-wash 0.8s ease-out 0.8s both', '--peak': 0.22 }} />
+      <div className="absolute inset-0 bg-amber-900"  style={{ animation: 'colour-wash 0.8s ease-out 1.7s both', '--peak': 0.18 }} />
+      <div className="absolute inset-0 bg-yellow-800" style={{ animation: 'colour-wash 0.9s ease-out 2.6s both', '--peak': 0.15 }} />
 
       {/* ── Toilet vortex — two swirls spinning at different rates ──
           z=1 / z=2 keeps them below everything else.

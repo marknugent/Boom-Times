@@ -76,9 +76,9 @@ const CY = '44%';
 // ── Expanding poof clouds at centre on detonation ─────────────────────
 // (dx=0, dy=0 → they grow in place using cloud-burst)
 const POOF_CLOUDS = [
-  { size: 50, delay:   0, dur:  700, color: '#ffffff', scale: 9  },
+  { size: 50, delay:   0, dur:  700, color: '#ffd93d', scale: 9  },
   { size: 40, delay:  40, dur:  900, color: '#f0abfc', scale: 10 },
-  { size: 60, delay:  80, dur:  800, color: '#ffffff', scale: 7  },
+  { size: 60, delay:  80, dur:  800, color: '#ff3cac', scale: 7  },
   { size: 45, delay: 120, dur: 1000, color: '#bfdbfe', scale: 11 },
   { size: 35, delay: 160, dur:  650, color: '#fde68a', scale: 8  },
 ];
@@ -144,7 +144,7 @@ const RAIN = Array.from({ length: 80 }, (_, i) => ({
 // ── Rainbow background strobes ────────────────────────────────────────
 // 16 rapid flashes cycling through vivid hues — full disco detonation
 const WASHES = [
-  { color: '#ffffff', delay:    0, dur: '0.45s', peak: 0.80 }, // blinding white
+  { color: '#ffd93d', delay:    0, dur: '0.45s', peak: 0.80 }, // vivid yellow flash
   { color: '#f72585', delay:   55, dur: '0.55s', peak: 0.50 }, // hot magenta
   { color: '#ffd93d', delay:  180, dur: '0.55s', peak: 0.45 }, // vivid yellow
   { color: '#06d6a0', delay:  320, dur: '0.55s', peak: 0.42 }, // mint
@@ -159,7 +159,7 @@ const WASHES = [
   { color: '#ffbe0b', delay: 1540, dur: '0.70s', peak: 0.30 }, // gold
   { color: '#ff3cac', delay: 1680, dur: '0.75s', peak: 0.25 }, // pink finale
   { color: '#4cc9f0', delay: 1830, dur: '1.00s', peak: 0.18 }, // cool blue wind-down
-  { color: '#ffffff', delay: 2000, dur: '1.80s', peak: 0.10 }, // soft white fade
+  { color: '#8338ec', delay: 2000, dur: '1.80s', peak: 0.10 }, // violet fade-out
 ];
 
 export default function FuzzBombAnimation() {
@@ -173,7 +173,7 @@ export default function FuzzBombAnimation() {
           className="absolute inset-0"
           style={{
             background: w.color,
-            animation:  `colour-wash ${w.dur} ease-out ${w.delay}ms forwards`,
+            animation:  `colour-wash ${w.dur} ease-out ${w.delay}ms both`,
             '--peak':   w.peak,
           }}
         />

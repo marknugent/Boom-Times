@@ -21,8 +21,8 @@ const SPRITE = {
 
 const SIZE_PX = { sm: 200, md: 360, lg: 420 };
 
-export default function Pudge({ state = PUDGE.IDLE, size = 'md' }) {
-  const px  = SIZE_PX[size] ?? SIZE_PX.md;
+export default function Pudge({ state = PUDGE.IDLE, size = 'md', widthPx }) {
+  const px  = widthPx ?? SIZE_PX[size] ?? SIZE_PX.md;
   const src = SPRITE[state] ?? SPRITE[PUDGE.IDLE];
 
   return (

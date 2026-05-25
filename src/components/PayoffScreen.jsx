@@ -5,7 +5,7 @@
  */
 import { useEffect, useState, useRef } from 'react';
 import { A }             from '../gameReducer.js';
-import { playSound }     from '../sounds.js';
+import { playSound, stopSound } from '../sounds.js';
 import Beaker            from './Beaker.jsx';
 import DancingCat        from './DancingCat.jsx';
 import FartBombAnimation       from './FartBombAnimation.jsx';
@@ -26,10 +26,18 @@ const ANIMATION_MAP = {
 const TRIPLE_TAP_MS = 600;
 
 export default function PayoffScreen({ state, dispatch }) {
-  const { round, newUnlock } = state;
+  const { round, newUnlock, levelUp } = state;
 
   // Incrementing this key remounts <PayoffAnim />, restarting the animation
   const [animKey, setAnimKey] = useState(0);
+
+  // Show level-up banner after a delay so the animation plays first
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  useEffect(() => {
+    if (!levelUp) return;
+    const t = setTimeout(() => setShowLevelUp(true), 3500);
+    return () => clearTimeout(t);
+  }, [levelUp]);
 
   // Secret triple-tap bottom-left → replay
   const tapCountRef = useRef(0);
@@ -67,8 +75,8 @@ export default function PayoffScreen({ state, dispatch }) {
     }
   }
 
-  // Play sound on initial mount (and on animKey bumps via the effect below).
-  // Toilet attack fades out after 7 s so it doesn't loop/blare forever.
+  // Play experiment SFX on mount and on replay (animKey bump).
+  // Toilet attack fades out after 7 s so it doesn't blare forever.
   useEffect(() => {
     if (!round) return;
     const id = round.experiment.id;
@@ -78,6 +86,13 @@ export default function PayoffScreen({ state, dispatch }) {
       playSound(id);
     }
   }, [animKey, round?.experiment.id]);
+
+  // Play background music on mount; fade it out after 10 s so it
+  // doesn't bleed into the next screen. Stop immediately on unmount.
+  useEffect(() => {
+    playSound('pounce-pop-parade');
+    return () => stopSound('pounce-pop-parade');
+  }, []);
 
   if (!round) return null;
 
@@ -169,6 +184,31 @@ export default function PayoffScreen({ state, dispatch }) {
           </div>
         </div>
       </div>
+
+      {/* ── Level-up banner — full screen overlay, tap to dismiss ── */}
+      {showLevelUp && levelUp && (
+        <div
+          className="fixed inset-0 flex flex-col items-center justify-center z-[400]
+                     bg-lab-bg/92 animate-pop-in cursor-pointer select-none"
+          onPointerDown={() => {
+            setShowLevelUp(false);
+            dispatch({ type: A.CLEAR_LEVEL_UP });
+          }}
+        >
+          <div className="flex flex-col items-center gap-4 px-8 text-center">
+            <div style={{ fontSize: '6rem', lineHeight: 1 }}>{levelUp.emoji}</div>
+            <div className="font-display text-lab-green text-2xl tracking-widest uppercase">
+              Level {levelUp.level} achieved
+            </div>
+            <div className="font-display text-lab-chalk text-4xl leading-tight">
+              {levelUp.name}
+            </div>
+            <div className="font-body text-lab-chalk/40 text-sm mt-4">
+              tap to continue
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -16,19 +16,29 @@
  */
 
 const SOUNDS = {
-  'fart-bomb':       new Audio('/fart.mp3'),
-  'slime-explosion': new Audio('/splat.mp3'),
-  'fuzz-bomb':       new Audio('/poof.mp3'),
-  'smoke-bomb':      new Audio('/poof.mp3'),    // billowing cloud
-  'toilet-attack':   new Audio('/toilet.mp3'),  // dedicated toilet sound
-  'success':         new Audio('/success.mp3'), // correct answer chime
-  'wrong':           new Audio('/wrong.mp3'),   // wrong answer sting
+  'fart-bomb':         new Audio('/fart.mp3'),
+  'slime-explosion':   new Audio('/splat.mp3'),
+  'fuzz-bomb':         new Audio('/poof.mp3'),
+  'smoke-bomb':        new Audio('/poof.mp3'),              // billowing cloud
+  'toilet-attack':     new Audio('/toilet.mp3'),            // dedicated toilet sound
+  'success':           new Audio('/success.mp3'),           // correct answer chime
+  'wrong':             new Audio('/wrong.mp3'),             // wrong answer sting
+  'pounce-pop-parade': new Audio('/pounce_pop_parade.mp3'), // payoff background music
 };
 
+// Per-sound base volumes (defaults to 0.8)
+const BASE_VOLUME = {
+  'pounce-pop-parade': 0.55, // sits under the SFX
+};
+
+// Sounds that should loop until explicitly stopped
+const LOOPING = new Set(['pounce-pop-parade']);
+
 // Pre-load so they're buffered before they're needed
-Object.values(SOUNDS).forEach(a => {
+Object.entries(SOUNDS).forEach(([id, a]) => {
   a.preload = 'auto';
-  a.volume  = 0.8;
+  a.volume  = BASE_VOLUME[id] ?? 0.8;
+  a.loop    = LOOPING.has(id);
   a.load();
 });
 
@@ -58,8 +68,9 @@ const FADE_TIMERS = {};
  * @param {number} [opts.fadeDurationMs] — ms over which to fade from full to silent
  */
 export function playSound(id, { fadeStartMs = null, fadeDurationMs = 2000 } = {}) {
-  const a = SOUNDS[id];
+  const a    = SOUNDS[id];
   if (!a) return;
+  const base = BASE_VOLUME[id] ?? 0.8;
 
   // Cancel any in-progress fade for this sound
   const existing = FADE_TIMERS[id];
@@ -71,7 +82,7 @@ export function playSound(id, { fadeStartMs = null, fadeDurationMs = 2000 } = {}
 
   // Reset and play
   a.currentTime = 0;
-  a.volume = 0.8;
+  a.volume = base;
   a.play().catch(err => console.warn('[sounds] play blocked:', err));
 
   if (fadeStartMs == null) return;
@@ -81,21 +92,39 @@ export function playSound(id, { fadeStartMs = null, fadeDurationMs = 2000 } = {}
   FADE_TIMERS[id] = entry;
 
   entry.startTimer = setTimeout(() => {
-    const STEPS   = 30;
-    const stepMs  = fadeDurationMs / STEPS;
-    let   step    = 0;
+    const STEPS  = 30;
+    const stepMs = fadeDurationMs / STEPS;
+    let   step   = 0;
 
     entry.fadeInterval = setInterval(() => {
       step++;
-      a.volume = Math.max(0, 0.8 * (1 - step / STEPS));
+      a.volume = Math.max(0, base * (1 - step / STEPS));
 
       if (step >= STEPS) {
         clearInterval(entry.fadeInterval);
         a.pause();
         a.currentTime = 0;
-        a.volume = 0.8; // reset for next play
+        a.volume = base;
         delete FADE_TIMERS[id];
       }
     }, stepMs);
   }, fadeStartMs);
+}
+
+/**
+ * Immediately stop a sound and cancel any pending fade.
+ * Safe to call even if the sound isn't playing.
+ */
+export function stopSound(id) {
+  const a = SOUNDS[id];
+  if (!a) return;
+  const existing = FADE_TIMERS[id];
+  if (existing) {
+    clearTimeout(existing.startTimer);
+    clearInterval(existing.fadeInterval);
+    delete FADE_TIMERS[id];
+  }
+  a.pause();
+  a.currentTime = 0;
+  a.volume = BASE_VOLUME[id] ?? 0.8;
 }

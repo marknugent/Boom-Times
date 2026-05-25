@@ -8,7 +8,7 @@
  */
 import { useState } from 'react';
 import { A }        from '../gameReducer.js';
-import { playSound } from '../sounds.js';
+import { playSound, stopSound } from '../sounds.js';
 import Beaker       from './Beaker.jsx';
 import DancingCat   from './DancingCat.jsx';
 import BrewingScreen           from './BrewingScreen.jsx';
@@ -52,6 +52,7 @@ export default function DevScreen({ dispatch }) {
     } else {
       playSound(exp.id);
     }
+    playSound('pounce-pop-parade');
   }
 
   // Shared controls bar used in both preview modes
@@ -62,7 +63,7 @@ export default function DevScreen({ dispatch }) {
           {label}
         </div>
         <div className="flex gap-3 pointer-events-auto">
-          <button className="btn-secondary text-sm" onClick={() => setPlaying(null)}>
+          <button className="btn-secondary text-sm" onClick={() => { stopSound('pounce-pop-parade'); setPlaying(null); }}>
             ← experiments
           </button>
           <button className="btn-secondary text-sm" onClick={() => launch(playing)}>
