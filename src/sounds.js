@@ -120,13 +120,26 @@ let unlocked = false;
 export function unlockAudio() {
   if (unlocked) return;
   unlocked = true;
-  // Resume Web Audio context — must happen inside a user gesture on iOS
-  getAudioCtx().resume().catch(() => {});
-  // Unlock HTML Audio elements with the silent play+pause trick
+
+  const ctx = getAudioCtx();
+
+  // Primary unlock: resume AudioContext + play a silent 1-sample buffer.
+  // This is the correct iOS Safari technique — no audible output.
+  ctx.resume().catch(() => {});
+  const silentBuf = ctx.createBuffer(1, 1, 22050);
+  const silentSrc = ctx.createBufferSource();
+  silentSrc.buffer = silentBuf;
+  silentSrc.connect(ctx.destination);
+  silentSrc.start(0);
+
+  // Secondary unlock for HTMLAudioElement (so SFX can fire from timers/effects).
+  // Zero volume before play so there's no audible blip if the .then() callback
+  // is slow — iOS Safari resolves the Promise later than desktop, leaking audio.
   Object.values(SOUNDS).forEach(a => {
+    a.volume = 0;
     a.play()
-      .then(() => { a.pause(); a.currentTime = 0; })
-      .catch(() => {});
+      .then(() => { a.pause(); a.currentTime = 0; a.volume = 0.8; })
+      .catch(() => { a.volume = 0.8; });
   });
 }
 
