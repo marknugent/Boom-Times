@@ -8,8 +8,9 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { A }        from '../gameReducer.js';
-import { playSound, stopSound } from '../sounds.js';
+import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
 import { LEVELS } from '../levels.js';
+import FireworksEffect from './FireworksEffect.jsx';
 import Beaker       from './Beaker.jsx';
 import DancingCat   from './DancingCat.jsx';
 import BrewingScreen           from './BrewingScreen.jsx';
@@ -42,7 +43,7 @@ const EXPERIMENTS = [
   { id: 'brewing',         label: 'BREWING... 🧫',        isBrewing: true               },
 ];
 
-const LEVEL_UP_DELAY_MS = 3500; // matches PayoffScreen exactly
+const LEVEL_UP_DELAY_MS = 5500; // matches PayoffScreen exactly
 
 /**
  * Payoff animation preview with real level-up banner timing.
@@ -55,11 +56,12 @@ function PayoffPreview({ playing, playKey, onBack, onReplay }) {
   const [bannerIdx,   setBannerIdx]   = useState(0);
   const timerRef = useRef(null);
 
-  // Auto-show the banner after 3.5 s — same timing as the real game
+  // Auto-show the banner after delay — same timing as the real game
   useEffect(() => {
     timerRef.current = setTimeout(() => {
       setBannerIdx(0);
       setBannerLevel(LEVELS[0]);
+      playLevelUpSound();
     }, LEVEL_UP_DELAY_MS);
     return () => clearTimeout(timerRef.current);
   }, []);
@@ -111,12 +113,14 @@ function PayoffPreview({ playing, playKey, onBack, onReplay }) {
       {bannerLevel && (
         <div
           className="fixed inset-0 flex flex-col items-center justify-center z-[400]
-                     bg-lab-bg/92 animate-pop-in cursor-pointer select-none"
-          onPointerDown={advanceBanner}
+                     animate-pop-in cursor-pointer select-none"
+          style={{ background: 'rgba(8, 14, 22, 0.93)' }}
+          onPointerDown={() => { advanceBanner(); playLevelUpSound(); }}
         >
-          <div className="flex flex-col items-center gap-4 px-8 text-center">
-            <div style={{ fontSize: '6rem', lineHeight: 1 }}>{bannerLevel.emoji}</div>
-            <div className="font-display text-lab-green text-2xl tracking-widest uppercase">
+          <FireworksEffect />
+          <div className="flex flex-col items-center gap-4 px-8 text-center relative" style={{ zIndex: 2 }}>
+            <div style={{ fontSize: '7rem', lineHeight: 1 }}>{bannerLevel.emoji}</div>
+            <div className="font-display text-lab-green text-3xl tracking-widest uppercase">
               Level {bannerLevel.level} achieved
             </div>
             <div className="font-display text-lab-chalk text-4xl leading-tight">

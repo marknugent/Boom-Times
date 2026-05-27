@@ -145,37 +145,41 @@ export default function ToiletAttackAnimation() {
       <VortexSVG uid={1} size={700} spinDur={7.5}                   opacity={0.50} zIndex={1} />
       <VortexSVG uid={2} size={700} spinDur={4.6} spinDelay="-1.4s" opacity={0.32} zIndex={2} />
 
-      {/* ── Background drifting images — behind all emoji layers ──
-          img-drift: fades in → holds visible → slowly drifts → fades.
-          z=5 / z=3 keeps them below the lowest emoji layer (z=10).  */}
+      {/* ── Background images — drift in then spiral into drain ────────
+          Positioned so their centres sit exactly on the vortex pivot
+          (50%, 45%) when transform is identity.  The elmo-flush /
+          tp-flush keyframes start with a large translate that places
+          each image further from centre; they drift in, then spiral
+          with 3 clockwise rotations + scale → 0 (flushed down drain).
+          z=5 / z=3 keeps them below the emoji layers (z=10).          */}
+
+      {/* Elmo — upper-left start, spirals clockwise into vortex */}
       <img
         src="/elmo.gif"
         alt=""
         draggable={false}
-        className="absolute select-none"
+        className="absolute select-none pointer-events-none"
         style={{
           width:     180,
-          left:      '6%',
-          top:       '22%',
+          left:      'calc(50% - 90px)',
+          top:       'calc(45% - 90px)',
           zIndex:    5,
-          '--op':    0.88,
-          '--dx':    '120px',
-          animation: 'img-drift 6000ms ease-in-out 300ms both',
+          animation: 'elmo-flush 7200ms linear 350ms both',
         }}
       />
+
+      {/* Bouncing TP — upper-right start, spirals clockwise into vortex */}
       <img
         src="/bouncing-TP.webp"
         alt=""
         draggable={false}
-        className="absolute select-none"
+        className="absolute select-none pointer-events-none"
         style={{
           width:     155,
-          right:     '5%',
-          top:       '32%',
+          left:      'calc(50% - 78px)',
+          top:       'calc(45% - 78px)',
           zIndex:    3,
-          '--op':    0.80,
-          '--dx':    '-104px',
-          animation: 'img-drift 6000ms ease-in-out 700ms both',
+          animation: 'tp-flush 7200ms linear 700ms both',
         }}
       />
 

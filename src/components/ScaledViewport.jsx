@@ -23,7 +23,7 @@
 
 import { useState, useEffect } from 'react';
 
-const DESIGN_W = 430;
+const DESIGN_W = 560;
 const DESIGN_H = 932;
 
 function getScale() {

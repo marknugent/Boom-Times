@@ -5,7 +5,7 @@
  */
 import { useEffect, useState, useRef } from 'react';
 import { A }             from '../gameReducer.js';
-import { playSound, stopSound } from '../sounds.js';
+import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
 import Beaker            from './Beaker.jsx';
 import DancingCat        from './DancingCat.jsx';
 import DanceCat          from './DanceCat.jsx';
@@ -15,7 +15,12 @@ import FuzzBombAnimation       from './FuzzBombAnimation.jsx';
 import SmokeBombAnimation      from './SmokeBombAnimation.jsx';
 import ToiletAttackAnimation   from './ToiletAttackAnimation.jsx';
 import DancePartyAnimation     from './DancePartyAnimation.jsx';
+import FireworksEffect   from './FireworksEffect.jsx';
 import { TABLE_GROUPS }  from '../progression.js';
+
+// Delay before the level-up banner interrupts the payoff animation.
+// Long enough for the animation to be enjoyed; short enough to feel responsive.
+const LEVEL_UP_DELAY_MS = 5500;
 
 const ANIMATION_MAP = {
   'fart-bomb':       FartBombAnimation,
@@ -38,7 +43,10 @@ export default function PayoffScreen({ state, dispatch }) {
   const [showLevelUp, setShowLevelUp] = useState(false);
   useEffect(() => {
     if (!levelUp) return;
-    const t = setTimeout(() => setShowLevelUp(true), 3500);
+    const t = setTimeout(() => {
+      setShowLevelUp(true);
+      playLevelUpSound();
+    }, LEVEL_UP_DELAY_MS);
     return () => clearTimeout(t);
   }, [levelUp]);
 
@@ -196,15 +204,19 @@ export default function PayoffScreen({ state, dispatch }) {
       {showLevelUp && levelUp && (
         <div
           className="fixed inset-0 flex flex-col items-center justify-center z-[400]
-                     bg-lab-bg/92 animate-pop-in cursor-pointer select-none"
+                     animate-pop-in cursor-pointer select-none"
+          style={{ background: 'rgba(8, 14, 22, 0.93)' }}
           onPointerDown={() => {
             setShowLevelUp(false);
             dispatch({ type: A.CLEAR_LEVEL_UP });
           }}
         >
-          <div className="flex flex-col items-center gap-4 px-8 text-center">
-            <div style={{ fontSize: '6rem', lineHeight: 1 }}>{levelUp.emoji}</div>
-            <div className="font-display text-lab-green text-2xl tracking-widest uppercase">
+          {/* Fireworks bursting behind the text */}
+          <FireworksEffect />
+
+          <div className="flex flex-col items-center gap-4 px-8 text-center relative" style={{ zIndex: 2 }}>
+            <div style={{ fontSize: '7rem', lineHeight: 1 }}>{levelUp.emoji}</div>
+            <div className="font-display text-lab-green text-3xl tracking-widest uppercase">
               Level {levelUp.level} achieved
             </div>
             <div className="font-display text-lab-chalk text-4xl leading-tight">

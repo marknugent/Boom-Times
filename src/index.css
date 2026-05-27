@@ -348,6 +348,38 @@
   100% { opacity: 0; transform: translateX(var(--dx, 0px)); }
 }
 
+/* ── Toilet attack — images spiral into vortex drain ─────────
+   Each image is centered on the vortex pivot via CSS positioning
+   (left: calc(50% - halfW), top: calc(45% - halfH)).
+   The transform starts with a translate that moves it to a
+   position further from the centre; it drifts inward (phase 1),
+   then spirals in with 3 clockwise rotations while shrinking to
+   nothing (phase 2).  Separate keyframes avoid calc-multiply
+   issues with CSS custom properties.
+   Rotation rate per %-interval increases → visually accelerates. */
+
+/* Elmo — upper-left start, centre (80 px, 179 px) in 560×932 design */
+@keyframes elmo-flush {
+  0%   { transform: translate(-200px, -240px) scale(1)    rotate(0deg);    opacity: 0;    }
+  10%  { transform: translate(-200px, -240px) scale(1)    rotate(0deg);    opacity: 0.88; }
+  42%  { transform: translate( -90px, -108px) scale(1)    rotate(0deg);    opacity: 0.88; }
+  60%  { transform: translate( -36px,  -43px) scale(0.65) rotate(250deg);  opacity: 0.88; }
+  76%  { transform: translate( -10px,  -12px) scale(0.28) rotate(560deg);  opacity: 0.53; }
+  90%  { transform: translate(  -2px,   -2px) scale(0.08) rotate(860deg);  opacity: 0.20; }
+  100% { transform: translate(   0px,    0px) scale(0)    rotate(1080deg); opacity: 0;    }
+}
+
+/* Bouncing TP — upper-right start, centre (485 px, 194 px) */
+@keyframes tp-flush {
+  0%   { transform: translate( 205px, -225px) scale(1)    rotate(0deg);    opacity: 0;    }
+  10%  { transform: translate( 205px, -225px) scale(1)    rotate(0deg);    opacity: 0.80; }
+  42%  { transform: translate(  92px, -101px) scale(1)    rotate(0deg);    opacity: 0.80; }
+  60%  { transform: translate(  37px,  -41px) scale(0.65) rotate(250deg);  opacity: 0.80; }
+  76%  { transform: translate(  10px,  -11px) scale(0.28) rotate(560deg);  opacity: 0.48; }
+  90%  { transform: translate(   2px,   -2px) scale(0.08) rotate(860deg);  opacity: 0.20; }
+  100% { transform: translate(   0px,    0px) scale(0)    rotate(1080deg); opacity: 0;    }
+}
+
 /* ── Toilet attack — vortex spin ─────────────────────────── */
 @keyframes vortex-spin {
   from { transform: rotate(0deg); }
@@ -381,6 +413,33 @@
   75%      { transform: translateY(-5px)  rotate(-1deg); }
 }
 
+/* ── Payoff detonation screen-shake ─────────────────────────
+   Translation-only (no rotation) so the full-screen wrapper
+   doesn't look tilted.  Applied to an inner wrapper whose
+   parent has overflow:hidden to clip edge bleed.
+   Amplitude builds then damps — impact feel.                 */
+@keyframes screen-quake {
+  0%   { transform: translate(  0px,  0px); }
+  10%  { transform: translate( -3px,  1px); }
+  22%  { transform: translate(  5px, -2px); }
+  34%  { transform: translate( -6px,  2px); }
+  46%  { transform: translate(  8px, -2px); }
+  58%  { transform: translate( -7px,  1px); }
+  70%  { transform: translate(  5px,  2px); }
+  82%  { transform: translate( -3px, -1px); }
+  92%  { transform: translate(  2px,  1px); }
+  100% { transform: translate(  0px,  0px); }
+}
+
+/* ── Smoke bomb — shockwave ring expanding from beaker ───────
+   Element is anchored at OX/OY; translate(-50%,-50%) centres
+   it on that point.  Scales up and fades — ring explodes out. */
+@keyframes smoke-ring {
+  0%   { transform: translate(-50%, -50%) scale(0.05); opacity: 0.9; }
+  35%  { opacity: 0.65; }
+  100% { transform: translate(-50%, -50%) scale(5.5);  opacity: 0;   }
+}
+
 /* ── Brewing screen — escalating quake ──────────────────────
    Applied to beaker + text container over ~1.2 s.
    Amplitude ramps up from gentle wobble to violent shake.    */
@@ -411,4 +470,12 @@
 @keyframes brew-glow {
   0%   { opacity: 0; transform: scale(0.8); }
   100% { opacity: 1; transform: scale(1.0); }
+}
+
+/* ── Level-up firework particles ──────────────────────────────
+   --fx / --fy: final pixel offset from the shell origin.       */
+@keyframes firework-particle {
+  0%   { transform: translate(0, 0) scale(1);                                  opacity: 1; }
+  75%  { opacity: 0.8; }
+  100% { transform: translate(var(--fx), var(--fy)) scale(0.2);                opacity: 0; }
 }

@@ -229,3 +229,51 @@ export function stopSound(id) {
   a.currentTime = 0;
   a.volume = BASE_VOLUME[id] ?? 0.8;
 }
+
+/**
+ * Synthesised fireworks burst — no audio file required.
+ *
+ * Fires 5 staggered noise-burst "shells" using the Web Audio API.
+ * Each shell is bandpass-filtered white noise with an exponential
+ * volume decay, giving a realistic firework crack/pop.
+ */
+export function playLevelUpSound() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+  function shell(offsetSec, freq, vol) {
+    const dur    = 0.6;
+    const bufLen = Math.floor(ctx.sampleRate * dur);
+    const buf    = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data   = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type            = 'bandpass';
+    filter.frequency.value = freq;
+    filter.Q.value         = 0.7;
+
+    const gain = ctx.createGain();
+    const t    = ctx.currentTime + offsetSec;
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(t);
+    noise.stop(t + dur);
+  }
+
+  // Five shells at staggered offsets — feels like a multi-burst firework
+  shell(0.00, 1100, 0.55);
+  shell(0.18,  800, 0.45);
+  shell(0.38, 1400, 0.40);
+  shell(0.60,  650, 0.35);
+  shell(0.82, 1000, 0.30);
+}

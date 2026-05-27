@@ -4,8 +4,10 @@
  * Gray billowing clouds fill the screen — visibility drops to near zero.
  *
  * Detonation sequence (t = 0–1 000 ms):
+ *   screen-quake shakes everything; white flash bleaches the frame;
+ *   orange/amber heat glow fades before the gray smoke arrives.
  *   💣 cherry bomb pops in at the beaker, then 💥 explosion emoji
- *   rapidly expands and fades, signalling the release of smoke.
+ *   rapidly expands and fades.  Three shockwave rings expand outward.
  *
  * Phase 1 — Cloud puffs (500–1 800 ms):
  *   20 large heavily-blurred circles erupt from the beaker.
@@ -19,6 +21,10 @@
  * Phase 4 — Cartoon clouds (600–2 300 ms stagger):
  *   6 crisp-edged SVG clouds (ellipse silhouettes) drift lazily across
  *   the screen at different depths. Two sit in front of the cat (z > 50).
+ *
+ * Phase 5 — 👀 Eyes (2 400–4 200 ms stagger):
+ *   Five pairs of eyes materialise and drift through the thickest smoke,
+ *   suggesting hidden figures lurking in the cloud.
  */
 
 // Beaker centre on PayoffScreen
@@ -183,6 +189,25 @@ const CLOUD_LAYERS = [
   { t: 1, c: '#c8d8e4', op: 0.70, w:  80, top: '42%', left:  '5%', z: 53, from: '-105px', to:  '44px', delay: 1950, dur:  7500 },
 ];
 
+// ── 👀 Eyes peering through the smoke ─────────────────────────────────
+// Appear during peak smoke coverage using img-drift (--dx drift + fade).
+// z=45 puts them above fog bands but below the front cartoon clouds.
+const EYES = [
+  { left: '12%', top: '22%', dx:  '22px', delay: 2400, dur: 3800, op: 0.82, size: 42 },
+  { left: '60%', top: '35%', dx: '-18px', delay: 3200, dur: 3200, op: 0.75, size: 36 },
+  { left: '30%', top: '56%', dx:  '26px', delay: 2800, dur: 3500, op: 0.88, size: 40 },
+  { left: '72%', top: '17%', dx: '-22px', delay: 3700, dur: 2800, op: 0.70, size: 34 },
+  { left: '46%', top: '70%', dx:  '16px', delay: 4200, dur: 3200, op: 0.80, size: 38 },
+];
+
+// ── Shockwave rings from detonation point ─────────────────────────────
+// Three rings staggered 180 ms apart — warm to gray, first is orange.
+const RINGS = [
+  { delay:   0, dur: 700, color: '#f97316', border: 6 },
+  { delay: 180, dur: 860, color: '#d97706', border: 4 },
+  { delay: 340, dur: 980, color: '#9ca3af', border: 3 },
+];
+
 // ── Cloud SVG renderer ─────────────────────────────────────────────────
 function CloudShape({ tmpl, color }) {
   const t = CLOUD_TEMPLATES[tmpl];
@@ -205,122 +230,177 @@ export default function SmokeBombAnimation() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
 
-      {/* ── Detonation: 💣 cherry bomb ──────────────────────────── */}
-      <div
-        className="absolute select-none leading-none"
-        style={{ left: OX, top: OY, fontSize: 52, zIndex: 62,
-                 animation: 'bomb-show 520ms ease-out 0ms both' }}
-      >
-        💣
-      </div>
+      {/* ── Quake wrapper — shakes everything at detonation ──────────
+          Inner wrapper so parent overflow:hidden clips edge bleed.  */}
+      <div style={{ position: 'relative', width: '100%', height: '100%',
+                    animation: 'screen-quake 480ms ease-out 0ms both' }}>
 
-      {/* ── Detonation: 💥 explosion expands + fades ────────────── */}
-      <div
-        className="absolute select-none leading-none"
-        style={{ left: OX, top: OY, fontSize: 80, zIndex: 62,
-                 animation: 'explosion-burst 720ms ease-out 300ms both' }}
-      >
-        💥
-      </div>
+        {/* ── Detonation: white flash then orange heat glow ─────────── */}
+        <div className="absolute inset-0 bg-white"
+             style={{ animation: 'colour-wash 200ms ease-out 0ms both', '--peak': 0.90 }} />
+        {/* Orange explosion heat — fades before gray smoke arrives */}
+        <div className="absolute inset-0"
+             style={{ backgroundColor: '#f97316',
+                      animation: 'colour-wash 680ms ease-out 0ms both', '--peak': 0.60 }} />
+        <div className="absolute inset-0"
+             style={{ backgroundColor: '#fbbf24',
+                      animation: 'colour-wash 520ms ease-out 180ms both', '--peak': 0.42 }} />
 
-      {/* ── Stacked smoke fills ────────────────────────────────── */}
-      {FILL_LAYERS.map((l, i) => (
-        <div key={`fill-${i}`} className="absolute inset-0"
-          style={{
-            backgroundColor: l.color,
-            '--peak': l.peak,
-            '--hold': l.hold,
-            animation: `smoke-fill ${l.dur}ms ease-in-out ${l.delay}ms both`,
-          }}
-        />
-      ))}
-
-      {/* ── Blurry circular cloud puffs ───────────────────────── */}
-      {PUFFS.map((p, i) => (
-        <div key={`puff-${i}`} className="absolute rounded-full"
-          style={{
-            top: OY, left: OX,
-            width: p.size, height: p.size,
-            backgroundColor: p.color,
-            filter: `blur(${p.blur}px)`,
-            '--fx': `${p.fx}px`, '--fy': `${p.fy}px`,
-            '--sc': p.sc, '--op': p.op,
-            animation: `smoke-puff ${p.dur}ms cubic-bezier(0.1, 0.8, 0.3, 1) ${p.delay}ms both`,
-          }}
-        />
-      ))}
-
-      {/* ── Gradient fog bands ────────────────────────────────── */}
-      {FOG_LAYERS.map(fog => (
-        <div key={`fog-${fog.id}`}
-          className="absolute pointer-events-none"
-          style={{
-            left: '-60px', right: '-60px',
-            ...(fog.top    !== undefined ? { top:    fog.top    } : {}),
-            ...(fog.bottom !== undefined ? { bottom: fog.bottom } : {}),
-            height: fog.height,
-            zIndex: fog.zIndex,
-            filter: `blur(${fog.blur}px)`,
-            '--drift': fog.drift,
-            animation:
-              `fog-appear ${fog.appearDur}ms ease-in ${fog.delay}ms both, ` +
-              `fog-drift ${fog.driftDur}ms ease-in-out ${fog.delay}ms infinite alternate`,
-          }}
+        {/* ── Detonation: 💣 cherry bomb ──────────────────────────── */}
+        <div
+          className="absolute select-none leading-none"
+          style={{ left: OX, top: OY, fontSize: 52, zIndex: 62,
+                   animation: 'bomb-show 520ms ease-out 0ms both' }}
         >
-          <svg width="100%" height={fog.svgH} viewBox={`0 0 520 ${fog.svgH}`} preserveAspectRatio="none">
-            <defs>
-              <linearGradient id={`smokeFog${fog.id}`} x1="0" y1="0" x2="0" y2="1">
-                {fog.stops.map((s, si) => (
-                  <stop key={si} offset={s.o} stopColor={fog.color} stopOpacity={s.op} />
-                ))}
-              </linearGradient>
-            </defs>
-            <path d={fog.path} fill={`url(#smokeFog${fog.id})`} />
-          </svg>
+          💣
         </div>
-      ))}
 
-      {/* ── Cartoon clouds — crisp-edged, no blur ────────────────
-          Each cloud drifts from --from to --to while fading in
-          and out. Some sit above z=50 (in front of dancing cat). */}
-      {CLOUD_LAYERS.map((cl, i) => {
-        const tmpl = CLOUD_TEMPLATES[cl.t];
-        const h = Math.round(cl.w * tmpl.vh / tmpl.vw);
-        return (
-          <div key={`cloud-${i}`}
+        {/* ── Detonation: 💥 explosion expands + fades ────────────── */}
+        <div
+          className="absolute select-none leading-none"
+          style={{ left: OX, top: OY, fontSize: 80, zIndex: 62,
+                   animation: 'explosion-burst 720ms ease-out 300ms both' }}
+        >
+          💥
+        </div>
+
+        {/* ── Shockwave rings expanding from detonation point ──────── */}
+        {RINGS.map((ring, i) => (
+          <div key={`ring-${i}`}
             className="absolute pointer-events-none"
             style={{
-              left:   cl.left,
-              top:    cl.top,
-              width:  cl.w,
-              height: h,
-              zIndex: cl.z,
-              '--from': cl.from,
-              '--to':   cl.to,
-              '--op':   cl.op,
-              animation: `cloud-drift-in ${cl.dur}ms ease-in-out ${cl.delay}ms both`,
+              left:         OX,
+              top:          OY,
+              width:        60,
+              height:       60,
+              borderRadius: '50%',
+              border:       `${ring.border}px solid ${ring.color}`,
+              zIndex:       61,
+              animation:    `smoke-ring ${ring.dur}ms ease-out ${ring.delay}ms both`,
+            }}
+          />
+        ))}
+
+        {/* ── Stacked smoke fills ────────────────────────────────── */}
+        {FILL_LAYERS.map((l, i) => (
+          <div key={`fill-${i}`} className="absolute inset-0"
+            style={{
+              backgroundColor: l.color,
+              '--peak': l.peak,
+              '--hold': l.hold,
+              animation: `smoke-fill ${l.dur}ms ease-in-out ${l.delay}ms both`,
+            }}
+          />
+        ))}
+
+        {/* ── Blurry circular cloud puffs ───────────────────────── */}
+        {PUFFS.map((p, i) => (
+          <div key={`puff-${i}`} className="absolute rounded-full"
+            style={{
+              top: OY, left: OX,
+              width: p.size, height: p.size,
+              backgroundColor: p.color,
+              filter: `blur(${p.blur}px)`,
+              '--fx': `${p.fx}px`, '--fy': `${p.fy}px`,
+              '--sc': p.sc, '--op': p.op,
+              animation: `smoke-puff ${p.dur}ms cubic-bezier(0.1, 0.8, 0.3, 1) ${p.delay}ms both`,
+            }}
+          />
+        ))}
+
+        {/* ── Gradient fog bands ────────────────────────────────── */}
+        {FOG_LAYERS.map(fog => (
+          <div key={`fog-${fog.id}`}
+            className="absolute pointer-events-none"
+            style={{
+              left: '-60px', right: '-60px',
+              ...(fog.top    !== undefined ? { top:    fog.top    } : {}),
+              ...(fog.bottom !== undefined ? { bottom: fog.bottom } : {}),
+              height: fog.height,
+              zIndex: fog.zIndex,
+              filter: `blur(${fog.blur}px)`,
+              '--drift': fog.drift,
+              animation:
+                `fog-appear ${fog.appearDur}ms ease-in ${fog.delay}ms both, ` +
+                `fog-drift ${fog.driftDur}ms ease-in-out ${fog.delay}ms infinite alternate`,
             }}
           >
-            <CloudShape tmpl={cl.t} color={cl.c} />
+            <svg width="100%" height={fog.svgH} viewBox={`0 0 520 ${fog.svgH}`} preserveAspectRatio="none">
+              <defs>
+                <linearGradient id={`smokeFog${fog.id}`} x1="0" y1="0" x2="0" y2="1">
+                  {fog.stops.map((s, si) => (
+                    <stop key={si} offset={s.o} stopColor={fog.color} stopOpacity={s.op} />
+                  ))}
+                </linearGradient>
+              </defs>
+              <path d={fog.path} fill={`url(#smokeFog${fog.id})`} />
+            </svg>
           </div>
-        );
-      })}
+        ))}
 
-      {/* Payoff text — z=46: above general fog, below front fog/clouds */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center"
-           style={{ paddingBottom: '28%', zIndex: 46 }}>
-        <div className="text-center animate-payoff-text"
-             style={{ animationDelay: '900ms', animationFillMode: 'backwards' }}>
-          <div className="font-display text-5xl sm:text-6xl leading-tight"
-               style={{ color: '#f9fafb', textShadow: '0 0 24px rgba(255,255,255,1), 0 0 48px rgba(255,255,255,0.7), 0 2px 10px rgba(0,0,0,1)' }}>
-            SMOKE
+        {/* ── 👀 Eyes peering through the smoke ────────────────────
+            Materialise during peak coverage, drift slowly sideways.
+            The img-drift keyframe handles fade-in, hold, fade-out.  */}
+        {EYES.map((eye, i) => (
+          <div key={`eye-${i}`}
+            className="absolute select-none leading-none"
+            style={{
+              left:      eye.left,
+              top:       eye.top,
+              fontSize:  eye.size,
+              zIndex:    45,
+              '--op':    eye.op,
+              '--dx':    eye.dx,
+              animation: `img-drift ${eye.dur}ms ease-in-out ${eye.delay}ms both`,
+            }}
+          >
+            👀
           </div>
-          <div className="font-display text-5xl sm:text-6xl leading-tight"
-               style={{ color: '#e5e7eb', textShadow: '0 0 24px rgba(255,255,255,1), 0 0 48px rgba(255,255,255,0.7), 0 2px 10px rgba(0,0,0,1)' }}>
-            BOMB! 🌫️
+        ))}
+
+        {/* ── Cartoon clouds — crisp-edged, no blur ────────────────
+            Each cloud drifts from --from to --to while fading in
+            and out. Some sit above z=50 (in front of dancing cat). */}
+        {CLOUD_LAYERS.map((cl, i) => {
+          const tmpl = CLOUD_TEMPLATES[cl.t];
+          const h = Math.round(cl.w * tmpl.vh / tmpl.vw);
+          return (
+            <div key={`cloud-${i}`}
+              className="absolute pointer-events-none"
+              style={{
+                left:   cl.left,
+                top:    cl.top,
+                width:  cl.w,
+                height: h,
+                zIndex: cl.z,
+                '--from': cl.from,
+                '--to':   cl.to,
+                '--op':   cl.op,
+                animation: `cloud-drift-in ${cl.dur}ms ease-in-out ${cl.delay}ms both`,
+              }}
+            >
+              <CloudShape tmpl={cl.t} color={cl.c} />
+            </div>
+          );
+        })}
+
+        {/* Payoff text — z=46: above general fog, below front fog/clouds */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center"
+             style={{ paddingBottom: '28%', zIndex: 46 }}>
+          <div className="text-center animate-payoff-text"
+               style={{ animationDelay: '900ms', animationFillMode: 'backwards' }}>
+            <div className="font-display text-5xl sm:text-6xl leading-tight"
+                 style={{ color: '#f9fafb', textShadow: '0 0 24px rgba(255,255,255,1), 0 0 48px rgba(255,255,255,0.7), 0 2px 10px rgba(0,0,0,1)' }}>
+              SMOKE
+            </div>
+            <div className="font-display text-5xl sm:text-6xl leading-tight"
+                 style={{ color: '#e5e7eb', textShadow: '0 0 24px rgba(255,255,255,1), 0 0 48px rgba(255,255,255,0.7), 0 2px 10px rgba(0,0,0,1)' }}>
+              BOMB! 🌫️
+            </div>
           </div>
         </div>
-      </div>
+
+      </div>{/* end quake wrapper */}
     </div>
   );
 }

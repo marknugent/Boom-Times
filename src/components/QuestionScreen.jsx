@@ -14,6 +14,7 @@
 import { useEffect, useRef } from 'react';
 import { A } from '../gameReducer.js';
 import { playSound } from '../sounds.js';
+import { TEST_PLAYER } from '../players.js';
 import Keypad       from './Keypad.jsx';
 import Beaker       from './Beaker.jsx';
 import Pudge        from './Pudge.jsx';
@@ -33,7 +34,12 @@ const HEARTS = [
 ];
 
 export default function QuestionScreen({ state, dispatch }) {
-  const { round, question, pudgeState, speechBubble } = state;
+  const { round, question, pudgeState, speechBubble, currentPlayer } = state;
+
+  // Display name for the brewing label — uppercase, "TEST" for test profile
+  const playerLabel = currentPlayer === TEST_PLAYER
+    ? 'TEST'
+    : (currentPlayer ?? '').toUpperCase();
 
   const feedbackTimerRef = useRef(null);
   const hintTimerRef     = useRef(null);
@@ -104,17 +110,17 @@ export default function QuestionScreen({ state, dispatch }) {
 
       {/* ── Top bar ─────────────────────────────── */}
       <div className="shrink-0 flex items-center justify-between px-4 pt-3 pb-1">
-        <div className="font-body text-xs text-lab-chalk/50 tracking-wide">
-          {experiment.brewingLabel}
+        <div className="font-body text-sm text-lab-chalk/50 tracking-wide">
+          {playerLabel} is brewing: {experiment.name} 🧪
         </div>
         <div className="flex items-center gap-3">
           <div className="font-body text-xs text-lab-chalk/40">
             {answeredCorrectly.length} / {denominator} done
           </div>
-          {/* Subtle exit — muted so it doesn't distract during play */}
+          {/* Exit — large enough tap target, visible but not distracting */}
           <button
-            className="font-body text-base text-lab-chalk/25 hover:text-lab-chalk/60
-                       transition-colors leading-none px-1"
+            className="font-body text-xl text-lab-chalk/50 hover:text-lab-chalk/90
+                       transition-colors leading-none px-2 py-1"
             onClick={() => dispatch({ type: A.NAVIGATE, screen: 'home' })}
             aria-label="Exit round"
           >
@@ -222,7 +228,7 @@ export default function QuestionScreen({ state, dispatch }) {
       </div>
 
       {/* ── Answer display + keypad ── */}
-      <div className="shrink-0 flex flex-col items-center gap-3 px-4 pb-5 pt-2">
+      <div className="shrink-0 flex flex-col items-center gap-3 px-4 pb-10 pt-2">
         <div
           className={[
             'lab-panel w-full max-w-[320px] h-16 flex items-center justify-center',

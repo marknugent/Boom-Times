@@ -3,6 +3,9 @@
  *
  * Everything originates from the beaker — nothing pre-splotched.
  *
+ * Detonation (t=0):
+ *   screen-quake shakes the whole animation + near-white lime flash.
+ *
  * Phase 1 — Flying blobs (0–600 ms):
  *   40 organic SVG blobs burst outward in all directions from the beaker.
  *
@@ -15,7 +18,11 @@
  *   Teardrop drips (width proportional to splat size) grow downward
  *   from each splat center.
  *
- * Phase 4 — Screen wash: deep green tint pulses 6 times.
+ * Phase 4 — Ceiling goo (150–5000 ms):
+ *   Six wide goo rivers grow downward from the top edge, as if the
+ *   ceiling absorbed the explosion.
+ *
+ * Phase 5 — Screen wash: deep green tint pulses 6 times.
  */
 
 // Beaker centre on PayoffScreen
@@ -166,111 +173,160 @@ const SCREEN_HITS = [
   },
 ];
 
+// ── Ceiling goo — wide rivers that ooze down from the top edge ────────
+// Uses slime-drip-grow (scaleY 0→1, transform-origin: top center) so
+// they look like the ceiling absorbed the explosion and is dripping back.
+const CEILING_DRIPS = [
+  { x: '10%', h: 240, w: 14, color: '#4ade80', delay:  200, dur: 4000 },
+  { x: '24%', h: 390, w: 24, color: '#a3e635', delay:  350, dur: 4600 },
+  { x: '41%', h: 320, w: 20, color: '#16a34a', delay:  150, dur: 4200 },
+  { x: '57%', h: 430, w: 28, color: '#22c55e', delay:  500, dur: 4900 },
+  { x: '73%', h: 280, w: 18, color: '#84cc16', delay:  280, dur: 3900 },
+  { x: '88%', h: 370, w: 22, color: '#65a30d', delay:  420, dur: 4400 },
+];
+
 export default function SlimeExplosionAnimation() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
 
-      {/* Pulsing green washes — staggered so the screen throbs */}
-      <div className="absolute inset-0 bg-green-600"   style={{ animation: 'colour-wash 0.8s ease-out 0.0s both', '--peak': 0.45 }} />
-      <div className="absolute inset-0 bg-lime-400"    style={{ animation: 'colour-wash 0.7s ease-out 0.9s both', '--peak': 0.35 }} />
-      <div className="absolute inset-0 bg-green-500"   style={{ animation: 'colour-wash 0.7s ease-out 1.7s both', '--peak': 0.28 }} />
-      <div className="absolute inset-0 bg-emerald-500" style={{ animation: 'colour-wash 0.8s ease-out 2.5s both', '--peak': 0.22 }} />
-      <div className="absolute inset-0 bg-lime-500"    style={{ animation: 'colour-wash 0.9s ease-out 3.3s both', '--peak': 0.16 }} />
-      <div className="absolute inset-0 bg-green-400"   style={{ animation: 'colour-wash 0.9s ease-out 4.2s both', '--peak': 0.10 }} />
+      {/* ── Quake wrapper — shakes everything at detonation ──────────
+          Inner wrapper so parent overflow:hidden clips edge bleed.  */}
+      <div style={{ position: 'relative', width: '100%', height: '100%',
+                    animation: 'screen-quake 520ms ease-out 0ms both' }}>
 
-      {/* ── 40 flying blobs burst from beaker ────────────────────── */}
-      {BLOBS.map((b, i) => (
-        <div key={`blob-${i}`} className="absolute select-none"
-          style={{
-            top: OY, left: OX,
-            '--dx': `${b.dx}px`, '--dy': `${b.dy}px`,
-            '--rot': b.rot, '--scale': 1,
-            animation: `slime-burst ${b.dur}ms cubic-bezier(0.15, 0.85, 0.35, 1) ${b.delay}ms both`,
-          }}
-        >
-          <svg width={b.size} height={b.size} viewBox="-35 -35 70 70" overflow="visible">
-            <path d={b.path} fill={b.color} opacity="0.92" />
-            <ellipse cx="-6" cy="-8" rx="7" ry="4" fill="white" opacity="0.25"
-                     transform="rotate(-20)" />
-          </svg>
-        </div>
-      ))}
+        {/* ── Detonation flash — near-white lime burst ─────────────── */}
+        <div className="absolute inset-0 bg-lime-100"
+             style={{ animation: 'colour-wash 160ms ease-out 0ms both', '--peak': 0.95 }} />
 
-      {/* ── Travel globs (fly from beaker to each splat position) ─── */}
-      {SCREEN_HITS.map((h, i) => (
-        <div key={`travel-${i}`} className="absolute select-none"
-          style={{
-            top: OY, left: OX,
-            '--tx': `${h.tx}px`, '--ty': `${h.ty}px`,
-            animation: `slime-travel ${h.travelDur}ms cubic-bezier(0.3, 0.0, 0.7, 1) ${h.travelDelay}ms both`,
-          }}
-        >
-          {/* Bigger travel blob — 88 px so it reads clearly in flight */}
-          <svg width={88} height={88} viewBox="-35 -35 70 70" overflow="visible">
-            <path d={BLOB_PATHS[i % BLOB_PATHS.length]} fill={h.color} opacity="0.9" />
-          </svg>
-        </div>
-      ))}
+        {/* Pulsing green washes — staggered so the screen throbs */}
+        <div className="absolute inset-0 bg-green-600"   style={{ animation: 'colour-wash 0.8s ease-out 0.0s both', '--peak': 0.45 }} />
+        <div className="absolute inset-0 bg-lime-400"    style={{ animation: 'colour-wash 0.7s ease-out 0.9s both', '--peak': 0.35 }} />
+        <div className="absolute inset-0 bg-green-500"   style={{ animation: 'colour-wash 0.7s ease-out 1.7s both', '--peak': 0.28 }} />
+        <div className="absolute inset-0 bg-emerald-500" style={{ animation: 'colour-wash 0.8s ease-out 2.5s both', '--peak': 0.22 }} />
+        <div className="absolute inset-0 bg-lime-500"    style={{ animation: 'colour-wash 0.9s ease-out 3.3s both', '--peak': 0.16 }} />
+        <div className="absolute inset-0 bg-green-400"   style={{ animation: 'colour-wash 0.9s ease-out 4.2s both', '--peak': 0.10 }} />
 
-      {/* ── Splat marks (appear when travel glob arrives) ─────────── */}
-      {SCREEN_HITS.map((h, i) => (
-        <div key={`splat-${i}`} className="absolute select-none"
-          style={{
-            // Pixel-absolute — translate(-50%,-50%) in keyframe centres on this point
-            top:  OY + h.ty,
-            left: OX + h.tx,
-            animation: `slime-hit 3600ms ease-out ${h.splatDelay}ms both`,
-          }}
-        >
-          <svg width={h.size} height={h.size} viewBox="-55 -55 110 110" overflow="visible">
-            <path d={h.path} fill={h.color} opacity="0.95" />
-            {/* SplatDots are in SVG-coordinate space, so they auto-scale with the SVG */}
-            <SplatDots color={h.color} />
-            <ellipse cx="-8" cy="-10" rx="10" ry="5" fill="white" opacity="0.28"
-                     transform="rotate(-25)" />
-          </svg>
-        </div>
-      ))}
+        {/* ── Ceiling goo — wide rivers dripping from the top edge ──── */}
+        {CEILING_DRIPS.map((drip, i) => {
+          const svgW = drip.w * 2 + 4;
+          return (
+            <div key={`ceil-${i}`}
+              className="absolute"
+              style={{
+                top:             0,
+                left:            drip.x,
+                transformOrigin: 'top center',
+                zIndex:          6,
+                animation:       `slime-drip-grow ${drip.dur}ms ease-in ${drip.delay}ms both`,
+              }}
+            >
+              <svg
+                width={svgW}
+                height={drip.h + 4}
+                viewBox={`-${drip.w + 2} -2 ${svgW} ${drip.h + 4}`}
+                overflow="visible"
+              >
+                <path d={dripPath(drip.h, drip.w)} fill={drip.color} opacity="0.88" />
+              </svg>
+            </div>
+          );
+        })}
 
-      {/* ── Drips sliding down from each splat ───────────────────── */}
-      {SCREEN_HITS.map((h, i) => {
-        // Drip width scales with splat size — fat rivers for big splats
-        const dripW = Math.max(5, Math.min(18, Math.round(h.size * 0.028)));
-        const svgW  = dripW * 2 + 4;
-        return (
-          <div key={`drip-${i}`} className="absolute select-none"
+        {/* ── 40 flying blobs burst from beaker ────────────────────── */}
+        {BLOBS.map((b, i) => (
+          <div key={`blob-${i}`} className="absolute select-none"
             style={{
-              top:             OY + h.ty + Math.round(h.size * 0.42),
-              left:            OX + h.tx,
-              transformOrigin: 'top center',
-              animation:       `slime-drip-grow 3400ms ease-in ${h.splatDelay + 180}ms both`,
+              top: OY, left: OX,
+              '--dx': `${b.dx}px`, '--dy': `${b.dy}px`,
+              '--rot': b.rot, '--scale': 1,
+              animation: `slime-burst ${b.dur}ms cubic-bezier(0.15, 0.85, 0.35, 1) ${b.delay}ms both`,
             }}
           >
-            <svg
-              width={svgW}
-              height={h.dripH + 4}
-              viewBox={`-${dripW + 2} -2 ${svgW} ${h.dripH + 4}`}
-              overflow="visible"
-            >
-              <path d={dripPath(h.dripH, dripW)} fill={h.color} opacity="0.88" />
+            <svg width={b.size} height={b.size} viewBox="-35 -35 70 70" overflow="visible">
+              <path d={b.path} fill={b.color} opacity="0.92" />
+              <ellipse cx="-6" cy="-8" rx="7" ry="4" fill="white" opacity="0.25"
+                       transform="rotate(-20)" />
             </svg>
           </div>
-        );
-      })}
+        ))}
 
-      {/* Payoff text */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center"
-           style={{ paddingBottom: '28%' }}>
-        <div className="text-center animate-payoff-text"
-             style={{ animationDelay: '600ms', animationFillMode: 'backwards' }}>
-          <div className="font-display text-5xl sm:text-6xl text-green-300 drop-shadow-lg leading-tight">
-            SLIME
+        {/* ── Travel globs (fly from beaker to each splat position) ─── */}
+        {SCREEN_HITS.map((h, i) => (
+          <div key={`travel-${i}`} className="absolute select-none"
+            style={{
+              top: OY, left: OX,
+              '--tx': `${h.tx}px`, '--ty': `${h.ty}px`,
+              animation: `slime-travel ${h.travelDur}ms cubic-bezier(0.3, 0.0, 0.7, 1) ${h.travelDelay}ms both`,
+            }}
+          >
+            {/* Bigger travel blob — 88 px so it reads clearly in flight */}
+            <svg width={88} height={88} viewBox="-35 -35 70 70" overflow="visible">
+              <path d={BLOB_PATHS[i % BLOB_PATHS.length]} fill={h.color} opacity="0.9" />
+            </svg>
           </div>
-          <div className="font-display text-5xl sm:text-6xl text-green-400 drop-shadow-lg leading-tight">
-            EXPLOSION! 🟢
+        ))}
+
+        {/* ── Splat marks (appear when travel glob arrives) ─────────── */}
+        {SCREEN_HITS.map((h, i) => (
+          <div key={`splat-${i}`} className="absolute select-none"
+            style={{
+              // Pixel-absolute — translate(-50%,-50%) in keyframe centres on this point
+              top:  OY + h.ty,
+              left: OX + h.tx,
+              animation: `slime-hit 3600ms ease-out ${h.splatDelay}ms both`,
+            }}
+          >
+            <svg width={h.size} height={h.size} viewBox="-55 -55 110 110" overflow="visible">
+              <path d={h.path} fill={h.color} opacity="0.95" />
+              {/* SplatDots are in SVG-coordinate space, so they auto-scale with the SVG */}
+              <SplatDots color={h.color} />
+              <ellipse cx="-8" cy="-10" rx="10" ry="5" fill="white" opacity="0.28"
+                       transform="rotate(-25)" />
+            </svg>
+          </div>
+        ))}
+
+        {/* ── Drips sliding down from each splat ───────────────────── */}
+        {SCREEN_HITS.map((h, i) => {
+          // Drip width scales with splat size — fat rivers for big splats
+          const dripW = Math.max(5, Math.min(18, Math.round(h.size * 0.028)));
+          const svgW  = dripW * 2 + 4;
+          return (
+            <div key={`drip-${i}`} className="absolute select-none"
+              style={{
+                top:             OY + h.ty + Math.round(h.size * 0.42),
+                left:            OX + h.tx,
+                transformOrigin: 'top center',
+                animation:       `slime-drip-grow 3400ms ease-in ${h.splatDelay + 180}ms both`,
+              }}
+            >
+              <svg
+                width={svgW}
+                height={h.dripH + 4}
+                viewBox={`-${dripW + 2} -2 ${svgW} ${h.dripH + 4}`}
+                overflow="visible"
+              >
+                <path d={dripPath(h.dripH, dripW)} fill={h.color} opacity="0.88" />
+              </svg>
+            </div>
+          );
+        })}
+
+        {/* Payoff text */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center"
+             style={{ paddingBottom: '28%' }}>
+          <div className="text-center animate-payoff-text"
+               style={{ animationDelay: '600ms', animationFillMode: 'backwards' }}>
+            <div className="font-display text-5xl sm:text-6xl text-green-300 drop-shadow-lg leading-tight">
+              SLIME
+            </div>
+            <div className="font-display text-5xl sm:text-6xl text-green-400 drop-shadow-lg leading-tight">
+              EXPLOSION! 🟢
+            </div>
           </div>
         </div>
-      </div>
+
+      </div>{/* end quake wrapper */}
     </div>
   );
 }

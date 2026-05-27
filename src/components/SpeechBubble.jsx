@@ -9,11 +9,21 @@
  *                                           'right' → tail on right (Pudge is to the right)
  *                                           'down'  → tail on bottom center (Pudge is below)
  *   onDismiss {function}                  — called when tapped
+ *
+ * Shadow note:
+ *   We use filter:drop-shadow on the wrapper rather than box-shadow on the
+ *   body — drop-shadow traces the actual visual shape (bubble + tail triangle),
+ *   so the shadow follows the full outline including the tail.
+ *
+ * Gap note:
+ *   CSS border-triangles positioned flush at -10px land exactly on the
+ *   bubble's outer border edge, leaving a 1px subpixel gap. Nudging to -9px
+ *   overlaps by 1px and closes it cleanly.
  */
 export default function SpeechBubble({ text, type = 'reaction', side = 'down', onDismiss }) {
   if (!text) return null;
 
-  const isHint = type === 'hint';
+  const isHint      = type === 'hint';
   const bubbleColor = isHint ? '#fef08a' : 'white';
   const borderStyle = isHint ? '2px solid #d4b800' : '1px solid #e0e0e0';
 
@@ -23,11 +33,12 @@ export default function SpeechBubble({ text, type = 'reaction', side = 'down', o
       onClick={onDismiss}
       role="button"
       aria-label="Dismiss"
+      style={{ filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.30))' }}
     >
-      {/* Bubble body */}
+      {/* Bubble body — no shadow-lg here; drop-shadow on wrapper covers both */}
       <div
         className={[
-          'rounded-2xl px-4 py-3 shadow-lg',
+          'rounded-2xl px-4 py-3',
           'font-body text-lg font-bold leading-snug',
           isHint
             ? 'bg-[#fef08a] text-[#1a1a00]'
@@ -43,38 +54,40 @@ export default function SpeechBubble({ text, type = 'reaction', side = 'down', o
         <span className="font-body italic">{text}</span>
       </div>
 
-      {/* Tail */}
+      {/* Tails — nudged 1px inside the bubble body to close the subpixel gap */}
+
       {side === 'left' && (
-        /* Left edge — Pudge is to the left */
         <div
-          className="absolute left-[-10px] top-1/2 -translate-y-1/2 w-0 h-0"
+          className="absolute top-1/2 -translate-y-1/2 w-0 h-0"
           style={{
-            borderTop: '8px solid transparent',
+            left: -9,
+            borderTop:    '8px solid transparent',
             borderBottom: '8px solid transparent',
-            borderRight: `10px solid ${bubbleColor}`,
+            borderRight:  `10px solid ${bubbleColor}`,
           }}
         />
       )}
+
       {side === 'right' && (
-        /* Right edge — Pudge is to the right */
         <div
-          className="absolute right-[-10px] top-1/2 -translate-y-1/2 w-0 h-0"
+          className="absolute top-1/2 -translate-y-1/2 w-0 h-0"
           style={{
-            borderTop: '8px solid transparent',
+            right: -9,
+            borderTop:    '8px solid transparent',
             borderBottom: '8px solid transparent',
-            borderLeft: `10px solid ${bubbleColor}`,
+            borderLeft:   `10px solid ${bubbleColor}`,
           }}
         />
       )}
+
       {side === 'down' && (
-        /* Bottom center — Pudge is below */
         <div
           className="absolute left-1/2 -translate-x-1/2 w-0 h-0"
           style={{
-            bottom: -10,
-            borderLeft: '8px solid transparent',
+            bottom: -9,
+            borderLeft:  '8px solid transparent',
             borderRight: '8px solid transparent',
-            borderTop: `10px solid ${bubbleColor}`,
+            borderTop:   `10px solid ${bubbleColor}`,
           }}
         />
       )}
