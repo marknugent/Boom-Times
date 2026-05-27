@@ -32,7 +32,12 @@ import {
   TABLE_GROUPS,
 } from './progression.js';
 
-import { getRandomExperiment } from './experiments.js';
+import {
+  getRandomExperiment,
+  loadPendingExperiment,
+  savePendingExperiment,
+  clearPendingExperiment,
+} from './experiments.js';
 import { shouldShowHint, getHintText } from './hints.js';
 import { pudge, PUDGE } from './pudge.js';
 import { getLevelFromSrs } from './levels.js';
@@ -248,7 +253,11 @@ export function gameReducer(state, action) {
       const queue = buildRoundQueue(updatedSrsState, introducedFacts, 15);
       if (queue.length === 0) return state;
 
-      const experiment  = getRandomExperiment();
+      // Use a locked pending experiment if one exists (prevents gaming payoffs
+      // by restarting rounds), otherwise pick a fresh random one and lock it.
+      const experiment = loadPendingExperiment(playerName) ?? getRandomExperiment();
+      savePendingExperiment(playerName, experiment);
+
       const firstFactId = queue[0];
 
       const round = {
@@ -299,8 +308,10 @@ export function gameReducer(state, action) {
       const queue = buildRoundQueue(updatedSrsState, introducedFacts, 15);
       if (queue.length === 0) return state;
 
-      // 3. Pick a random experiment
-      const experiment = getRandomExperiment();
+      // 3. Use locked pending experiment if one exists, otherwise pick fresh
+      const experiment =
+        loadPendingExperiment(state.currentPlayer) ?? getRandomExperiment();
+      savePendingExperiment(state.currentPlayer, experiment);
 
       // 4. Build round state
       const round = {
@@ -530,6 +541,9 @@ function handleRoundComplete(state) {
       tables: TABLE_GROUPS[newGroupIndex] ?? [],
     };
   }
+
+  // Round completed — unlock a fresh experiment for next time
+  clearPendingExperiment(currentPlayer);
 
   // Detect level-up: compare level at round start with level now
   const newLevelObj = getLevelFromSrs(state.srsState);

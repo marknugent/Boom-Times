@@ -1,6 +1,13 @@
 /**
  * Experiment roster — the "what you're brewing" label per round.
  * Each experiment has a payoff animation component ID.
+ *
+ * Pending-experiment persistence
+ * ────────────────────────────────
+ * To prevent players gaming payoffs by restarting rounds, the chosen
+ * experiment is committed to localStorage at round-start and only cleared
+ * when the round actually completes. Exits, refreshes, and "Another
+ * Experiment" presses before payoff all return the same locked experiment.
  */
 
 export const EXPERIMENTS = [
@@ -66,4 +73,49 @@ export function getRandomExperiment() {
   }
   lastExperimentId = pick.id;
   return pick;
+}
+
+// ─── Pending-experiment persistence ──────────────────────────────────────────
+// Namespaced per player so each kid's locked experiment is independent.
+
+const PENDING_KEY_BASE = 'pudge_pending_exp';
+
+function pendingKey(playerName) {
+  return playerName ? `${PENDING_KEY_BASE}__${playerName}` : PENDING_KEY_BASE;
+}
+
+/**
+ * Load the pending (locked) experiment for a player from localStorage.
+ * Returns null if none is stored or the stored id no longer exists in the roster.
+ */
+export function loadPendingExperiment(playerName) {
+  try {
+    const raw = localStorage.getItem(pendingKey(playerName));
+    if (!raw) return null;
+    const stored = JSON.parse(raw);
+    // Re-hydrate from the live roster so any future property additions are included
+    return EXPERIMENTS.find(e => e.id === stored.id) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Persist the chosen experiment for a player.
+ * Call this at round-start so it survives exits and refreshes.
+ */
+export function savePendingExperiment(playerName, experiment) {
+  try {
+    localStorage.setItem(pendingKey(playerName), JSON.stringify({ id: experiment.id }));
+  } catch { /* storage full — non-fatal */ }
+}
+
+/**
+ * Clear the pending experiment after a round completes successfully.
+ * The next round will pick a fresh random experiment.
+ */
+export function clearPendingExperiment(playerName) {
+  try {
+    localStorage.removeItem(pendingKey(playerName));
+  } catch { /* non-fatal */ }
 }

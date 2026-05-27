@@ -107,8 +107,19 @@ export default function QuestionScreen({ state, dispatch }) {
         <div className="font-body text-xs text-lab-chalk/50 tracking-wide">
           {experiment.brewingLabel}
         </div>
-        <div className="font-body text-xs text-lab-chalk/40">
-          {answeredCorrectly.length} / {denominator} done
+        <div className="flex items-center gap-3">
+          <div className="font-body text-xs text-lab-chalk/40">
+            {answeredCorrectly.length} / {denominator} done
+          </div>
+          {/* Subtle exit — muted so it doesn't distract during play */}
+          <button
+            className="font-body text-base text-lab-chalk/25 hover:text-lab-chalk/60
+                       transition-colors leading-none px-1"
+            onClick={() => dispatch({ type: A.NAVIGATE, screen: 'home' })}
+            aria-label="Exit round"
+          >
+            ✕
+          </button>
         </div>
       </div>
 

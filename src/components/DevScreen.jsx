@@ -6,9 +6,10 @@
  * beaker (top-left), dancing cat (bottom-right), and sound — so what you
  * see here is what players see.
  */
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { A }        from '../gameReducer.js';
 import { playSound, stopSound } from '../sounds.js';
+import { LEVELS } from '../levels.js';
 import Beaker       from './Beaker.jsx';
 import DancingCat   from './DancingCat.jsx';
 import BrewingScreen           from './BrewingScreen.jsx';
@@ -41,10 +42,103 @@ const EXPERIMENTS = [
   { id: 'brewing',         label: 'BREWING... 🧫',        isBrewing: true               },
 ];
 
+const LEVEL_UP_DELAY_MS = 3500; // matches PayoffScreen exactly
+
+/**
+ * Payoff animation preview with real level-up banner timing.
+ * Rendered as a separate component so hooks (useEffect/useRef) reset
+ * cleanly each time playKey changes via the replay button.
+ */
+function PayoffPreview({ playing, playKey, onBack, onReplay }) {
+  const { Anim } = playing;
+  const [bannerLevel, setBannerLevel] = useState(null);
+  const [bannerIdx,   setBannerIdx]   = useState(0);
+  const timerRef = useRef(null);
+
+  // Auto-show the banner after 3.5 s — same timing as the real game
+  useEffect(() => {
+    timerRef.current = setTimeout(() => {
+      setBannerIdx(0);
+      setBannerLevel(LEVELS[0]);
+    }, LEVEL_UP_DELAY_MS);
+    return () => clearTimeout(timerRef.current);
+  }, []);
+
+  function advanceBanner() {
+    const next = bannerIdx + 1;
+    if (next >= LEVELS.length) {
+      setBannerLevel(null);
+    } else {
+      setBannerIdx(next);
+      setBannerLevel(LEVELS[next]);
+    }
+  }
+
+  return (
+    <div className="w-full h-full relative bg-lab-bg overflow-hidden">
+
+      {/* Animation fills the screen */}
+      <Anim key={playKey} />
+
+      {/* Beaker — same position as PayoffScreen */}
+      <div className="absolute z-20 animate-beaker-glow beaker-payoff-glow" style={{ top: 56, left: 16 }}>
+        <Beaker fillPercent={100} glow />
+      </div>
+
+      {/* Dancing cat — swap for DanceCat on dance-party */}
+      <div className="absolute right-3 z-40 pointer-events-none" style={{ bottom: 102 }}>
+        {playing.danceCat ? <DanceCat size={280} /> : <DancingCat size={280} />}
+      </div>
+
+      {/* Controls — includes a manual level-up trigger */}
+      <div className="absolute bottom-8 inset-x-0 flex flex-col items-center gap-3 z-50 pointer-events-none">
+        <div className="font-display text-white/60 text-sm tracking-widest uppercase">
+          {playing.label}
+        </div>
+        <div className="flex gap-2 pointer-events-auto flex-wrap justify-center">
+          <button className="btn-secondary text-sm" onClick={onBack}>← experiments</button>
+          <button className="btn-secondary text-sm" onClick={onReplay}>↺ replay</button>
+          <button
+            className="btn-secondary text-sm border-purple-500/50 text-purple-300"
+            onClick={() => { clearTimeout(timerRef.current); setBannerIdx(0); setBannerLevel(LEVELS[0]); }}
+          >
+            🎖️ level up now
+          </button>
+        </div>
+      </div>
+
+      {/* Level-up banner overlay — same markup as PayoffScreen, tap cycles levels */}
+      {bannerLevel && (
+        <div
+          className="fixed inset-0 flex flex-col items-center justify-center z-[400]
+                     bg-lab-bg/92 animate-pop-in cursor-pointer select-none"
+          onPointerDown={advanceBanner}
+        >
+          <div className="flex flex-col items-center gap-4 px-8 text-center">
+            <div style={{ fontSize: '6rem', lineHeight: 1 }}>{bannerLevel.emoji}</div>
+            <div className="font-display text-lab-green text-2xl tracking-widest uppercase">
+              Level {bannerLevel.level} achieved
+            </div>
+            <div className="font-display text-lab-chalk text-4xl leading-tight">
+              {bannerLevel.name}
+            </div>
+            <div className="font-body text-lab-chalk/40 text-sm mt-4">
+              tap to continue · {bannerLevel.level} / {LEVELS.length}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DevScreen({ dispatch }) {
   const [playing, setPlaying] = useState(null);
   // playKey changes on each launch so CSS animations restart cleanly
   const [playKey, setPlayKey] = useState(0);
+  // Level-up banner preview — cycles through LEVELS on each tap
+  const [previewLevel, setPreviewLevel] = useState(null);
+  const [levelIndex, setLevelIndex] = useState(0);
 
   function launch(exp) {
     setPlaying(exp);
@@ -105,22 +199,46 @@ export default function DevScreen({ dispatch }) {
     // ── Payoff animation preview ──────────────────────────────────────
     const { Anim, label } = playing;
     return (
-      <div className="w-full h-full relative bg-lab-bg overflow-hidden">
+      <PayoffPreview
+        key={playKey}
+        playing={playing}
+        playKey={playKey}
+        onBack={() => { stopSound(playing.bgMusic ?? 'pounce-pop-parade'); setPlaying(null); }}
+        onReplay={() => launch(playing)}
+      />
+    );
+  }
 
-        {/* Animation fills the screen */}
-        <Anim key={playKey} />
-
-        {/* Beaker — same position as PayoffScreen */}
-        <div className="absolute z-20 animate-beaker-glow beaker-payoff-glow" style={{ top: 56, left: 16 }}>
-          <Beaker fillPercent={100} glow />
+  // ── Level-up banner preview overlay ─────────────────────────────────
+  if (previewLevel) {
+    return (
+      <div
+        className="fixed inset-0 flex flex-col items-center justify-center z-[400]
+                   bg-lab-bg/92 animate-pop-in cursor-pointer select-none"
+        onPointerDown={() => {
+          // Each tap advances to the next level; wraps around; last tap exits
+          const next = levelIndex + 1;
+          if (next >= LEVELS.length) {
+            setPreviewLevel(null);
+            setLevelIndex(0);
+          } else {
+            setLevelIndex(next);
+            setPreviewLevel(LEVELS[next]);
+          }
+        }}
+      >
+        <div className="flex flex-col items-center gap-4 px-8 text-center">
+          <div style={{ fontSize: '6rem', lineHeight: 1 }}>{previewLevel.emoji}</div>
+          <div className="font-display text-lab-green text-2xl tracking-widest uppercase">
+            Level {previewLevel.level} achieved
+          </div>
+          <div className="font-display text-lab-chalk text-4xl leading-tight">
+            {previewLevel.name}
+          </div>
+          <div className="font-body text-lab-chalk/40 text-sm mt-4">
+            tap to see next level
+          </div>
         </div>
-
-        {/* Dancing cat — swap for DanceCat on dance-party */}
-        <div className="absolute right-3 z-40 pointer-events-none" style={{ bottom: 102 }}>
-          {playing.danceCat ? <DanceCat size={280} /> : <DancingCat size={280} />}
-        </div>
-
-        <Controls label={label} />
       </div>
     );
   }
@@ -144,6 +262,14 @@ export default function DevScreen({ dispatch }) {
             {exp.label}
           </button>
         ))}
+
+        {/* Level-up banner preview — tapping cycles through all 10 levels */}
+        <button
+          className="btn-primary w-full text-xl py-5 bg-purple-600 hover:bg-purple-500 active:bg-purple-700"
+          onClick={() => { setLevelIndex(0); setPreviewLevel(LEVELS[0]); }}
+        >
+          LEVEL UP BANNER 🎖️
+        </button>
       </div>
 
       <button

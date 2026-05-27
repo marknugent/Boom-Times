@@ -8,6 +8,7 @@ import BrewingScreen  from './components/BrewingScreen.jsx';
 import PayoffScreen   from './components/PayoffScreen.jsx';
 import ProgressScreen from './components/ProgressScreen.jsx';
 import DevScreen      from './components/DevScreen.jsx';
+import ScaledViewport from './components/ScaledViewport.jsx';
 
 // Triple-tap the upper-right quarter within this window to open dev mode
 const TRIPLE_TAP_MS = 600;
@@ -64,16 +65,18 @@ export default function App() {
   }
 
   return (
-    <div
-      className="w-full h-full flex flex-col overflow-hidden"
-      onPointerDown={handleTap}
-    >
-      {state.screen === 'home'     && <HomeScreen     state={state} dispatch={dispatch} />}
-      {state.screen === 'question' && <QuestionScreen state={state} dispatch={dispatch} />}
-      {state.screen === 'brewing'  && <BrewingScreen  state={state} dispatch={dispatch} />}
-      {state.screen === 'payoff'   && <PayoffScreen   state={state} dispatch={dispatch} />}
-      {state.screen === 'progress' && <ProgressScreen state={state} dispatch={dispatch} />}
-      {state.screen === 'dev'      && <DevScreen      dispatch={dispatch} />}
-    </div>
+    <ScaledViewport>
+      <div
+        className="w-full h-full flex flex-col overflow-hidden"
+        onPointerDown={handleTap}
+      >
+        {state.screen === 'home'     && <HomeScreen     state={state} dispatch={dispatch} />}
+        {state.screen === 'question' && <QuestionScreen state={state} dispatch={dispatch} />}
+        {state.screen === 'brewing'  && <BrewingScreen  state={state} dispatch={dispatch} />}
+        {state.screen === 'payoff'   && <PayoffScreen   state={state} dispatch={dispatch} />}
+        {state.screen === 'progress' && <ProgressScreen state={state} dispatch={dispatch} />}
+        {state.screen === 'dev'      && <DevScreen      dispatch={dispatch} />}
+      </div>
+    </ScaledViewport>
   );
 }
