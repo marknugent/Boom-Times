@@ -247,6 +247,21 @@
   100% { transform: translateX(-50%) scaleY(1); opacity: 0.75; }
 }
 
+/* ── Slime GIF — rockets from beaker to final position ───────
+   Element is placed at its landing spot; --ox / --oy translate
+   it back to the beaker origin at 0%.  Springy overshoot on
+   arrival mimics a blob smacking into the frame.
+   --ox: x-offset from landing centre back to beaker (negative)
+   --oy: y-offset from landing centre back to beaker            */
+@keyframes slime-launch {
+  0%   { transform: translate(var(--ox), var(--oy)) scale(0.2) rotate(-30deg); opacity: 0;   }
+  7%   { opacity: 1; }
+  65%  { transform: translate(0, 0) scale(1.20) rotate( 8deg);  opacity: 1;   }
+  78%  { transform: translate(0, 0) scale(0.88) rotate(-3deg);  }
+  90%  { transform: translate(0, 0) scale(1.05) rotate( 1deg);  }
+  100% { transform: translate(0, 0) scale(1.00) rotate( 0deg);  opacity: 1;   }
+}
+
 /* ── Wrong-answer red pulse ─────────────────────────── */
 @keyframes wrong-pulse {
   0%   { opacity: 0; }
@@ -478,4 +493,87 @@
   0%   { transform: translate(0, 0) scale(1);                                  opacity: 1; }
   75%  { opacity: 0.8; }
   100% { transform: translate(var(--fx), var(--fy)) scale(0.2);                opacity: 0; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Space Launch payoff animation
+   ════════════════════════════════════════════════════════════════ */
+
+/* Blue sky overlay fades out, revealing the dark-space base layer */
+@keyframes sky-to-space {
+  0%   { opacity: 1;    }
+  20%  { opacity: 0.92; }
+  55%  { opacity: 0.45; }
+  80%  { opacity: 0.10; }
+  100% { opacity: 0;    }
+}
+
+/* Ground (and launchpad) slides off the bottom.
+   1 100 px >> design height — guarantees full exit.              */
+@keyframes ground-recede {
+  0%   { transform: translateY(0);      }
+  100% { transform: translateY(1100px); }
+}
+
+/* Stars and background details drift downward (rocket goes up).
+   --sy : starting translateY (negative = above viewport)
+   --op : peak opacity                                            */
+@keyframes star-scroll {
+  0%   { transform: translateY(var(--sy)); opacity: 0;       }
+  8%   { opacity: var(--op);              }
+  88%  { opacity: var(--op);              }
+  100% { transform: translateY(calc(var(--sy) + 1300px)); opacity: 0; }
+}
+
+/* Exhaust / smoke emojis blast downward from the rocket nozzle.
+   --dx : final horizontal offset from centre (signed px)
+   --dy : final downward offset (px)
+   --sc : final scale (fire < 1 shrinks, smoke > 1 expands)     */
+@keyframes exhaust-launch {
+  0%   { transform: translate(-50%, 0) scale(0.2);                                        opacity: 0;    }
+  8%   { opacity: 0.92; }
+  100% { transform: translate(calc(-50% + var(--dx)), var(--dy)) scale(var(--sc, 1.4));   opacity: 0;    }
+}
+
+/* Rocket shakes at ignition — pure translateX so the -45° rotation
+   applied on the inner element isn't affected.                   */
+@keyframes rocket-ignite {
+  0%,100% { transform: translateX(  0px); }
+  15%     { transform: translateX( -4px); }
+  30%     { transform: translateX(  5px); }
+  45%     { transform: translateX( -5px); }
+  60%     { transform: translateX(  4px); }
+  75%     { transform: translateX( -3px); }
+  90%     { transform: translateX(  2px); }
+}
+
+/* 💥 burst at ignition: pops in fast, hangs, then fades while growing. */
+@keyframes boom-burst {
+  0%   { transform: translate(-50%, -50%) scale(0.08); opacity: 0;    }
+  10%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1.0;  }
+  28%  { transform: translate(-50%, -50%) scale(0.96); opacity: 0.95; }
+  65%  { transform: translate(-50%, -50%) scale(1.08); opacity: 0.55; }
+  100% { transform: translate(-50%, -50%) scale(1.40); opacity: 0;    }
+}
+
+/* Smoke billows from the launchpad outward at ignition.
+   --sdx : final horizontal offset from center (signed px, e.g. '-120px')
+   --sdy : final vertical offset (negative = upward drift)
+   --ssc : final scale                                                   */
+@keyframes ground-smoke {
+  0%   { transform: translate(-50%, -50%) scale(0.15);                                                 opacity: 0;    }
+  10%  { opacity: 0.88;                                                                                               }
+  62%  { opacity: 0.72;                                                                                               }
+  100% { transform: translate(calc(-50% + var(--sdx)), calc(-50% + var(--sdy))) scale(var(--ssc));     opacity: 0;    }
+}
+
+/* Clouds drift downward (rocket is ascending past them).
+   --cy  : starting translateY in px (negative = above viewport)
+   --cdx : horizontal drift amount (signed px string)
+   --cop : peak opacity                                          */
+@keyframes cloud-drift {
+  0%   { transform: translate(    0px, var(--cy));                       opacity: 0;         }
+  10%  { opacity: var(--cop);                                                                }
+  82%  { opacity: var(--cop);                                                                }
+  100% { transform: translate(var(--cdx), calc(var(--cy) + 1100px));     opacity: 0;         }
 }

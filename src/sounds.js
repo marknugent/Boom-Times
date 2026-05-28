@@ -62,6 +62,7 @@ function getAudioCtx() {
 const LOOP_URLS = {
   'pounce-pop-parade': '/pounce_pop_parade.mp3',
   'dance-party':       '/dance.mp3',
+  'space-launch':      '/rocket.mp3',
 };
 
 // id → Promise<AudioBuffer | null>  (resolved once at module load)

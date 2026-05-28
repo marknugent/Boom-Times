@@ -15,6 +15,7 @@ import FuzzBombAnimation       from './FuzzBombAnimation.jsx';
 import SmokeBombAnimation      from './SmokeBombAnimation.jsx';
 import ToiletAttackAnimation   from './ToiletAttackAnimation.jsx';
 import DancePartyAnimation     from './DancePartyAnimation.jsx';
+import SpaceLaunchAnimation    from './SpaceLaunchAnimation.jsx';
 import FireworksEffect   from './FireworksEffect.jsx';
 import { TABLE_GROUPS }  from '../progression.js';
 
@@ -29,6 +30,7 @@ const ANIMATION_MAP = {
   'smoke-bomb':      SmokeBombAnimation,
   'toilet-attack':   ToiletAttackAnimation,
   'dance-party':     DancePartyAnimation,
+  'space-launch':    SpaceLaunchAnimation,
 };
 
 const TRIPLE_TAP_MS = 600;
@@ -92,7 +94,8 @@ export default function PayoffScreen({ state, dispatch }) {
   useEffect(() => {
     if (!round) return;
     const id = round.experiment.id;
-    if (id === 'dance-party') return;
+    // dance-party and space-launch use bgMusic only — no separate SFX
+    if (id === 'dance-party' || id === 'space-launch') return;
     if (id === 'toilet-attack') {
       playSound(id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
     } else {

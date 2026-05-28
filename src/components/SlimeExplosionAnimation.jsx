@@ -312,9 +312,28 @@ export default function SlimeExplosionAnimation() {
           );
         })}
 
+        {/* ── slime.gif — rockets from beaker, lands top-right ────────
+            Positioned at final spot; --ox/--oy start it at the beaker.
+            z=35 keeps it in the foreground; payoff text z=50 stays on top. */}
+        <img
+          src="/slime.gif"
+          alt=""
+          draggable={false}
+          className="absolute select-none pointer-events-none"
+          style={{
+            width:     225,
+            right:     20,
+            top:       28,
+            zIndex:    35,
+            '--ox':    '-384px',
+            '--oy':    '-28px',
+            animation: 'slime-launch 1100ms cubic-bezier(0.15, 0.85, 0.35, 1) 80ms both',
+          }}
+        />
+
         {/* Payoff text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center"
-             style={{ paddingBottom: '28%' }}>
+             style={{ paddingBottom: '28%', zIndex: 50 }}>
           <div className="text-center animate-payoff-text"
                style={{ animationDelay: '600ms', animationFillMode: 'backwards' }}>
             <div className="font-display text-5xl sm:text-6xl text-green-300 drop-shadow-lg leading-tight">

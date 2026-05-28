@@ -61,6 +61,15 @@ export const EXPERIMENTS = [
     bgMusic:  'dance-party',  // replaces pounce-pop-parade on payoff screen
     danceCat: true,           // use DanceCat frame loop instead of DancingCat
   },
+  {
+    id: 'space-launch',
+    name: 'SPACE LAUNCH',
+    brewingLabel: 'Brewing: SPACE LAUNCH 🚀',
+    payoffText: 'SPACE LAUNCH!',
+    ingredient: '🚀',
+    emoji: '🚀',
+    bgMusic: 'space-launch',   // loops rocket.mp3 for the full payoff
+  },
 ];
 
 /** Pick a random experiment, re-rolling once if it matches the previous round. */

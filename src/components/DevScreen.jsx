@@ -20,6 +20,7 @@ import FuzzBombAnimation       from './FuzzBombAnimation.jsx';
 import SmokeBombAnimation      from './SmokeBombAnimation.jsx';
 import ToiletAttackAnimation   from './ToiletAttackAnimation.jsx';
 import DancePartyAnimation     from './DancePartyAnimation.jsx';
+import SpaceLaunchAnimation    from './SpaceLaunchAnimation.jsx';
 import DanceCat                from './DanceCat.jsx';
 
 // Fake round state for the brewing preview
@@ -40,6 +41,7 @@ const EXPERIMENTS = [
   { id: 'smoke-bomb',      label: 'SMOKE BOMB 🌫️',      Anim: SmokeBombAnimation      },
   { id: 'toilet-attack',   label: 'TOILET ATTACK 🚽',   Anim: ToiletAttackAnimation   },
   { id: 'dance-party',     label: 'DANCE PARTY 🪩',       Anim: DancePartyAnimation, bgMusic: 'dance-party', danceCat: true },
+  { id: 'space-launch',   label: 'SPACE LAUNCH 🚀',      Anim: SpaceLaunchAnimation, bgMusic: 'space-launch' },
   { id: 'brewing',         label: 'BREWING... 🧫',        isBrewing: true               },
 ];
 
@@ -149,7 +151,8 @@ export default function DevScreen({ dispatch }) {
     setPlayKey(k => k + 1);
     if (exp.isBrewing) return;
     // Experiment SFX (dance-party uses its bgMusic track instead)
-    if (exp.id !== 'dance-party') {
+    // dance-party and space-launch use bgMusic only — no separate SFX
+    if (exp.id !== 'dance-party' && exp.id !== 'space-launch') {
       if (exp.id === 'toilet-attack') {
         playSound(exp.id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
       } else {
