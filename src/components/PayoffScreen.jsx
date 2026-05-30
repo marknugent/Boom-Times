@@ -114,9 +114,12 @@ export default function PayoffScreen({ state, dispatch }) {
 
   if (!round) return null;
 
-  const { experiment, firstAttemptCorrect, answeredCorrectly } = round;
-  const total   = answeredCorrectly.length;
-  const correct = firstAttemptCorrect;
+  const { experiment, firstAttemptCorrect, answeredCorrectly, totalAttempts } = round;
+  // correct = facts eventually answered correctly (= round size, always)
+  // total   = every confirmed answer, including re-tries for missed facts
+  // e.g. 15 correct, 2 missed → total = 17, shows "15 / 17"
+  const correct = answeredCorrectly.length;
+  const total   = totalAttempts ?? correct;   // fallback for old saved rounds
   const pct     = total > 0 ? Math.round((correct / total) * 100) : 0;
   const highAcc = pct >= 80;
 
@@ -136,8 +139,8 @@ export default function PayoffScreen({ state, dispatch }) {
       </div>
 
       {/* ── Dancing cat — bottom-right, ~100 px above the very edge ── */}
-      <div className="absolute right-3 z-50 pointer-events-none" style={{ bottom: 102 }}>
-        {experiment.danceCat ? <DanceCat size={280} /> : <DancingCat size={280} />}
+      <div className="absolute z-50 pointer-events-none" style={{ bottom: 118, right: 0 }}>
+        {experiment.danceCat ? <DanceCat size={246} /> : <DancingCat size={246} />}
       </div>
 
       {/* ── Overlay content (z-30) ── */}

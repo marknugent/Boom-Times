@@ -266,6 +266,7 @@ export function gameReducer(state, action) {
         answeredCorrectly:   [],
         firstAttemptFacts:   [firstFactId],
         firstAttemptCorrect: 0,
+        totalAttempts:       0,
         levelAtRoundStart:   getLevelFromSrs(updatedSrsState).level,
       };
 
@@ -319,7 +320,8 @@ export function gameReducer(state, action) {
         upcomingFacts: queue,         // mutable during round (wrongs appended)
         answeredCorrectly: [],        // facts answered correctly this round
         firstAttemptFacts: [],        // facts presented at least once (for first-attempt tracking)
-        firstAttemptCorrect: 0,       // score used for beaker & payoff
+        firstAttemptCorrect: 0,       // first-attempt correct count
+        totalAttempts: 0,             // every confirmed answer (correct + re-tries)
         levelAtRoundStart: getLevelFromSrs(updatedSrsState).level,
       };
 
@@ -408,6 +410,9 @@ export function gameReducer(state, action) {
 
       // Update round
       let updatedRound = { ...state.round };
+
+      // Count every confirmed answer toward the denominator shown on the payoff screen
+      updatedRound.totalAttempts = (updatedRound.totalAttempts ?? 0) + 1;
 
       if (correct) {
         updatedRound.answeredCorrectly = [...updatedRound.answeredCorrectly, factId];
