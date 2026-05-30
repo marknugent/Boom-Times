@@ -577,3 +577,17 @@
   82%  { opacity: var(--cop);                                                                }
   100% { transform: translate(var(--cdx), calc(var(--cy) + 1100px));     opacity: 0;         }
 }
+
+/* ── Fuzz Bomb — yarn ball pops in, wobbles, then detonates.
+   translate(-50%,-50%) keeps it centred on its position point. */
+@keyframes yarn-detonate {
+  0%   { transform: translate(-50%, -50%) scale(0);    opacity: 0;   }
+  14%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1;   }
+  28%  { transform: translate(-52%, -49%) scale(0.90); opacity: 1;   }
+  42%  { transform: translate(-48%, -51%) scale(1.08); opacity: 1;   }
+  55%  { transform: translate(-51%, -50%) scale(0.94); opacity: 1;   }
+  66%  { transform: translate(-50%, -50%) scale(1.20); opacity: 1;   }
+  78%  { transform: translate(-50%, -50%) scale(1.80); opacity: 0.7; }
+  90%  { transform: translate(-50%, -50%) scale(3.20); opacity: 0;   }
+  100% { transform: translate(-50%, -50%) scale(4.00); opacity: 0;   }
+}
