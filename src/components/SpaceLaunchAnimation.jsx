@@ -120,7 +120,23 @@ const SPACE_OBJECTS = [
   { emoji: '🛸',  left:  7, sy:  -600, op: 1.0,  s: '3.2rem', dur: 8800, delay: 5200 },
   { emoji: '🛰️', left: 45, sy:  -900, op: 0.90, s: '2.6rem', dur: 9200, delay: 4500 },
   { emoji: '👾',  left: 36, sy: -1050, op: 1.0,  s: '3.4rem', dur: 9500, delay: 5500 },
-  { emoji: '🌌',  left: 58, sy:  -700, op: 0.70, s: '4.0rem', dur: 9800, delay: 5800 },
+];
+
+// ── PNG celestial drifters ─────────────────────────────────────────────────
+// Garfield and Spongebob tumble past the rocket on the way to space.
+// Each entry uses the star-scroll keyframe on the wrapper (Y translation +
+// opacity fade) while the inner <img> rotates independently via vortex-spin.
+// max-width is capped at 150 px; height scales proportionally.
+// `reverse` flips the spin direction so they don't all turn the same way.
+// Sequence: G1 visible ~3200–11200ms · S1 visible ~11500–19500ms ·
+//           G2 visible ~20000–28500ms · S2 visible ~29000–37500ms
+// Each one is fully faded out before the next fades in.
+// Spin durations are intentionally slow (~16–22 s per rotation).
+const PNG_OBJECTS = [
+  { src: '/garfield.png',  left: 20, sy:  -350, op: 1.0, dur: 8000, delay:  3200, spin: 18000, reverse: false },
+  { src: '/spongebob.png', left: 62, sy:  -250, op: 1.0, dur: 8000, delay: 11500, spin: 16000, reverse: true  },
+  { src: '/garfield.png',  left: 75, sy:  -800, op: 0.9, dur: 8500, delay: 20000, spin: 22000, reverse: true  },
+  { src: '/spongebob.png', left:  8, sy:  -600, op: 0.9, dur: 8500, delay: 29000, spin: 20000, reverse: false },
 ];
 
 // ── Launch smoke ───────────────────────────────────────────────────────────
@@ -265,6 +281,34 @@ export default function SpaceLaunchAnimation() {
         </div>
       ))}
 
+      {/* ── 3c. PNG celestial drifters — Garfield & Spongebob tumble past ── */}
+      {PNG_OBJECTS.map((obj, i) => (
+        <div
+          key={`png-obj-${i}`}
+          className="absolute select-none pointer-events-none"
+          style={{
+            left:      `${obj.left}%`,
+            top:       0,
+            zIndex:    5,
+            '--sy':    `${obj.sy}px`,
+            '--op':    obj.op,
+            animation: `star-scroll ${obj.dur}ms linear ${obj.delay}ms both`,
+          }}
+        >
+          <img
+            src={obj.src}
+            alt=""
+            draggable={false}
+            style={{
+              maxWidth:           150,
+              height:             'auto',
+              animation:          `vortex-spin ${obj.spin}ms linear infinite`,
+              animationDirection: obj.reverse ? 'reverse' : 'normal',
+            }}
+          />
+        </div>
+      ))}
+
       {/* ── 4a. Ground fill (z=10) — green base slides off bottom ── */}
       <div
         className="absolute inset-x-0"
@@ -350,7 +394,7 @@ export default function SpaceLaunchAnimation() {
           className="absolute pointer-events-none"
           style={{
             left:         '50%',
-            top:          'calc(46% + 30px)',
+            top:          'calc(46% + 45px)',
             width:        ring.size,
             height:       ring.size,
             borderRadius: '50%',
@@ -366,7 +410,7 @@ export default function SpaceLaunchAnimation() {
         className="absolute select-none leading-none pointer-events-none"
         style={{
           left:      '50%',
-          top:       'calc(46% + 30px)',
+          top:       'calc(46% + 45px)',
           fontSize:  '5.5rem',
           zIndex:    32,
           animation: 'boom-burst 1300ms ease-out 340ms both',

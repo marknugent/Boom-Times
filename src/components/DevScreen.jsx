@@ -118,6 +118,7 @@ function PayoffPreview({ playing, playKey, onBack, onReplay }) {
                      animate-pop-in cursor-pointer select-none"
           style={{ background: 'rgba(8, 14, 22, 0.93)' }}
           onPointerDown={() => { advanceBanner(); playLevelUpSound(); }}
+          onContextMenu={(e) => { e.preventDefault(); setBannerLevel(null); }}
         >
           <FireworksEffect />
           <div className="flex flex-col items-center gap-4 px-8 text-center relative" style={{ zIndex: 2 }}>
@@ -129,7 +130,7 @@ function PayoffPreview({ playing, playKey, onBack, onReplay }) {
               {bannerLevel.name}
             </div>
             <div className="font-body text-lab-chalk/40 text-sm mt-4">
-              tap to continue · {bannerLevel.level} / {LEVELS.length}
+              tap to advance · right-click to dismiss · {bannerLevel.level} / {LEVELS.length}
             </div>
           </div>
         </div>
@@ -233,6 +234,7 @@ export default function DevScreen({ dispatch }) {
             setPreviewLevel(LEVELS[next]);
           }
         }}
+        onContextMenu={(e) => { e.preventDefault(); setPreviewLevel(null); setLevelIndex(0); }}
       >
         <div className="flex flex-col items-center gap-4 px-8 text-center">
           <div style={{ fontSize: '6rem', lineHeight: 1 }}>{previewLevel.emoji}</div>
@@ -243,7 +245,7 @@ export default function DevScreen({ dispatch }) {
             {previewLevel.name}
           </div>
           <div className="font-body text-lab-chalk/40 text-sm mt-4">
-            tap to see next level
+            tap to advance · right-click to dismiss · {previewLevel.level} / {LEVELS.length}
           </div>
         </div>
       </div>
