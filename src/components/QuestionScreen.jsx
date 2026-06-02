@@ -16,6 +16,7 @@ import { A } from '../gameReducer.js';
 import { playSound } from '../sounds.js';
 import SpongeBobCameo  from './SpongeBobCameo.jsx';
 import CatCloseupCameo from './CatCloseupCameo.jsx';
+import DoggieCameo     from './DoggieCameo.jsx';
 import HotStreakBanner from './HotStreakBanner.jsx';
 import { TEST_PLAYER } from '../players.js';
 import Keypad       from './Keypad.jsx';
@@ -77,9 +78,10 @@ export default function QuestionScreen({ state, dispatch }) {
 
       // 1-in-10 chance of a bonus cameo
       if (Math.random() < 0.10) {
-        const pick = Math.random() < 0.5 ? 'spongebob' : 'cat';
+        const r    = Math.random();
+        const pick = r < 0.33 ? 'spongebob' : r < 0.66 ? 'cat' : 'doggie';
         setActiveCameo(pick);
-        playSound(pick === 'spongebob' ? 'fanfare' : 'meow');
+        playSound(pick === 'spongebob' ? 'fanfare' : pick === 'cat' ? 'meow' : 'barking');
         return; // cameo's onDismiss fires NEXT_QUESTION when it ends
       }
     } else {
@@ -277,6 +279,11 @@ export default function QuestionScreen({ state, dispatch }) {
       )}
       {activeCameo === 'cat' && (
         <CatCloseupCameo
+          onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
+        />
+      )}
+      {activeCameo === 'doggie' && (
+        <DoggieCameo
           onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
         />
       )}

@@ -34,6 +34,7 @@ const SOUNDS = {
   'fanfare':         new Audio('/fanfare.mp3'),
   'meow':            new Audio('/meow.mp3'),
   'success-beep':    new Audio('/success-beep.mp3'),
+  'barking':         new Audio('/barking.mp3'),
 };
 
 // Per-sound base volumes (defaults to 0.8)

@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { A }          from '../gameReducer.js';
-import { PLAYERS, TEST_PLAYER } from '../players.js';
+import { VISIBLE_PLAYERS, TEST_PLAYER } from '../players.js';
 import Pudge          from './Pudge.jsx';
 import SpeechBubble   from './SpeechBubble.jsx';
 import { PUDGE }      from '../pudge.js';
@@ -82,7 +82,7 @@ export default function HomeScreen({ state, dispatch }) {
           Run Experiment
         </div>
         <div className="flex flex-col gap-3 w-full">
-          {PLAYERS.map(name => {
+          {VISIBLE_PLAYERS.map(name => {
             const lvl = getPlayerLevel(name);
             return (
               <button

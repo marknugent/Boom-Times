@@ -33,7 +33,7 @@ const SPONGEBS = [
     keyframe: 'sponge-walk-ltr',
     dur:      5000,
     delay:    300,
-    size:     296,
+    size:     326,   // +10 %
     flip:     false,
   },
   {
@@ -43,7 +43,7 @@ const SPONGEBS = [
     keyframe: 'sponge-walk-ltr',
     dur:      5400,
     delay:    1100,
-    size:     280,
+    size:     308,   // +10 %
     flip:     false,
   },
   // ── Right → left ─────────────────────────────────────────
@@ -55,9 +55,9 @@ const SPONGEBS = [
     left:     '0px',
     top:      '36%',
     keyframe: 'sponge-walk-rtl',
-    dur:      7500,
+    dur:      15000,  // slow — gives the GIF animation time to play through
     delay:    0,
-    size:     280,
+    size:     308,   // +10 %
     flip:     true,
   },
   {
@@ -65,9 +65,11 @@ const SPONGEBS = [
     left:     '0px',
     top:      '66%',
     keyframe: 'sponge-walk-rtl',
-    dur:      7200,
+    // dur extended so the right edge (~60 px in from left) is still
+    // clearly on screen when the cameo auto-dismisses at 8000 ms.
+    dur:      9000,
     delay:    1700,
-    size:     269,
+    size:     296,   // +10 %
     flip:     true,
   },
 ];

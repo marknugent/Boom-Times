@@ -7,7 +7,7 @@ import { useState, useMemo } from 'react';
 import { A } from '../gameReducer.js';
 import { TABLE_GROUPS, loadProgression } from '../progression.js';
 import { getFactIdsForTable, isFactMastered, loadSRSState } from '../srs.js';
-import { PLAYERS, TEST_PLAYER } from '../players.js';
+import { VISIBLE_PLAYERS, TEST_PLAYER } from '../players.js';
 import { getLevelFromPct } from '../levels.js';
 
 // All 12 table numbers in display order
@@ -90,7 +90,7 @@ export default function ProgressScreen({ state, dispatch }) {
 
   // Which player's stats are being viewed (defaults to the active player,
   // or the first in the list if the active player is the test profile)
-  const defaultViewed = PLAYERS.includes(currentPlayer) ? currentPlayer : PLAYERS[0];
+  const defaultViewed = VISIBLE_PLAYERS.includes(currentPlayer) ? currentPlayer : VISIBLE_PLAYERS[0];
   const [viewedPlayer, setViewedPlayer] = useState(defaultViewed);
 
   // Load viewed player's data fresh from localStorage each time they switch.
@@ -144,7 +144,7 @@ export default function ProgressScreen({ state, dispatch }) {
         </div>
       ) : (
         <div className="flex gap-1 bg-lab-border/20 rounded-xl p-1 shrink-0">
-          {PLAYERS.map(name => (
+          {VISIBLE_PLAYERS.map(name => (
             <button
               key={name}
               className={[

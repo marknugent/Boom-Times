@@ -11,6 +11,7 @@ import { A }        from '../gameReducer.js';
 import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
 import SpongeBobCameo  from './SpongeBobCameo.jsx';
 import CatCloseupCameo from './CatCloseupCameo.jsx';
+import DoggieCameo     from './DoggieCameo.jsx';
 import { LEVELS } from '../levels.js';
 import FireworksEffect from './FireworksEffect.jsx';
 import Beaker       from './Beaker.jsx';
@@ -149,8 +150,9 @@ export default function DevScreen({ dispatch }) {
   const [previewLevel, setPreviewLevel] = useState(null);
   const [levelIndex, setLevelIndex] = useState(0);
   // Cameo previews
-  const [showCameo, setShowCameo]   = useState(false);
+  const [showCameo,    setShowCameo]    = useState(false);
   const [showCatCameo, setShowCatCameo] = useState(false);
+  const [showDogCameo, setShowDogCameo] = useState(false);
 
   function launch(exp) {
     setPlaying(exp);
@@ -293,10 +295,17 @@ export default function DevScreen({ dispatch }) {
         </button>
 
         <button
-          className="btn-primary col-span-2 w-full text-sm py-4 leading-tight bg-orange-700 hover:bg-orange-600 active:bg-orange-800"
+          className="btn-primary w-full text-sm py-4 leading-tight bg-orange-700 hover:bg-orange-600 active:bg-orange-800"
           onClick={() => { setShowCatCameo(true); playSound('meow'); }}
         >
           CAT CLOSEUP 🐱
+        </button>
+
+        <button
+          className="btn-primary w-full text-sm py-4 leading-tight bg-amber-700 hover:bg-amber-600 active:bg-amber-800"
+          onClick={() => { setShowDogCameo(true); playSound('barking'); }}
+        >
+          DOGGIE BREAK 🐶
         </button>
       </div>
 
@@ -305,6 +314,9 @@ export default function DevScreen({ dispatch }) {
       )}
       {showCatCameo && (
         <CatCloseupCameo onDismiss={() => setShowCatCameo(false)} />
+      )}
+      {showDogCameo && (
+        <DoggieCameo onDismiss={() => setShowDogCameo(false)} />
       )}
 
       <button
