@@ -31,6 +31,8 @@ const SOUNDS = {
   'toilet-attack':   new Audio('/toilet.mp3'),
   'success':         new Audio('/success.mp3'),
   'wrong':           new Audio('/wrong.mp3'),
+  'fanfare':         new Audio('/fanfare.mp3'),
+  'meow':            new Audio('/meow.mp3'),
 };
 
 // Per-sound base volumes (defaults to 0.8)

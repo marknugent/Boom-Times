@@ -33,9 +33,10 @@ export default function SpeechBubble({ text, type = 'reaction', side = 'down', o
       onClick={onDismiss}
       role="button"
       aria-label="Dismiss"
-      style={{ filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.30))' }}
     >
-      {/* Bubble body — no shadow-lg here; drop-shadow on wrapper covers both */}
+      {/* Bubble body — box-shadow (not filter:drop-shadow) so the GPU
+          compositing layer doesn't bleed a black rectangle over the
+          dark hint overlay behind it.                                 */}
       <div
         className={[
           'rounded-2xl px-4 py-3',
@@ -44,7 +45,7 @@ export default function SpeechBubble({ text, type = 'reaction', side = 'down', o
             ? 'bg-[#fef08a] text-[#1a1a00]'
             : 'bg-white text-[#1a1a2e]',
         ].join(' ')}
-        style={{ border: borderStyle }}
+        style={{ border: borderStyle, boxShadow: '0 4px 10px rgba(0,0,0,0.30)' }}
       >
         {isHint && (
           <div className="text-[12px] font-extrabold text-[#b08000] mb-1 tracking-wide uppercase">

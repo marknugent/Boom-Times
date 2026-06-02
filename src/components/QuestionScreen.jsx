@@ -11,9 +11,11 @@
  *   Correct → hearts flutter up from Pudge + green question text
  *   Wrong   → full-screen red pulse + 😵 face flash + red question text
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { A } from '../gameReducer.js';
 import { playSound } from '../sounds.js';
+import SpongeBobCameo  from './SpongeBobCameo.jsx';
+import CatCloseupCameo from './CatCloseupCameo.jsx';
 import { TEST_PLAYER } from '../players.js';
 import Keypad       from './Keypad.jsx';
 import Beaker       from './Beaker.jsx';
@@ -41,6 +43,8 @@ export default function QuestionScreen({ state, dispatch }) {
     ? 'TEST'
     : (currentPlayer ?? '').toUpperCase();
 
+  // null | 'spongebob' | 'cat' — which bonus cameo is currently showing
+  const [activeCameo, setActiveCameo] = useState(null);
   const feedbackTimerRef = useRef(null);
   const hintTimerRef     = useRef(null);
 
@@ -50,9 +54,18 @@ export default function QuestionScreen({ state, dispatch }) {
     playSound(question.feedback.correct ? 'success' : 'wrong');
   }, [question?.feedback]);
 
-  // Auto-advance after feedback delay
+  // Auto-advance after feedback delay — 1-in-10 chance of Spongebob cameo
+  // on correct answers instead of the normal 2 s wait.
   useEffect(() => {
     if (!question?.feedback) return;
+
+    if (question.feedback.correct && Math.random() < 0.10) {
+      const pick = Math.random() < 0.5 ? 'spongebob' : 'cat';
+      setActiveCameo(pick);
+      playSound(pick === 'spongebob' ? 'fanfare' : 'meow');
+      return; // cameo's onDismiss fires NEXT_QUESTION when it ends
+    }
+
     const delay = question.feedback.correct ? CORRECT_FEEDBACK_MS : WRONG_FEEDBACK_MS;
     feedbackTimerRef.current = setTimeout(
       () => dispatch({ type: A.NEXT_QUESTION }),
@@ -226,6 +239,18 @@ export default function QuestionScreen({ state, dispatch }) {
           />
         </div>
       </div>
+
+      {/* ── Bonus cameo interstitials ── */}
+      {activeCameo === 'spongebob' && (
+        <SpongeBobCameo
+          onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
+        />
+      )}
+      {activeCameo === 'cat' && (
+        <CatCloseupCameo
+          onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
+        />
+      )}
 
       {/* ── Answer display + keypad ── */}
       <div className="shrink-0 flex flex-col items-center gap-3 px-4 pb-10 pt-2">

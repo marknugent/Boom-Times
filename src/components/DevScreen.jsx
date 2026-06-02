@@ -9,6 +9,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { A }        from '../gameReducer.js';
 import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
+import SpongeBobCameo  from './SpongeBobCameo.jsx';
+import CatCloseupCameo from './CatCloseupCameo.jsx';
 import { LEVELS } from '../levels.js';
 import FireworksEffect from './FireworksEffect.jsx';
 import Beaker       from './Beaker.jsx';
@@ -146,6 +148,9 @@ export default function DevScreen({ dispatch }) {
   // Level-up banner preview — cycles through LEVELS on each tap
   const [previewLevel, setPreviewLevel] = useState(null);
   const [levelIndex, setLevelIndex] = useState(0);
+  // Cameo previews
+  const [showCameo, setShowCameo]   = useState(false);
+  const [showCatCameo, setShowCatCameo] = useState(false);
 
   function launch(exp) {
     setPlaying(exp);
@@ -253,36 +258,57 @@ export default function DevScreen({ dispatch }) {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-lab-bg px-6">
-      <div className="font-body text-lab-chalk/30 text-xs tracking-[0.3em] uppercase mb-1">
+    <div className="w-full h-full flex flex-col items-center gap-3 bg-lab-bg px-4 pt-6 pb-4 overflow-y-auto">
+      <div className="font-body text-lab-chalk/30 text-xs tracking-[0.3em] uppercase">
         🔧 dev mode
       </div>
-      <div className="font-display text-3xl text-lab-chalk mb-2">
+      <div className="font-display text-3xl text-lab-chalk">
         Experiment Lab
       </div>
 
-      <div className="flex flex-col gap-3 w-full max-w-xs">
+      {/* ── Two-column button grid ── */}
+      <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
         {EXPERIMENTS.map(exp => (
           <button
             key={exp.id}
-            className="btn-primary w-full text-xl py-5"
+            className="btn-primary w-full text-sm py-4 leading-tight"
             onClick={() => launch(exp)}
           >
             {exp.label}
           </button>
         ))}
 
-        {/* Level-up banner preview — tapping cycles through all 10 levels */}
         <button
-          className="btn-primary w-full text-xl py-5 bg-purple-600 hover:bg-purple-500 active:bg-purple-700"
+          className="btn-primary w-full text-sm py-4 leading-tight bg-purple-600 hover:bg-purple-500 active:bg-purple-700"
           onClick={() => { setLevelIndex(0); setPreviewLevel(LEVELS[0]); }}
         >
           LEVEL UP BANNER 🎖️
         </button>
+
+        <button
+          className="btn-primary w-full text-sm py-4 leading-tight bg-cyan-700 hover:bg-cyan-600 active:bg-cyan-800"
+          onClick={() => { setShowCameo(true); playSound('fanfare'); }}
+        >
+          SPONGEBOB BREAK 🧽
+        </button>
+
+        <button
+          className="btn-primary col-span-2 w-full text-sm py-4 leading-tight bg-orange-700 hover:bg-orange-600 active:bg-orange-800"
+          onClick={() => { setShowCatCameo(true); playSound('meow'); }}
+        >
+          CAT CLOSEUP 🐱
+        </button>
       </div>
 
+      {showCameo && (
+        <SpongeBobCameo onDismiss={() => setShowCameo(false)} />
+      )}
+      {showCatCameo && (
+        <CatCloseupCameo onDismiss={() => setShowCatCameo(false)} />
+      )}
+
       <button
-        className="btn-secondary mt-8 px-8"
+        className="btn-secondary mt-2 px-8"
         onClick={() => dispatch({ type: A.NAVIGATE, screen: 'home' })}
       >
         ← Exit dev mode

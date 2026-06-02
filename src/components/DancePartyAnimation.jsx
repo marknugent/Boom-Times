@@ -48,6 +48,11 @@ const GIFS = [
     style: { width: 180, left: '6%',  top: '52%', zIndex: 20 },
     bobDur: '0.58s', bobDelay: '0.25s',
   },
+  {
+    src: '/spongebob-dance.gif',
+    style: { width: 175, right: '3%', top: '50%', zIndex: 20 },
+    bobDur: '0.52s', bobDelay: '0.33s',
+  },
 ];
 
 export default function DancePartyAnimation() {
