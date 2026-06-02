@@ -16,6 +16,7 @@ import { A } from '../gameReducer.js';
 import { playSound } from '../sounds.js';
 import SpongeBobCameo  from './SpongeBobCameo.jsx';
 import CatCloseupCameo from './CatCloseupCameo.jsx';
+import HotStreakBanner from './HotStreakBanner.jsx';
 import { TEST_PLAYER } from '../players.js';
 import Keypad       from './Keypad.jsx';
 import Beaker       from './Beaker.jsx';
@@ -45,6 +46,12 @@ export default function QuestionScreen({ state, dispatch }) {
 
   // null | 'spongebob' | 'cat' — which bonus cameo is currently showing
   const [activeCameo, setActiveCameo] = useState(null);
+
+  // Hot streak tracking — ref so incrementing doesn't cause re-renders
+  const streakRef              = useRef(0);
+  const [streakCount, setStreakCount] = useState(0); // shown in banner
+  const [showStreak,  setShowStreak]  = useState(false);
+
   const feedbackTimerRef = useRef(null);
   const hintTimerRef     = useRef(null);
 
@@ -54,16 +61,30 @@ export default function QuestionScreen({ state, dispatch }) {
     playSound(question.feedback.correct ? 'success' : 'wrong');
   }, [question?.feedback]);
 
-  // Auto-advance after feedback delay — 1-in-10 chance of Spongebob cameo
-  // on correct answers instead of the normal 2 s wait.
+  // Auto-advance after feedback delay.
+  // Also tracks hot streak and randomly triggers bonus cameos.
   useEffect(() => {
     if (!question?.feedback) return;
 
-    if (question.feedback.correct && Math.random() < 0.10) {
-      const pick = Math.random() < 0.5 ? 'spongebob' : 'cat';
-      setActiveCameo(pick);
-      playSound(pick === 'spongebob' ? 'fanfare' : 'meow');
-      return; // cameo's onDismiss fires NEXT_QUESTION when it ends
+    if (question.feedback.correct) {
+      // Track streak; fire banner on every multiple of 5
+      streakRef.current += 1;
+      if (streakRef.current % 5 === 0) {
+        setStreakCount(streakRef.current);
+        setShowStreak(true);
+        playSound('success-beep');
+      }
+
+      // 1-in-10 chance of a bonus cameo
+      if (Math.random() < 0.10) {
+        const pick = Math.random() < 0.5 ? 'spongebob' : 'cat';
+        setActiveCameo(pick);
+        playSound(pick === 'spongebob' ? 'fanfare' : 'meow');
+        return; // cameo's onDismiss fires NEXT_QUESTION when it ends
+      }
+    } else {
+      // Wrong answer — reset streak
+      streakRef.current = 0;
     }
 
     const delay = question.feedback.correct ? CORRECT_FEEDBACK_MS : WRONG_FEEDBACK_MS;
@@ -239,6 +260,14 @@ export default function QuestionScreen({ state, dispatch }) {
           />
         </div>
       </div>
+
+      {/* ── Hot streak banner (non-blocking) ── */}
+      {showStreak && (
+        <HotStreakBanner
+          streakCount={streakCount}
+          onDismiss={() => setShowStreak(false)}
+        />
+      )}
 
       {/* ── Bonus cameo interstitials ── */}
       {activeCameo === 'spongebob' && (

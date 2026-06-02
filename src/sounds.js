@@ -33,6 +33,7 @@ const SOUNDS = {
   'wrong':           new Audio('/wrong.mp3'),
   'fanfare':         new Audio('/fanfare.mp3'),
   'meow':            new Audio('/meow.mp3'),
+  'success-beep':    new Audio('/success-beep.mp3'),
 };
 
 // Per-sound base volumes (defaults to 0.8)

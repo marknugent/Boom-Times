@@ -581,6 +581,16 @@
 /* ── Cat closeup cameo — each image fades in, holds while zooming 100→120%,
    then fades out.  Apply to the wrapper div (fixed inset-0) so the scale
    clips naturally at the viewport edge.                                   */
+/* ── Hot streak banner — slides down from top, holds, fades out ─────
+   Non-blocking: pointer-events:none so the keypad stays live.          */
+@keyframes streak-banner {
+  0%   { transform: translateY(-110%); opacity: 0;   }
+  12%  { transform: translateY(8px);   opacity: 1;   }
+  18%  { transform: translateY(0px);   opacity: 1;   }
+  78%  { transform: translateY(0px);   opacity: 1;   }
+  100% { transform: translateY(-30%);  opacity: 0;   }
+}
+
 /* ── Cat closeup headline — rotated + continuous scale pulse ──────── */
 @keyframes cat-headline-pulse {
   0%, 100% { transform: rotate(10deg) scale(1.00); }
