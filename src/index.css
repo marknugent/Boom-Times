@@ -578,6 +578,14 @@
   100% { transform: translate(var(--cdx), calc(var(--cy) + 1100px));     opacity: 0;         }
 }
 
+/* ── Dad Is Watching — slow creep zoom 100→110%, fades in/out ───────── */
+@keyframes dad-zoom {
+  0%   { opacity: 0; transform: scale(1.00); }
+  15%  { opacity: 1; transform: scale(1.00); }
+  85%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+
 /* ── Cat closeup cameo — each image fades in, holds while zooming 100→120%,
    then fades out.  Apply to the wrapper div (fixed inset-0) so the scale
    clips naturally at the viewport edge.                                   */

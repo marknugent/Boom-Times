@@ -76,10 +76,10 @@ export const EXPERIMENTS = [
 let lastExperimentId = null;
 
 export function getRandomExperiment() {
-  let pick = EXPERIMENTS[Math.floor(Math.random() * EXPERIMENTS.length)];
-  if (pick.id === lastExperimentId && EXPERIMENTS.length > 1) {
+  let pick;
+  do {
     pick = EXPERIMENTS[Math.floor(Math.random() * EXPERIMENTS.length)];
-  }
+  } while (pick.id === lastExperimentId && EXPERIMENTS.length > 1);
   lastExperimentId = pick.id;
   return pick;
 }

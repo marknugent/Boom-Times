@@ -11,7 +11,8 @@ import { A }        from '../gameReducer.js';
 import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
 import SpongeBobCameo  from './SpongeBobCameo.jsx';
 import CatCloseupCameo from './CatCloseupCameo.jsx';
-import DoggieCameo     from './DoggieCameo.jsx';
+import DoggieCameo        from './DoggieCameo.jsx';
+import DadIsWatchingCameo from './DadIsWatchingCameo.jsx';
 import { LEVELS } from '../levels.js';
 import FireworksEffect from './FireworksEffect.jsx';
 import Beaker       from './Beaker.jsx';
@@ -153,6 +154,7 @@ export default function DevScreen({ dispatch }) {
   const [showCameo,    setShowCameo]    = useState(false);
   const [showCatCameo, setShowCatCameo] = useState(false);
   const [showDogCameo, setShowDogCameo] = useState(false);
+  const [showDadCameo, setShowDadCameo] = useState(false);
 
   function launch(exp) {
     setPlaying(exp);
@@ -307,6 +309,13 @@ export default function DevScreen({ dispatch }) {
         >
           DOGGIE BREAK 🐶
         </button>
+
+        <button
+          className="btn-primary col-span-2 w-full text-sm py-4 leading-tight bg-slate-700 hover:bg-slate-600 active:bg-slate-800"
+          onClick={() => { setShowDadCameo(true); playSound('creepy'); }}
+        >
+          DAD IS WATCHING 👁️
+        </button>
       </div>
 
       {showCameo && (
@@ -317,6 +326,9 @@ export default function DevScreen({ dispatch }) {
       )}
       {showDogCameo && (
         <DoggieCameo onDismiss={() => setShowDogCameo(false)} />
+      )}
+      {showDadCameo && (
+        <DadIsWatchingCameo onDismiss={() => setShowDadCameo(false)} />
       )}
 
       <button
