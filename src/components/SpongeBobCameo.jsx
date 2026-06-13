@@ -72,6 +72,16 @@ const SPONGEBS = [
     size:     296,   // +10 %
     flip:     true,
   },
+  {
+    src:      '/spongebob4.gif',
+    left:     '-210px',
+    top:      '80%',
+    keyframe: 'sponge-walk-ltr',
+    dur:      5200,
+    delay:    2200,
+    size:     308,   // +10 %
+    flip:     false,
+  },
 ];
 
 export default function SpongeBobCameo({ onDismiss }) {
