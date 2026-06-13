@@ -77,8 +77,8 @@ export default function QuestionScreen({ state, dispatch }) {
         playSound('success-beep');
       }
 
-      // 1-in-10 chance of a bonus cameo
-      if (Math.random() < 0.05) {
+      // 8% chance of a bonus cameo
+      if (Math.random() < 0.08) {
         const r    = Math.random();
         const pick = r < 0.25 ? 'spongebob' : r < 0.50 ? 'cat' : r < 0.75 ? 'doggie' : 'dad';
         setActiveCameo(pick);
