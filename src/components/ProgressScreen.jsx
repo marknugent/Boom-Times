@@ -3,7 +3,7 @@
  * A segmented control at the top lets you browse any player's stats without
  * affecting the active game session.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { A } from '../gameReducer.js';
 import { TABLE_GROUPS, loadProgression } from '../progression.js';
 import { getFactIdsForTable, isFactMastered, loadSRSState } from '../srs.js';
@@ -85,13 +85,16 @@ function TableCell({ tableNum, status, confidence }) {
   );
 }
 
-export default function ProgressScreen({ state, dispatch }) {
+export default function ProgressScreen({ state, dispatch, onTestUserViewChange }) {
   const { currentPlayer } = state;
 
   // Which player's stats are being viewed (defaults to the active player,
   // or the first in the list if the active player is the test profile)
   const defaultViewed = VISIBLE_PLAYERS.includes(currentPlayer) ? currentPlayer : VISIBLE_PLAYERS[0];
   const [viewedPlayer, setViewedPlayer] = useState(defaultViewed);
+
+  // Always start un-armed — only the explicit "Test User" tap arms dev mode.
+  useEffect(() => { onTestUserViewChange?.(false); }, []);
 
   // Load viewed player's data fresh from localStorage each time they switch.
   // localStorage is always in sync (every answer + round-end saves immediately).
@@ -132,7 +135,7 @@ export default function ProgressScreen({ state, dispatch }) {
         <div className="flex items-center gap-3 shrink-0">
           <button
             className="font-body text-xs text-lab-chalk/40 hover:text-lab-chalk/70 transition-colors"
-            onClick={() => setViewedPlayer(defaultViewed)}
+            onClick={() => { setViewedPlayer(defaultViewed); onTestUserViewChange?.(false); }}
           >
             ← kids
           </button>
@@ -223,7 +226,7 @@ export default function ProgressScreen({ state, dispatch }) {
       {viewedPlayer !== TEST_PLAYER && (
         <button
           className="font-body text-xs text-lab-chalk/25 hover:text-lab-chalk/50 transition-colors shrink-0 py-1 text-center"
-          onClick={() => setViewedPlayer(TEST_PLAYER)}
+          onClick={() => { setViewedPlayer(TEST_PLAYER); onTestUserViewChange?.(true); }}
         >
           Test User
         </button>

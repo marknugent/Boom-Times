@@ -16,6 +16,7 @@ import SmokeBombAnimation      from './SmokeBombAnimation.jsx';
 import ToiletAttackAnimation   from './ToiletAttackAnimation.jsx';
 import DancePartyAnimation     from './DancePartyAnimation.jsx';
 import SpaceLaunchAnimation    from './SpaceLaunchAnimation.jsx';
+import UsaAnimation            from './UsaAnimation.jsx';
 import FireworksEffect   from './FireworksEffect.jsx';
 import { TABLE_GROUPS }  from '../progression.js';
 
@@ -31,6 +32,7 @@ const ANIMATION_MAP = {
   'toilet-attack':   ToiletAttackAnimation,
   'dance-party':     DancePartyAnimation,
   'space-launch':    SpaceLaunchAnimation,
+  'usa-usa-usa':     UsaAnimation,
 };
 
 const TRIPLE_TAP_MS = 600;
@@ -94,8 +96,8 @@ export default function PayoffScreen({ state, dispatch }) {
   useEffect(() => {
     if (!round) return;
     const id = round.experiment.id;
-    // dance-party and space-launch use bgMusic only — no separate SFX
-    if (id === 'dance-party' || id === 'space-launch') return;
+    // dance-party, space-launch, and usa-usa-usa use bgMusic only — no separate SFX
+    if (id === 'dance-party' || id === 'space-launch' || id === 'usa-usa-usa') return;
     if (id === 'toilet-attack') {
       playSound(id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
     } else {
@@ -139,9 +141,11 @@ export default function PayoffScreen({ state, dispatch }) {
       </div>
 
       {/* ── Dancing cat — bottom-right, ~100 px above the very edge ── */}
-      <div className="absolute z-50 pointer-events-none" style={{ bottom: 118, right: 0 }}>
-        {experiment.danceCat ? <DanceCat size={246} /> : <DancingCat size={246} />}
-      </div>
+      {!experiment.hideCat && (
+        <div className="absolute z-50 pointer-events-none" style={{ bottom: 118, right: 0 }}>
+          {experiment.danceCat ? <DanceCat size={246} /> : <DancingCat size={246} />}
+        </div>
+      )}
 
       {/* ── Overlay content (z-30) ── */}
       <div className="absolute inset-0 z-30 flex flex-col pointer-events-none">

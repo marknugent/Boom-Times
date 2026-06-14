@@ -586,6 +586,14 @@
   100% { opacity: 0; transform: scale(1.05); }
 }
 
+/* ── Awesome cameo — confetti drifting down past the poster ─────────── */
+@keyframes awesome-confetti-fall {
+  0%   { transform: translateY(-10vh) rotate(0deg);          opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(110vh) rotate(var(--rot, 360deg)); opacity: 0; }
+}
+
 /* ── Cat closeup cameo — each image fades in, holds while zooming 100→120%,
    then fades out.  Apply to the wrapper div (fixed inset-0) so the scale
    clips naturally at the viewport edge.                                   */

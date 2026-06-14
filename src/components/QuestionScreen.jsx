@@ -18,8 +18,9 @@ import SpongeBobCameo  from './SpongeBobCameo.jsx';
 import CatCloseupCameo from './CatCloseupCameo.jsx';
 import DoggieCameo          from './DoggieCameo.jsx';
 import DadIsWatchingCameo   from './DadIsWatchingCameo.jsx';
+import AwesomeCameo         from './AwesomeCameo.jsx';
 import HotStreakBanner from './HotStreakBanner.jsx';
-import { TEST_PLAYER } from '../players.js';
+import { TEST_PLAYER, VISIBLE_PLAYERS } from '../players.js';
 import Keypad       from './Keypad.jsx';
 import Beaker       from './Beaker.jsx';
 import Pudge        from './Pudge.jsx';
@@ -79,10 +80,13 @@ export default function QuestionScreen({ state, dispatch }) {
 
       // 8% chance of a bonus cameo
       if (Math.random() < 0.08) {
-        const r    = Math.random();
-        const pick = r < 0.25 ? 'spongebob' : r < 0.50 ? 'cat' : r < 0.75 ? 'doggie' : 'dad';
+        // "<player> is awesome" is only valid for Louisa/Marjorie, not the test profile
+        const cameoPool = VISIBLE_PLAYERS.includes(currentPlayer)
+          ? ['spongebob', 'cat', 'doggie', 'dad', 'awesome']
+          : ['spongebob', 'cat', 'doggie', 'dad'];
+        const pick = cameoPool[Math.floor(Math.random() * cameoPool.length)];
         setActiveCameo(pick);
-        const sfx  = { spongebob: 'fanfare', cat: 'meow', doggie: 'barking', dad: 'creepy' };
+        const sfx  = { spongebob: 'fanfare', cat: 'meow', doggie: 'barking', dad: 'creepy', awesome: 'awesome' };
         playSound(sfx[pick]);
         return; // cameo's onDismiss fires NEXT_QUESTION when it ends
       }
@@ -291,6 +295,12 @@ export default function QuestionScreen({ state, dispatch }) {
       )}
       {activeCameo === 'dad' && (
         <DadIsWatchingCameo
+          onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
+        />
+      )}
+      {activeCameo === 'awesome' && (
+        <AwesomeCameo
+          player={currentPlayer}
           onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
         />
       )}

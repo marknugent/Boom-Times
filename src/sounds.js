@@ -36,6 +36,7 @@ const SOUNDS = {
   'success-beep':    new Audio('/success-beep.mp3'),
   'barking':         new Audio('/barking.mp3'),
   'creepy':          new Audio('/creepy.mp3'),
+  'awesome':         new Audio('/awesome.mp3'),
 };
 
 // Per-sound base volumes (defaults to 0.8)
@@ -68,6 +69,7 @@ const LOOP_URLS = {
   'pounce-pop-parade': '/pounce_pop_parade.mp3',
   'dance-party':       '/dance.mp3',
   'space-launch':      '/rocket.mp3',
+  'nyan':              '/nyan.mp3',
 };
 
 // id → Promise<AudioBuffer | null>  (resolved once at module load)

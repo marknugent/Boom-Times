@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useRef } from 'react';
+import { useReducer, useEffect, useRef, useState } from 'react';
 import { gameReducer, createInitialState, A } from './gameReducer.js';
 import { unlockAudio } from './sounds.js';
 
@@ -24,6 +24,9 @@ export default function App() {
   }, [state.speechBubble]);
 
   // ── Secret triple-tap → dev mode ─────────────────────────────────
+  // Only armed while viewing the hidden Test User tab on the Progress
+  // screen — keeps curious kids from stumbling into dev mode elsewhere.
+  const [testUserView, setTestUserView] = useState(false);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef(null);
 
@@ -43,8 +46,11 @@ export default function App() {
       cx - rect.left > rect.width  * 0.5 &&
       cy - rect.top  < rect.height * 0.25;
 
-    if (!inUpperRight) {
-      // tap outside zone resets counter
+    // Dev mode is only reachable from the Test User tab of the Progress screen.
+    const devModeArmed = state.screen === 'progress' && testUserView;
+
+    if (!inUpperRight || !devModeArmed) {
+      // tap outside zone (or outside the armed screen) resets counter
       tapCountRef.current = 0;
       clearTimeout(tapTimerRef.current);
       return;
@@ -74,7 +80,7 @@ export default function App() {
         {state.screen === 'question' && <QuestionScreen state={state} dispatch={dispatch} />}
         {state.screen === 'brewing'  && <BrewingScreen  state={state} dispatch={dispatch} />}
         {state.screen === 'payoff'   && <PayoffScreen   state={state} dispatch={dispatch} />}
-        {state.screen === 'progress' && <ProgressScreen state={state} dispatch={dispatch} />}
+        {state.screen === 'progress' && <ProgressScreen state={state} dispatch={dispatch} onTestUserViewChange={setTestUserView} />}
         {state.screen === 'dev'      && <DevScreen      dispatch={dispatch} />}
       </div>
     </ScaledViewport>

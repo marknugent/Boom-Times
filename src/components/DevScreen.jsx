@@ -13,6 +13,7 @@ import SpongeBobCameo  from './SpongeBobCameo.jsx';
 import CatCloseupCameo from './CatCloseupCameo.jsx';
 import DoggieCameo        from './DoggieCameo.jsx';
 import DadIsWatchingCameo from './DadIsWatchingCameo.jsx';
+import AwesomeCameo from './AwesomeCameo.jsx';
 import { LEVELS } from '../levels.js';
 import FireworksEffect from './FireworksEffect.jsx';
 import Beaker       from './Beaker.jsx';
@@ -25,6 +26,7 @@ import SmokeBombAnimation      from './SmokeBombAnimation.jsx';
 import ToiletAttackAnimation   from './ToiletAttackAnimation.jsx';
 import DancePartyAnimation     from './DancePartyAnimation.jsx';
 import SpaceLaunchAnimation    from './SpaceLaunchAnimation.jsx';
+import UsaAnimation            from './UsaAnimation.jsx';
 import DanceCat                from './DanceCat.jsx';
 
 // Fake round state for the brewing preview
@@ -46,6 +48,7 @@ const EXPERIMENTS = [
   { id: 'toilet-attack',   label: 'TOILET ATTACK 🚽',   Anim: ToiletAttackAnimation   },
   { id: 'dance-party',     label: 'DANCE PARTY 🪩',       Anim: DancePartyAnimation, bgMusic: 'dance-party', danceCat: true },
   { id: 'space-launch',   label: 'SPACE LAUNCH 🚀',      Anim: SpaceLaunchAnimation, bgMusic: 'space-launch' },
+  { id: 'usa-usa-usa',     label: 'USA! USA! USA! 🎆',    Anim: UsaAnimation, bgMusic: 'nyan', hideCat: true },
   { id: 'brewing',         label: 'BREWING... 🧫',        isBrewing: true               },
 ];
 
@@ -93,10 +96,12 @@ function PayoffPreview({ playing, playKey, onBack, onReplay }) {
         <Beaker fillPercent={100} glow />
       </div>
 
-      {/* Dancing cat — swap for DanceCat on dance-party */}
-      <div className="absolute right-3 z-40 pointer-events-none" style={{ bottom: 102 }}>
-        {playing.danceCat ? <DanceCat size={280} /> : <DancingCat size={280} />}
-      </div>
+      {/* Dancing cat — swap for DanceCat on dance-party; omitted entirely when hideCat */}
+      {!playing.hideCat && (
+        <div className="absolute right-3 z-40 pointer-events-none" style={{ bottom: 102 }}>
+          {playing.danceCat ? <DanceCat size={280} /> : <DancingCat size={280} />}
+        </div>
+      )}
 
       {/* Controls — includes a manual level-up trigger */}
       <div className="absolute bottom-8 inset-x-0 flex flex-col items-center gap-3 z-50 pointer-events-none">
@@ -155,14 +160,16 @@ export default function DevScreen({ dispatch }) {
   const [showCatCameo, setShowCatCameo] = useState(false);
   const [showDogCameo, setShowDogCameo] = useState(false);
   const [showDadCameo, setShowDadCameo] = useState(false);
+  // 'Louisa' | 'Marjorie' | null — which player's "is awesome" cameo to preview
+  const [showAwesomeCameo, setShowAwesomeCameo] = useState(null);
 
   function launch(exp) {
     setPlaying(exp);
     setPlayKey(k => k + 1);
     if (exp.isBrewing) return;
     // Experiment SFX (dance-party uses its bgMusic track instead)
-    // dance-party and space-launch use bgMusic only — no separate SFX
-    if (exp.id !== 'dance-party' && exp.id !== 'space-launch') {
+    // dance-party, space-launch, and usa-usa-usa use bgMusic only — no separate SFX
+    if (exp.id !== 'dance-party' && exp.id !== 'space-launch' && exp.id !== 'usa-usa-usa') {
       if (exp.id === 'toilet-attack') {
         playSound(exp.id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
       } else {
@@ -316,6 +323,20 @@ export default function DevScreen({ dispatch }) {
         >
           DAD IS WATCHING 👁️
         </button>
+
+        <button
+          className="btn-primary w-full text-sm py-4 leading-tight bg-pink-700 hover:bg-pink-600 active:bg-pink-800"
+          onClick={() => { setShowAwesomeCameo('Louisa'); playSound('awesome'); }}
+        >
+          LOUISA IS AWESOME 🌟
+        </button>
+
+        <button
+          className="btn-primary w-full text-sm py-4 leading-tight bg-pink-700 hover:bg-pink-600 active:bg-pink-800"
+          onClick={() => { setShowAwesomeCameo('Marjorie'); playSound('awesome'); }}
+        >
+          MARJORIE IS AWESOME 🌟
+        </button>
       </div>
 
       {showCameo && (
@@ -329,6 +350,9 @@ export default function DevScreen({ dispatch }) {
       )}
       {showDadCameo && (
         <DadIsWatchingCameo onDismiss={() => setShowDadCameo(false)} />
+      )}
+      {showAwesomeCameo && (
+        <AwesomeCameo player={showAwesomeCameo} onDismiss={() => setShowAwesomeCameo(null)} />
       )}
 
       <button
