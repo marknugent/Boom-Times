@@ -55,6 +55,11 @@ export default function QuestionScreen({ state, dispatch }) {
   const [streakCount, setStreakCount] = useState(0); // shown in banner
   const [showStreak,  setShowStreak]  = useState(false);
 
+  // Bonus cameo "pity timer" — ref so incrementing doesn't cause re-renders.
+  // Tracks correct answers since the last bonus cameo; the longer the dry
+  // spell, the higher the chance, so no one goes too long without a bonus.
+  const sinceBonusRef = useRef(0);
+
   const feedbackTimerRef = useRef(null);
   const hintTimerRef     = useRef(null);
 
@@ -78,8 +83,16 @@ export default function QuestionScreen({ state, dispatch }) {
         playSound('success-beep');
       }
 
-      // 8% chance of a bonus cameo
-      if (Math.random() < 0.08) {
+      // Bonus cameo chance — 10% baseline, with a "pity timer" floor that
+      // ramps up the odds the longer the player goes without one.
+      sinceBonusRef.current += 1;
+      const bonusChance =
+        sinceBonusRef.current < 8  ? 0.10 :
+        sinceBonusRef.current < 15 ? 0.20 :
+        0.60;
+
+      if (Math.random() < bonusChance) {
+        sinceBonusRef.current = 0;
         // "<player> is awesome" is only valid for Louisa/Marjorie, not the test profile
         const cameoPool = VISIBLE_PLAYERS.includes(currentPlayer)
           ? ['spongebob', 'cat', 'doggie', 'dad', 'awesome']

@@ -37,6 +37,7 @@ import {
   loadPendingExperiment,
   savePendingExperiment,
   clearPendingExperiment,
+  recordShownExperiment,
 } from './experiments.js';
 import { shouldShowHint, getHintText } from './hints.js';
 import { pudge, PUDGE } from './pudge.js';
@@ -256,6 +257,7 @@ export function gameReducer(state, action) {
       // Use a locked pending experiment if one exists (prevents gaming payoffs
       // by restarting rounds), otherwise pick a fresh random one and lock it.
       const experiment = loadPendingExperiment(playerName) ?? getRandomExperiment();
+      recordShownExperiment(experiment.id);
       savePendingExperiment(playerName, experiment);
 
       const firstFactId = queue[0];
@@ -312,6 +314,7 @@ export function gameReducer(state, action) {
       // 3. Use locked pending experiment if one exists, otherwise pick fresh
       const experiment =
         loadPendingExperiment(state.currentPlayer) ?? getRandomExperiment();
+      recordShownExperiment(experiment.id);
       savePendingExperiment(state.currentPlayer, experiment);
 
       // 4. Build round state

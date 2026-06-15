@@ -89,6 +89,17 @@ export function getRandomExperiment() {
   return pick;
 }
 
+/**
+ * Record the experiment actually shown to the player this round, whether it
+ * came from getRandomExperiment() or was reused from a locked pending
+ * experiment. Keeps the "no repeat" check in getRandomExperiment honest —
+ * without this, reused pending experiments don't update lastExperimentId,
+ * so the next fresh pick could repeat the one the player just saw.
+ */
+export function recordShownExperiment(id) {
+  lastExperimentId = id;
+}
+
 // ─── Pending-experiment persistence ──────────────────────────────────────────
 // Namespaced per player so each kid's locked experiment is independent.
 
@@ -107,8 +118,10 @@ export function loadPendingExperiment(playerName) {
     const raw = localStorage.getItem(pendingKey(playerName));
     if (!raw) return null;
     const stored = JSON.parse(raw);
-    // Re-hydrate from the live roster so any future property additions are included
-    return EXPERIMENTS.find(e => e.id === stored.id) ?? null;
+    // Re-hydrate from the live roster so any future property additions are included.
+    // Ignore stale locks pointing at experiments that have since been disabled.
+    const experiment = EXPERIMENTS.find(e => e.id === stored.id) ?? null;
+    return experiment?.disabled ? null : experiment;
   } catch {
     return null;
   }
