@@ -1,7 +1,7 @@
 /**
  * CatCloseupCameo — "BONUS EXTREME CAT CLOSEUP" interstitial.
  *
- * Four cat closeup images fill the viewport sequentially.  Each one:
+ * Five cat closeup images fill the viewport sequentially.  Each one:
  *   • Fades in over ~12% of its duration
  *   • Holds at full opacity while slowly zooming 100% → 120% (Ken Burns)
  *   • Fades out over the last ~15%, overlapping with the next image
@@ -11,18 +11,19 @@
  *   IMAGE_STRIDE = 2000 ms between starts  (= dur − 500 ms overlap)
  *
  * z-stack (all position:fixed):
- *   z=250-253  cat images (each subsequent on top for correct crossfade layering)
- *   z=254      dark overlay strip so headline text is always readable
- *   z=255      headline
+ *   z=250-254  cat images (each subsequent on top for correct crossfade layering)
+ *   z=255      dark overlay strip so headline text is always readable
+ *   z=256      headline
  */
 import { useEffect, useRef } from 'react';
 
-const CAMEO_DURATION_MS = 9000;
+const CAMEO_DURATION_MS = 11000;
 const IMAGE_DUR         = 2500;   // ms each image is active
 const IMAGE_STRIDE      = 2000;   // ms between each image starting
 
 const IMAGES = [
   '/closeup1.png',
+  '/closeup.jpg',
   '/closeup2.png',
   '/closeup3.png',
   '/closeup4.png',
@@ -46,7 +47,7 @@ export default function CatCloseupCameo({ onDismiss }) {
 
   return (
     <>
-      {/* ── z=250-253: Cat images — stacked so later ones sit on top ── */}
+      {/* ── z=250-254: Cat images — stacked so later ones sit on top ── */}
       {CLOSEUPS.map((img, i) => (
         <div
           key={i}
@@ -65,22 +66,22 @@ export default function CatCloseupCameo({ onDismiss }) {
         </div>
       ))}
 
-      {/* ── z=254: Gradient overlay — darkens top so headline pops ──── */}
+      {/* ── z=255: Gradient overlay — darkens top so headline pops ──── */}
       <div
         className="fixed inset-x-0 top-0 pointer-events-none"
         style={{
-          zIndex:     254,
+          zIndex:     255,
           height:     '38%',
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, transparent 100%)',
         }}
       />
 
-      {/* ── z=255: Headline — tilted 10° and continuously pulsing ────── */}
+      {/* ── z=256: Headline — tilted 10° and continuously pulsing ────── */}
       <div
         className="fixed inset-x-0 flex flex-col items-center gap-1 pointer-events-none select-none"
         style={{
           top:       '6%',
-          zIndex:    255,
+          zIndex:    256,
           animation: 'cat-headline-pulse 1.3s ease-in-out infinite',
         }}
       >

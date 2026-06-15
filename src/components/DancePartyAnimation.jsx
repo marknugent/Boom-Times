@@ -35,12 +35,12 @@ const GIFS = [
   },
   {
     src: '/dance-gru.gif',
-    style: { width: 220, right: '4%', top: '12%', zIndex: 20 },
+    style: { width: 220, right: '4%', top: 'calc(12% - 50px)', zIndex: 20 },
     bobDur: '0.60s', bobDelay: '0.18s',
   },
   {
     src: '/dance-st2.gif',
-    style: { width: 200, left: '38%', top: '38%', zIndex: 22 },
+    style: { width: 200, left: '38%', top: 'calc(38% - 125px)', zIndex: 22 },
     bobDur: '0.50s', bobDelay: '0.08s',
   },
   {

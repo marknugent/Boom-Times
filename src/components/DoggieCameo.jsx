@@ -7,8 +7,7 @@
  * Timing:
  *   IMAGE_DUR    = 2200 ms per image
  *   IMAGE_STRIDE = 1700 ms between starts  (500 ms crossfade overlap)
- *   6th image added 1000 ms after the 5th
- *   Total        ≈ 10500 ms
+ *   Total        ≈ 11300 ms
  *
  * z-stack (all position:fixed):
  *   z=250-255  dog images
@@ -17,10 +16,9 @@
  */
 import { useEffect, useRef } from 'react';
 
-const CAMEO_DURATION_MS = 10500;
+const CAMEO_DURATION_MS = 11300;
 const IMAGE_DUR         = 2200;
 const IMAGE_STRIDE      = 1700;
-const LAST_IMAGE_STRIDE = 1000;
 
 const IMAGES = [
   '/dog1.png',
@@ -33,13 +31,10 @@ const IMAGES = [
 
 const DOGGIES = IMAGES.map((src, i) => {
   const isLast = i === IMAGES.length - 1;
-  const delay  = isLast
-    ? (i - 1) * IMAGE_STRIDE + LAST_IMAGE_STRIDE
-    : i * IMAGE_STRIDE;
   return {
     src,
-    delay,
-    dur: isLast ? IMAGE_DUR + 600 : IMAGE_DUR,
+    delay: i * IMAGE_STRIDE,
+    dur:   isLast ? IMAGE_DUR + 600 : IMAGE_DUR,
   };
 });
 

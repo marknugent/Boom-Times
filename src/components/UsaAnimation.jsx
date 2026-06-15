@@ -19,12 +19,14 @@
 import { useEffect, useMemo, useState } from 'react';
 
 // "U... S... A!" chant cycle — each letter pops in, all hold, then reset.
-const CHANT_CYCLE_MS = 2400;
+// Build (pop-in timing) is 15% faster than the original 250/650/1050ms;
+// the complete "USA!" holds for 25% less time before resetting.
+const CHANT_CYCLE_MS = 2000;
 const CHANT_STEPS = [
-  { step: 1, at:  250 }, // "U"
-  { step: 2, at:  650 }, // "S"
-  { step: 3, at: 1050 }, // "A!"
-  { step: 0, at: 2050 }, // reset (fade out before looping)
+  { step: 1, at:  215 }, // "U"
+  { step: 2, at:  555 }, // "S"
+  { step: 3, at:  895 }, // "A!"
+  { step: 0, at: 1645 }, // reset (fade out before looping)
 ];
 
 const CHANT_LETTERS = [
