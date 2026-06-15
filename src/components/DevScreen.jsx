@@ -43,8 +43,8 @@ const MOCK_BREWING_STATE = {
 const EXPERIMENTS = [
   { id: 'fart-bomb',       label: 'FART BOMB 💨',       Anim: FartBombAnimation       },
   { id: 'slime-explosion', label: 'SLIME EXPLOSION 🟢', Anim: SlimeExplosionAnimation },
-  { id: 'fuzz-bomb',       label: 'FUZZ BOMB 🧶',       Anim: FuzzBombAnimation       },
-  { id: 'smoke-bomb',      label: 'SMOKE BOMB 🌫️',      Anim: SmokeBombAnimation      },
+  { id: 'fuzz-bomb',       label: 'FUZZ BOMB 🧶',       Anim: FuzzBombAnimation,  disabled: true },
+  { id: 'smoke-bomb',      label: 'SMOKE BOMB 🌫️',      Anim: SmokeBombAnimation, disabled: true },
   { id: 'toilet-attack',   label: 'TOILET ATTACK 🚽',   Anim: ToiletAttackAnimation   },
   { id: 'dance-party',     label: 'DANCE PARTY 🪩',       Anim: DancePartyAnimation, bgMusic: 'dance-party', danceCat: true },
   { id: 'space-launch',   label: 'SPACE LAUNCH 🚀',      Anim: SpaceLaunchAnimation, bgMusic: 'space-launch' },
@@ -285,7 +285,7 @@ export default function DevScreen({ dispatch }) {
             className="btn-primary w-full text-sm py-4 leading-tight"
             onClick={() => launch(exp)}
           >
-            {exp.label}
+            {exp.disabled ? `🚫 ${exp.label}` : exp.label}
           </button>
         ))}
 

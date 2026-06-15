@@ -83,11 +83,11 @@ export default function QuestionScreen({ state, dispatch }) {
         playSound('success-beep');
       }
 
-      // Bonus cameo chance — 10% baseline, with a "pity timer" floor that
+      // Bonus cameo chance — 11% baseline, with a "pity timer" floor that
       // ramps up the odds the longer the player goes without one.
       sinceBonusRef.current += 1;
       const bonusChance =
-        sinceBonusRef.current < 8  ? 0.10 :
+        sinceBonusRef.current < 8  ? 0.11 :
         sinceBonusRef.current < 15 ? 0.20 :
         0.60;
 

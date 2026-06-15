@@ -5,12 +5,11 @@
  * zoom creep as DadIsWatchingCameo, plus confetti drifting down
  * over it for extra sparkle. The poster image already carries
  * the "<PLAYER> IS AWESOME" text — no extra headline needed.
- * Auto-dismisses after 7 seconds or on tap.
+ * Auto-dismisses after 7 seconds.
  *
  * z-stack (all position:fixed):
  *   z=250  the image
  *   z=255  confetti
- *   z=260  transparent click-catcher
  */
 import { useEffect, useMemo, useRef } from 'react';
 
@@ -30,11 +29,6 @@ export default function AwesomeCameo({ player, onDismiss }) {
     timerRef.current = setTimeout(onDismiss, CAMEO_DURATION_MS);
     return () => clearTimeout(timerRef.current);
   }, []);
-
-  function dismiss() {
-    clearTimeout(timerRef.current);
-    onDismiss();
-  }
 
   const confetti = useMemo(() =>
     Array.from({ length: CONFETTI_COUNT }, () => ({
@@ -85,13 +79,6 @@ export default function AwesomeCameo({ player, onDismiss }) {
           />
         ))}
       </div>
-
-      {/* ── z=260: Transparent click-catcher ───────────────────────── */}
-      <div
-        className="fixed inset-0"
-        style={{ zIndex: 260 }}
-        onPointerDown={dismiss}
-      />
     </>
   );
 }

@@ -4,11 +4,10 @@
  * Fades in dadiswatching.png full-screen, slowly zooms 100→110%
  * (a gentle creep rather than a full Ken Burns), then fades out.
  * The image itself reads "DAD IS WATCHING" — no extra headline needed.
- * Auto-dismisses after 4 seconds or on tap.
+ * Auto-dismisses after 4 seconds.
  *
  * z-stack (all position:fixed):
  *   z=250  the image
- *   z=251  transparent click-catcher
  */
 import { useEffect, useRef } from 'react';
 
@@ -21,11 +20,6 @@ export default function DadIsWatchingCameo({ onDismiss }) {
     timerRef.current = setTimeout(onDismiss, CAMEO_DURATION_MS);
     return () => clearTimeout(timerRef.current);
   }, []);
-
-  function dismiss() {
-    clearTimeout(timerRef.current);
-    onDismiss();
-  }
 
   return (
     <>
@@ -44,13 +38,6 @@ export default function DadIsWatchingCameo({ onDismiss }) {
           className="w-full h-full object-cover select-none"
         />
       </div>
-
-      {/* ── z=251: Transparent click-catcher ───────────────────────── */}
-      <div
-        className="fixed inset-0"
-        style={{ zIndex: 251 }}
-        onPointerDown={dismiss}
-      />
     </>
   );
 }

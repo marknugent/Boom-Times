@@ -8,15 +8,14 @@
  * Layering (all position:fixed, no overflow:hidden):
  *   z=250  dark backdrop
  *   z=251  Spongebob parade
- *   z=252  headline + "tap to continue"
- *   z=253  transparent click-catcher (on top of everything)
+ *   z=252  headline
  *
  * Using fixed siblings rather than overflow:hidden children avoids the
  * browser compositor bug where elements starting off the right edge of
  * an overflow:hidden container are never painted even when animated in.
  *
  * Props:
- *   onDismiss  {() => void}  — called when the cameo ends (auto or tap)
+ *   onDismiss  {() => void}  — called when the cameo ends (auto-dismiss only)
  */
 import { useEffect, useRef } from 'react';
 
@@ -92,11 +91,6 @@ export default function SpongeBobCameo({ onDismiss }) {
     return () => clearTimeout(timerRef.current);
   }, []);
 
-  function dismiss() {
-    clearTimeout(timerRef.current);
-    onDismiss();
-  }
-
   return (
     <>
       {/* ── z=250: Dark backdrop ───────────────────────────────────── */}
@@ -168,22 +162,6 @@ export default function SpongeBobCameo({ onDismiss }) {
         </div>
       </div>
 
-      {/* ── z=252: "Tap to continue" hint ──────────────────────────── */}
-      <div
-        className="fixed inset-x-0 bottom-10 flex justify-center pointer-events-none select-none"
-        style={{ zIndex: 252 }}
-      >
-        <p className="font-body text-sm text-white/35 tracking-widest uppercase">
-          tap to continue
-        </p>
-      </div>
-
-      {/* ── z=253: Transparent click-catcher (above everything) ────── */}
-      <div
-        className="fixed inset-0"
-        style={{ zIndex: 253 }}
-        onPointerDown={dismiss}
-      />
     </>
   );
 }

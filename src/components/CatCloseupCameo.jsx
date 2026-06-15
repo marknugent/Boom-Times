@@ -13,8 +13,7 @@
  * z-stack (all position:fixed):
  *   z=250-253  cat images (each subsequent on top for correct crossfade layering)
  *   z=254      dark overlay strip so headline text is always readable
- *   z=255      headline + "tap to continue"
- *   z=256      transparent click-catcher
+ *   z=255      headline
  */
 import { useEffect, useRef } from 'react';
 
@@ -44,11 +43,6 @@ export default function CatCloseupCameo({ onDismiss }) {
     timerRef.current = setTimeout(onDismiss, CAMEO_DURATION_MS);
     return () => clearTimeout(timerRef.current);
   }, []);
-
-  function dismiss() {
-    clearTimeout(timerRef.current);
-    onDismiss();
-  }
 
   return (
     <>
@@ -123,22 +117,6 @@ export default function CatCloseupCameo({ onDismiss }) {
         </div>
       </div>
 
-      {/* ── z=255: Tap hint ─────────────────────────────────────────── */}
-      <div
-        className="fixed inset-x-0 bottom-10 flex justify-center pointer-events-none select-none"
-        style={{ zIndex: 255 }}
-      >
-        <p className="font-body text-sm text-white/50 tracking-widest uppercase">
-          tap to continue
-        </p>
-      </div>
-
-      {/* ── z=256: Transparent click-catcher ───────────────────────── */}
-      <div
-        className="fixed inset-0"
-        style={{ zIndex: 256 }}
-        onPointerDown={dismiss}
-      />
     </>
   );
 }
