@@ -34,6 +34,7 @@ export const EXPERIMENTS = [
     payoffText: 'FUZZ BOMB DETONATED',
     ingredient: '🌿',
     emoji: '🧶',
+    disabled: true, // temporarily out of rotation
   },
   {
     id: 'smoke-bomb',
@@ -42,6 +43,7 @@ export const EXPERIMENTS = [
     payoffText: 'SMOKE BOMB!',
     ingredient: '🌫️',
     emoji: '💨',
+    disabled: true, // temporarily out of rotation
   },
   {
     id: 'toilet-attack',
@@ -72,14 +74,17 @@ export const EXPERIMENTS = [
   },
 ];
 
+// Experiments currently in rotation — excludes anything flagged `disabled`.
+const ACTIVE_EXPERIMENTS = EXPERIMENTS.filter(e => !e.disabled);
+
 /** Pick a random experiment, re-rolling once if it matches the previous round. */
 let lastExperimentId = null;
 
 export function getRandomExperiment() {
   let pick;
   do {
-    pick = EXPERIMENTS[Math.floor(Math.random() * EXPERIMENTS.length)];
-  } while (pick.id === lastExperimentId && EXPERIMENTS.length > 1);
+    pick = ACTIVE_EXPERIMENTS[Math.floor(Math.random() * ACTIVE_EXPERIMENTS.length)];
+  } while (pick.id === lastExperimentId && ACTIVE_EXPERIMENTS.length > 1);
   lastExperimentId = pick.id;
   return pick;
 }
