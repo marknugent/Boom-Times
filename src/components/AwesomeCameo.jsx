@@ -20,7 +20,7 @@ const CONFETTI_COLORS = [
   '#4cc9f0', '#f72585', '#7bf1a8', '#ffbe0b', '#ffffff',
 ];
 
-const CONFETTI_COUNT = 28;
+const CONFETTI_COUNT = 56;
 
 export default function AwesomeCameo({ player, onDismiss }) {
   const timerRef = useRef(null);

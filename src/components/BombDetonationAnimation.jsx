@@ -33,7 +33,7 @@ const PETE_FRAMES = [
   '/pete1.png','/pete2.png','/pete3.png','/pete4.png','/pete5.png','/pete6.png','/pete7.png',
 ];
 const PETE_FRAME_MS  = 143;
-const PETE_DELAY_MS  = 1000;  // ms after detonation before pete appears
+const PETE_DELAY_MS  = 700;   // ms after detonation before pete appears
 const PETE_LAUNCH_MS = 3000;  // travel duration (matches pete-launch keyframe)
 
 const SQ_FRAMES = Array.from({ length: 12 }, (_, i) => `/sq${i + 1}.png`);
@@ -41,10 +41,16 @@ const SQ_FRAME_MS  = 143;
 const SQ_DELAY_MS  = 2500;  // ms after detonation before sq appears
 const SQ_LAUNCH_MS = 3000;
 
+const TOASTA_DELAY_MS  = 1750; // ms after detonation before toaster appears
+const TOASTA_LAUNCH_MS = 3000;
+
+const SQ_PEEK_DELAY_MS = 6200; // ms after detonation — after sq fully exits (2500+3000+buffer)
+const SQ_PEEK_TOTAL_MS = 3400; // 0.8s slide in + 1.8s pause + 0.8s slide out
+
 // Shared origin: bomb emoji center ≈ top:55% left:50%
 const SPRITE_ORIGIN   = { top: '55%', left: '50%' };
 const SPRITE_MARGIN_X = -75;   // centres a 150px-wide sprite horizontally
-const SPRITE_MARGIN_Y = -132;  // centres vertically + shifts origin up 57px total
+const SPRITE_MARGIN_Y = -142;  // centres vertically + shifts origin up 67px total
 
 const DEBRIS_COLORS = ['#ff6b00', '#ffcc00', '#ff3300', '#cccccc', '#ff8800', '#ffffff', '#ff4400'];
 
@@ -85,13 +91,15 @@ export default function BombDetonationAnimation() {
   const [peteVisible, setPeteVisible] = useState(false);
   const [sqFrame, setSqFrame]       = useState(0);
   const [sqVisible, setSqVisible]   = useState(false);
+  const [toastaVisible, setToastaVisible] = useState(false);
+  const [sqPeekVisible, setSqPeekVisible] = useState(false);
   const exploded = count === 0;
   const debris = useMemo(makeDebris, []);
 
   // Preload all sprite frames immediately so they're cached by the time
   // they're needed (Pete at +7s, SQ at +8.5s from component mount)
   useEffect(() => {
-    [...PETE_FRAMES, ...SQ_FRAMES, '/ex.gif', '/ex1.png'].forEach(src => {
+    [...PETE_FRAMES, ...SQ_FRAMES, '/toasta.png', '/sq-peek.png', '/ex.gif', '/ex1.png'].forEach(src => {
       const img = new Image();
       img.src = src;
     });
@@ -135,7 +143,7 @@ export default function BombDetonationAnimation() {
     return () => { clearTimeout(showTimer); if (frameTimer) clearInterval(frameTimer); };
   }, [exploded]);
 
-  // Sq: appears 2s after detonation, exits bottom-left
+  // Sq: appears 2.5s after detonation, exits bottom-right
   useEffect(() => {
     if (!exploded) return;
     let frameTimer = null;
@@ -147,6 +155,20 @@ export default function BombDetonationAnimation() {
       );
     }, SQ_DELAY_MS);
     return () => { clearTimeout(showTimer); if (frameTimer) clearInterval(frameTimer); };
+  }, [exploded]);
+
+  // Toasta: appears 1.75s after detonation, rotates out top-left
+  useEffect(() => {
+    if (!exploded) return;
+    const showTimer = setTimeout(() => setToastaVisible(true), TOASTA_DELAY_MS);
+    return () => clearTimeout(showTimer);
+  }, [exploded]);
+
+  // Sq peek: slides in from left after sq sprite fully exits (~5.5s after detonation)
+  useEffect(() => {
+    if (!exploded) return;
+    const showTimer = setTimeout(() => setSqPeekVisible(true), SQ_PEEK_DELAY_MS);
+    return () => clearTimeout(showTimer);
   }, [exploded]);
 
   const shake = SHAKE[count] ?? null;
@@ -265,6 +287,38 @@ export default function BombDetonationAnimation() {
             marginTop:  SPRITE_MARGIN_Y,
             zIndex:     11,
             animation:  `sq-launch ${SQ_LAUNCH_MS}ms ease-in both`,
+          }}
+        />
+      )}
+
+      {toastaVisible && (
+        <img
+          src="/toasta.png"
+          alt="" draggable={false}
+          className="absolute select-none pointer-events-none"
+          style={{
+            ...SPRITE_ORIGIN,
+            width:      150,
+            marginLeft: SPRITE_MARGIN_X,
+            marginTop:  SPRITE_MARGIN_Y,
+            zIndex:     11,
+            animation:  `toasta-launch ${TOASTA_LAUNCH_MS}ms ease-in both`,
+          }}
+        />
+      )}
+
+      {/* ── Sq peek — slides in from left after sq sprite exits ─── */}
+      {sqPeekVisible && (
+        <img
+          src="/sq-peek.png"
+          alt="" draggable={false}
+          className="absolute select-none pointer-events-none"
+          style={{
+            bottom:    '12%',
+            right:     0,
+            width:     260,
+            zIndex:    15,
+            animation: `sq-peek-slide ${SQ_PEEK_TOTAL_MS}ms linear both`,
           }}
         />
       )}

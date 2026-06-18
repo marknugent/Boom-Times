@@ -668,6 +668,25 @@
   100% { transform: translate(70vw, 75vh) scale(5.4); opacity: 0; }
 }
 
+@keyframes toasta-launch {
+  0%   { transform: translate(0, 0) scale(0.04) rotate(0deg);    opacity: 0; }
+  6%   { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translate(-70vw, -75vh) scale(4.5) rotate(600deg); opacity: 0; }
+}
+
+/* sq-peek: portrait slides in from left at 45° clockwise, pauses, slides back out.
+   Per-keyframe timing: ease-out on entry, ease-in on exit, linear pause. */
+/* sq-peek: portrait slides in from right at -45° (counterclockwise), pauses, slides back out. */
+/* sq-peek: portrait slides in from right at -45° (counterclockwise), pauses, slides back out.
+   Total 3.4s: 0.8s in (24%) + 1.8s pause (76%) + 0.8s out (100%) */
+@keyframes sq-peek-slide {
+  0%   { transform: translateX(200%)  rotate(-45deg); animation-timing-function: ease-out; }
+  24%  { transform: translateX(25%)   rotate(-45deg); animation-timing-function: linear;   }
+  76%  { transform: translateX(25%)   rotate(-45deg); animation-timing-function: ease-in;  }
+  100% { transform: translateX(200%)  rotate(-45deg); }
+}
+
 @keyframes debris-fly {
   from {
     transform: translateX(0) scale(0.6);
