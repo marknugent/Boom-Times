@@ -26,11 +26,19 @@ import { useState, useEffect } from 'react';
 const DESIGN_W = 560;
 const DESIGN_H = 932;
 
+function getViewportSize() {
+  // visualViewport excludes browser chrome (iOS address bar, bottom toolbar).
+  // Falls back to innerWidth/innerHeight on older browsers.
+  const vv = window.visualViewport;
+  return {
+    w: vv ? vv.width  : window.innerWidth,
+    h: vv ? vv.height : window.innerHeight,
+  };
+}
+
 function getScale() {
-  return Math.min(
-    window.innerWidth  / DESIGN_W,
-    window.innerHeight / DESIGN_H,
-  );
+  const { w, h } = getViewportSize();
+  return Math.min(w / DESIGN_W, h / DESIGN_H);
 }
 
 export default function ScaledViewport({ children }) {
@@ -39,7 +47,12 @@ export default function ScaledViewport({ children }) {
   useEffect(() => {
     function onResize() { setScale(getScale()); }
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    // visualViewport fires its own resize when browser chrome shows/hides on iOS
+    window.visualViewport?.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
+    };
   }, []);
 
   return (
@@ -50,7 +63,7 @@ export default function ScaledViewport({ children }) {
     <div
       style={{
         width:           '100vw',
-        height:          '100vh',
+        height:          '100dvh',
         background:      '#0f1923',
         display:         'flex',
         alignItems:      'center',
