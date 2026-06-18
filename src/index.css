@@ -643,6 +643,43 @@
 
 /* ── Fuzz Bomb — yarn ball pops in, wobbles, then detonates.
    translate(-50%,-50%) keeps it centred on its position point. */
+/* ── Bomb Detonation — bomb shakes with increasing intensity as countdown runs ──
+   --shake-amp: horizontal displacement (set per count level in the component) */
+@keyframes bomb-shake {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(var(--shake-amp)); }
+  40%  { transform: translateX(calc(var(--shake-amp) * -1.2)); }
+  60%  { transform: translateX(calc(var(--shake-amp) * 0.8)); }
+  80%  { transform: translateX(calc(var(--shake-amp) * -1)); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes pete-launch {
+  0%   { transform: translate(0, 0) scale(0.04); opacity: 0; }
+  6%   { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translate(70vw, -75vh) scale(4.5); opacity: 0; }
+}
+
+@keyframes sq-launch {
+  0%   { transform: translate(0, 0) scale(0.04); opacity: 0; }
+  6%   { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translate(70vw, 75vh) scale(5.4); opacity: 0; }
+}
+
+@keyframes debris-fly {
+  from {
+    transform: translateX(0) scale(0.6);
+    opacity: 1;
+  }
+  70% { opacity: 0.75; }
+  to {
+    transform: translateX(var(--fly-dist, 260px)) scale(var(--fly-scale, 3));
+    opacity: 0;
+  }
+}
+
 @keyframes yarn-detonate {
   0%   { transform: translate(-50%, -50%) scale(0);    opacity: 0;   }
   14%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1;   }

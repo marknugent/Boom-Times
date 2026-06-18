@@ -17,12 +17,9 @@ import ToiletAttackAnimation   from './ToiletAttackAnimation.jsx';
 import DancePartyAnimation     from './DancePartyAnimation.jsx';
 import SpaceLaunchAnimation    from './SpaceLaunchAnimation.jsx';
 import UsaAnimation            from './UsaAnimation.jsx';
+import BombDetonationAnimation from './BombDetonationAnimation.jsx';
 import FireworksEffect   from './FireworksEffect.jsx';
 import { TABLE_GROUPS }  from '../progression.js';
-
-// Delay before the level-up banner interrupts the payoff animation.
-// Long enough for the animation to be enjoyed; short enough to feel responsive.
-const LEVEL_UP_DELAY_MS = 5500;
 
 const ANIMATION_MAP = {
   'fart-bomb':       FartBombAnimation,
@@ -32,7 +29,8 @@ const ANIMATION_MAP = {
   'toilet-attack':   ToiletAttackAnimation,
   'dance-party':     DancePartyAnimation,
   'space-launch':    SpaceLaunchAnimation,
-  'usa-usa-usa':     UsaAnimation,
+  'usa-usa-usa':       UsaAnimation,
+  'bomb-detonation':   BombDetonationAnimation,
 };
 
 const TRIPLE_TAP_MS = 600;
@@ -43,16 +41,20 @@ export default function PayoffScreen({ state, dispatch }) {
   // Incrementing this key remounts <PayoffAnim />, restarting the animation
   const [animKey, setAnimKey] = useState(0);
 
-  // Show level-up banner after a delay so the animation plays first
+  // Level-up banner — shown only when the player actively tries to move on,
+  // so it never cuts into an in-progress animation.
   const [showLevelUp, setShowLevelUp] = useState(false);
-  useEffect(() => {
-    if (!levelUp) return;
-    const t = setTimeout(() => {
+  const pendingActionRef = useRef(null);
+
+  function handleNavigate(action) {
+    if (levelUp) {
+      pendingActionRef.current = action;
       setShowLevelUp(true);
       playLevelUpSound();
-    }, LEVEL_UP_DELAY_MS);
-    return () => clearTimeout(t);
-  }, [levelUp]);
+    } else {
+      dispatch(action);
+    }
+  }
 
   // Secret triple-tap bottom-left → replay
   const tapCountRef = useRef(0);
@@ -127,6 +129,39 @@ export default function PayoffScreen({ state, dispatch }) {
 
   const PayoffAnim = ANIMATION_MAP[experiment.id] ?? FartBombAnimation;
 
+  // Level-up screen — replaces the payoff entirely when the player presses a
+  // navigation button. Doing it as an early return (not an overlay) means the
+  // animation, beaker, and cat all unmount cleanly first.
+  if (showLevelUp && levelUp) {
+    return (
+      <div
+        className="w-full h-full flex flex-col items-center justify-center bg-lab-bg
+                   animate-pop-in cursor-pointer select-none"
+        onPointerDown={() => {
+          dispatch({ type: A.CLEAR_LEVEL_UP });
+          if (pendingActionRef.current) {
+            dispatch(pendingActionRef.current);
+            pendingActionRef.current = null;
+          }
+        }}
+      >
+        <FireworksEffect />
+        <div className="flex flex-col items-center gap-4 px-8 text-center relative" style={{ zIndex: 2 }}>
+          <div style={{ fontSize: '7rem', lineHeight: 1 }}>{levelUp.emoji}</div>
+          <div className="font-display text-lab-green text-3xl tracking-widest uppercase">
+            Level {levelUp.level} achieved
+          </div>
+          <div className="font-display text-lab-chalk text-4xl leading-tight">
+            {levelUp.name}
+          </div>
+          <div className="font-body text-lab-chalk/40 text-sm mt-4">
+            tap to continue
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="w-full h-full flex flex-col relative overflow-hidden bg-lab-bg"
@@ -196,48 +231,19 @@ export default function PayoffScreen({ state, dispatch }) {
           <div className="flex flex-col items-center gap-3 w-full max-w-xs">
             <button
               className="btn-primary w-full text-xl py-5"
-              onClick={() => dispatch({ type: A.START_ROUND })}
+              onClick={() => handleNavigate({ type: A.START_ROUND })}
             >
               ANOTHER EXPERIMENT 🧪
             </button>
             <button
               className="btn-secondary w-full text-sm"
-              onClick={() => dispatch({ type: A.NAVIGATE, screen: 'home' })}
+              onClick={() => handleNavigate({ type: A.NAVIGATE, screen: 'home' })}
             >
               Take a break
             </button>
           </div>
         </div>
       </div>
-
-      {/* ── Level-up banner — full screen overlay, tap to dismiss ── */}
-      {showLevelUp && levelUp && (
-        <div
-          className="fixed inset-0 flex flex-col items-center justify-center z-[400]
-                     animate-pop-in cursor-pointer select-none"
-          style={{ background: 'rgba(8, 14, 22, 0.93)' }}
-          onPointerDown={() => {
-            setShowLevelUp(false);
-            dispatch({ type: A.CLEAR_LEVEL_UP });
-          }}
-        >
-          {/* Fireworks bursting behind the text */}
-          <FireworksEffect />
-
-          <div className="flex flex-col items-center gap-4 px-8 text-center relative" style={{ zIndex: 2 }}>
-            <div style={{ fontSize: '7rem', lineHeight: 1 }}>{levelUp.emoji}</div>
-            <div className="font-display text-lab-green text-3xl tracking-widest uppercase">
-              Level {levelUp.level} achieved
-            </div>
-            <div className="font-display text-lab-chalk text-4xl leading-tight">
-              {levelUp.name}
-            </div>
-            <div className="font-body text-lab-chalk/40 text-sm mt-4">
-              tap to continue
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

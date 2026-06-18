@@ -28,9 +28,9 @@ export default function BrewingScreen({ state, dispatch }) {
 
   if (!round) return null;
 
-  const { experiment, firstAttemptCorrect } = round;
+  const { experiment, answeredCorrectly } = round;
   const denominator = 15;
-  const beakerFill  = Math.round((firstAttemptCorrect / denominator) * 100);
+  const beakerFill  = Math.round((answeredCorrectly.length / denominator) * 100);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden">

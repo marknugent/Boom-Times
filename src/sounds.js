@@ -239,6 +239,136 @@ export function stopSound(id) {
 }
 
 /**
+ * Single countdown beep — clean electronic tick for the bomb countdown.
+ * Call at each step: 5, 4, 3, 2, 1.
+ */
+export function playCountdownBeep() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type            = 'square';
+  osc.frequency.value = 880;
+
+  const t = ctx.currentTime;
+  gain.gain.setValueAtTime(0.22, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.10);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.10);
+}
+
+/**
+ * Synthesised explosion boom — six layered sources through a compressor.
+ * No audio file required.
+ *
+ * Layers (all → compressor → destination):
+ *   1. Heavy lowpass noise body   (300 Hz, 4 s)
+ *   2. Mid-range rumble           (120 Hz bandpass, 2.5 s)
+ *   3. Sub-bass pitch sweep       (90→20 Hz sine, 1.3 s)
+ *   4. Ultra-low sub pulse        (45→12 Hz sine, 0.6 s)
+ *   5. Sharp crack                (3000 Hz bandpass, 0.15 s)
+ *   6. High-frequency debris hiss (5000 Hz highpass, 2 s)
+ */
+export function playExplosionBoom() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+
+  // Master compressor — lets each layer be loud without hard clipping
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -6;
+  comp.knee.value      = 6;
+  comp.ratio.value     = 20;
+  comp.attack.value    = 0.001;
+  comp.release.value   = 0.25;
+  comp.connect(ctx.destination);
+
+  function noise(durationSec) {
+    const len  = Math.floor(ctx.sampleRate * durationSec);
+    const buf  = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src  = ctx.createBufferSource();
+    src.buffer = buf;
+    return src;
+  }
+
+  // 1. Heavy noise body
+  const body     = noise(4.0);
+  const bodyLP   = ctx.createBiquadFilter();
+  bodyLP.type    = 'lowpass';
+  bodyLP.frequency.value = 300;
+  const bodyGain = ctx.createGain();
+  bodyGain.gain.setValueAtTime(2.2, now);
+  bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 4.0);
+  body.connect(bodyLP); bodyLP.connect(bodyGain); bodyGain.connect(comp);
+  body.start(now); body.stop(now + 4.0);
+
+  // 2. Mid-range rumble
+  const rumble     = noise(2.5);
+  const rumbleBP   = ctx.createBiquadFilter();
+  rumbleBP.type    = 'bandpass';
+  rumbleBP.frequency.value = 120;
+  rumbleBP.Q.value = 0.7;
+  const rumbleGain = ctx.createGain();
+  rumbleGain.gain.setValueAtTime(1.8, now);
+  rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+  rumble.connect(rumbleBP); rumbleBP.connect(rumbleGain); rumbleGain.connect(comp);
+  rumble.start(now); rumble.stop(now + 2.5);
+
+  // 3. Sub-bass sweep (chest-thump)
+  const sub1     = ctx.createOscillator();
+  const sub1Gain = ctx.createGain();
+  sub1.type = 'sine';
+  sub1.frequency.setValueAtTime(90, now);
+  sub1.frequency.exponentialRampToValueAtTime(20, now + 1.3);
+  sub1Gain.gain.setValueAtTime(2.5, now);
+  sub1Gain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+  sub1.connect(sub1Gain); sub1Gain.connect(comp);
+  sub1.start(now); sub1.stop(now + 1.3);
+
+  // 4. Ultra-low sub pulse
+  const sub2     = ctx.createOscillator();
+  const sub2Gain = ctx.createGain();
+  sub2.type = 'sine';
+  sub2.frequency.setValueAtTime(45, now);
+  sub2.frequency.exponentialRampToValueAtTime(12, now + 0.6);
+  sub2Gain.gain.setValueAtTime(3.0, now);
+  sub2Gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+  sub2.connect(sub2Gain); sub2Gain.connect(comp);
+  sub2.start(now); sub2.stop(now + 0.6);
+
+  // 5. Sharp crack
+  const crack     = noise(0.15);
+  const crackBP   = ctx.createBiquadFilter();
+  crackBP.type    = 'bandpass';
+  crackBP.frequency.value = 3000;
+  crackBP.Q.value = 0.3;
+  const crackGain = ctx.createGain();
+  crackGain.gain.setValueAtTime(2.0, now);
+  crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  crack.connect(crackBP); crackBP.connect(crackGain); crackGain.connect(comp);
+  crack.start(now); crack.stop(now + 0.15);
+
+  // 6. High-frequency debris hiss
+  const hiss     = noise(2.0);
+  const hissHP   = ctx.createBiquadFilter();
+  hissHP.type    = 'highpass';
+  hissHP.frequency.value = 5000;
+  const hissGain = ctx.createGain();
+  hissGain.gain.setValueAtTime(0.6, now);
+  hissGain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+  hiss.connect(hissHP); hissHP.connect(hissGain); hissGain.connect(comp);
+  hiss.start(now); hiss.stop(now + 2.0);
+}
+
+/**
  * Synthesised fireworks burst — no audio file required.
  *
  * Fires 5 staggered noise-burst "shells" using the Web Audio API.

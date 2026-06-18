@@ -6,7 +6,7 @@
  * beaker (top-left), dancing cat (bottom-right), and sound — so what you
  * see here is what players see.
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { A }        from '../gameReducer.js';
 import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
 import SpongeBobCameo  from './SpongeBobCameo.jsx';
@@ -28,6 +28,7 @@ import DancePartyAnimation     from './DancePartyAnimation.jsx';
 import SpaceLaunchAnimation    from './SpaceLaunchAnimation.jsx';
 import UsaAnimation            from './UsaAnimation.jsx';
 import DanceCat                from './DanceCat.jsx';
+import BombDetonationAnimation from './BombDetonationAnimation.jsx';
 
 // Fake round state for the brewing preview
 const MOCK_BREWING_STATE = {
@@ -36,7 +37,7 @@ const MOCK_BREWING_STATE = {
       ingredient:    '🧪',
       brewingLabel:  'Unstable Compound #7',
     },
-    firstAttemptCorrect: 13, // ~87 % fill — realistic mid-high score
+    answeredCorrectly: Array(15).fill(null), // 15/15 = 100% — beaker always full at Brewing
   },
 };
 
@@ -48,32 +49,20 @@ const EXPERIMENTS = [
   { id: 'toilet-attack',   label: 'TOILET ATTACK 🚽',   Anim: ToiletAttackAnimation   },
   { id: 'dance-party',     label: 'DANCE PARTY 🪩',       Anim: DancePartyAnimation, bgMusic: 'dance-party', danceCat: true },
   { id: 'space-launch',   label: 'SPACE LAUNCH 🚀',      Anim: SpaceLaunchAnimation, bgMusic: 'space-launch' },
-  { id: 'usa-usa-usa',     label: 'USA! USA! USA! 🎆',    Anim: UsaAnimation, bgMusic: 'nyan', hideCat: true },
-  { id: 'brewing',         label: 'BREWING... 🧫',        isBrewing: true               },
+  { id: 'usa-usa-usa',       label: 'USA! USA! USA! 🎆',     Anim: UsaAnimation,            bgMusic: 'nyan',             hideCat: true },
+  { id: 'bomb-detonation',  label: 'BOMB DETONATION 💥',   Anim: BombDetonationAnimation, bgMusic: 'bomb-detonation',  hideCat: true },
+  { id: 'brewing',          label: 'BREWING... 🧫',        isBrewing: true               },
 ];
 
-const LEVEL_UP_DELAY_MS = 5500; // matches PayoffScreen exactly
-
 /**
- * Payoff animation preview with real level-up banner timing.
- * Rendered as a separate component so hooks (useEffect/useRef) reset
- * cleanly each time playKey changes via the replay button.
+ * Payoff animation preview. Level-up banner is triggered manually via the
+ * "🎖️ level up now" button — matching real PayoffScreen which only shows it
+ * on player-initiated navigation.
  */
 function PayoffPreview({ playing, playKey, onBack, onReplay }) {
   const { Anim } = playing;
   const [bannerLevel, setBannerLevel] = useState(null);
   const [bannerIdx,   setBannerIdx]   = useState(0);
-  const timerRef = useRef(null);
-
-  // Auto-show the banner after delay — same timing as the real game
-  useEffect(() => {
-    timerRef.current = setTimeout(() => {
-      setBannerIdx(0);
-      setBannerLevel(LEVELS[0]);
-      playLevelUpSound();
-    }, LEVEL_UP_DELAY_MS);
-    return () => clearTimeout(timerRef.current);
-  }, []);
 
   function advanceBanner() {
     const next = bannerIdx + 1;
@@ -113,7 +102,7 @@ function PayoffPreview({ playing, playKey, onBack, onReplay }) {
           <button className="btn-secondary text-sm" onClick={onReplay}>↺ replay</button>
           <button
             className="btn-secondary text-sm border-purple-500/50 text-purple-300"
-            onClick={() => { clearTimeout(timerRef.current); setBannerIdx(0); setBannerLevel(LEVELS[0]); }}
+            onClick={() => { setBannerIdx(0); setBannerLevel(LEVELS[0]); playLevelUpSound(); }}
           >
             🎖️ level up now
           </button>

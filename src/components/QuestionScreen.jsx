@@ -87,7 +87,7 @@ export default function QuestionScreen({ state, dispatch }) {
       // ramps up the odds the longer the player goes without one.
       sinceBonusRef.current += 1;
       const bonusChance =
-        sinceBonusRef.current < 8  ? 0.11 :
+        sinceBonusRef.current < 8  ? 0.12 :
         sinceBonusRef.current < 15 ? 0.20 :
         0.60;
 
@@ -130,7 +130,7 @@ export default function QuestionScreen({ state, dispatch }) {
 
   const { experiment, firstAttemptCorrect, answeredCorrectly } = round;
   const denominator     = 15;
-  const beakerFill      = Math.round((firstAttemptCorrect / denominator) * 100);
+  const beakerFill      = Math.round((answeredCorrectly.length / denominator) * 100);
 
   const hasFeedback     = question.feedback !== null;
   const feedbackOk      = hasFeedback && question.feedback.correct;

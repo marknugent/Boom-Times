@@ -72,6 +72,18 @@ export const EXPERIMENTS = [
     emoji: '🚀',
     bgMusic: 'space-launch',   // loops rocket.mp3 for the full payoff
   },
+  {
+    id: 'bomb-detonation',
+    name: 'BOMB DETONATION',
+    brewingLabel: 'Brewing: BOMB DETONATION 💣',
+    payoffText: 'KABOOM!',
+    ingredient: '💣',
+    emoji: '💥',
+    // bgMusic is a fake ID — the animation component self-manages all audio
+    // (countdown beeps, explosion boom, pounce-pop-parade at detonation).
+    bgMusic:  'bomb-detonation',
+    hideCat:  true,
+  },
 ];
 
 // Experiments currently in rotation — excludes anything flagged `disabled`.
