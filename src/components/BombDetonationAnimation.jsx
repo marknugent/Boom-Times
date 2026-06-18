@@ -26,25 +26,25 @@ import { playSound, stopSound, playCountdownBeep, playExplosionBoom } from '../s
 
 const STEP_MS = 1200;
 const GIF_DURATION_MS = 3470; // one full cycle of ex.gif (52 frames @ ~67ms each)
-const BOMB_TOP = 'calc(55% - 60px)'; // shared by bomb, debris, and pete origin
+const BOMB_TOP = 'calc(55% - 75px)'; // shared by bomb, debris, and pete origin
 
 const PETE_FRAMES = [
   '/pete8.png','/pete9.png','/pete10.png','/pete11.png','/pete12.png',
   '/pete1.png','/pete2.png','/pete3.png','/pete4.png','/pete5.png','/pete6.png','/pete7.png',
 ];
-const PETE_FRAME_MS  = 150;
+const PETE_FRAME_MS  = 143;
 const PETE_DELAY_MS  = 1000;  // ms after detonation before pete appears
 const PETE_LAUNCH_MS = 3000;  // travel duration (matches pete-launch keyframe)
 
 const SQ_FRAMES = Array.from({ length: 12 }, (_, i) => `/sq${i + 1}.png`);
-const SQ_FRAME_MS  = 150;
+const SQ_FRAME_MS  = 143;
 const SQ_DELAY_MS  = 2500;  // ms after detonation before sq appears
 const SQ_LAUNCH_MS = 3000;
 
 // Shared origin: bomb emoji center ≈ top:55% left:50%
 const SPRITE_ORIGIN   = { top: '55%', left: '50%' };
 const SPRITE_MARGIN_X = -75;   // centres a 150px-wide sprite horizontally
-const SPRITE_MARGIN_Y = -117;  // centres vertically + shifts origin up 42px total
+const SPRITE_MARGIN_Y = -132;  // centres vertically + shifts origin up 57px total
 
 const DEBRIS_COLORS = ['#ff6b00', '#ffcc00', '#ff3300', '#cccccc', '#ff8800', '#ffffff', '#ff4400'];
 
@@ -87,6 +87,15 @@ export default function BombDetonationAnimation() {
   const [sqVisible, setSqVisible]   = useState(false);
   const exploded = count === 0;
   const debris = useMemo(makeDebris, []);
+
+  // Preload all sprite frames immediately so they're cached by the time
+  // they're needed (Pete at +7s, SQ at +8.5s from component mount)
+  useEffect(() => {
+    [...PETE_FRAMES, ...SQ_FRAMES, '/ex.gif', '/ex1.png'].forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   useEffect(() => {
     playCountdownBeep();
