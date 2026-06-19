@@ -8,7 +8,7 @@
  */
 import { useState } from 'react';
 import { A }        from '../gameReducer.js';
-import { BUILD_NUM, BUILD_TIME } from 'virtual:build-info';
+import { APP_VERSION, BUILD_ID, BUILD_TIME } from 'virtual:build-info';
 import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
 import SpongeBobCameo  from './SpongeBobCameo.jsx';
 import CatCloseupCameo from './CatCloseupCameo.jsx';
@@ -264,7 +264,7 @@ export default function DevScreen({ dispatch }) {
         🔧 dev mode
       </div>
       <div className="font-body text-lab-chalk/40 text-[10px] tracking-wide -mt-2">
-        build #{BUILD_NUM} · {new Date(BUILD_TIME).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+        v{APP_VERSION} · build {BUILD_ID}
       </div>
       <div className="font-display text-3xl text-lab-chalk">
         Experiment Lab

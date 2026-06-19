@@ -44,8 +44,8 @@ const SQ_LAUNCH_MS = 3000;
 const TOASTA_DELAY_MS  = 1750; // ms after detonation before toaster appears
 const TOASTA_LAUNCH_MS = 3000;
 
-const SQ_PEEK_DELAY_MS = 6200; // ms after detonation — after sq fully exits (2500+3000+buffer)
-const SQ_PEEK_TOTAL_MS = 3400; // 0.8s slide in + 1.8s pause + 0.8s slide out
+const SQ_PEEK_DELAY_MS = 6600; // ms after detonation (12.6s from start)
+const SQ_PEEK_TOTAL_MS = 3200; // 0.8s slide in + 1.6s pause + 0.8s slide out
 
 // Shared origin: bomb emoji center ≈ top:55% left:50%
 const SPRITE_ORIGIN   = { top: '55%', left: '50%' };
