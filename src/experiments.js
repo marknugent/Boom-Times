@@ -84,32 +84,53 @@ export const EXPERIMENTS = [
     bgMusic:  'bomb-detonation',
     hideCat:  true,
   },
+  {
+    id: 'usa-usa-usa',
+    name: 'USA! USA! USA!',
+    brewingLabel: 'Brewing: USA! USA! USA! 🎆',
+    payoffText: 'USA! USA! USA!',
+    ingredient: '🎆',
+    emoji: '🎆',
+    bgMusic:  'nyan',
+    hideCat:  true,
+  },
 ];
 
 // Experiments currently in rotation — excludes anything flagged `disabled`.
 const ACTIVE_EXPERIMENTS = EXPERIMENTS.filter(e => !e.disabled);
 
-/** Pick a random experiment, re-rolling once if it matches the previous round. */
-let lastExperimentId = null;
+// How many recent picks to exclude from the next selection.
+// With 7 active experiments this comfortably avoids A→B→A patterns.
+const HISTORY_SIZE = 2;
+const recentIds = [];
 
+function pushRecent(id) {
+  recentIds.push(id);
+  if (recentIds.length > HISTORY_SIZE) recentIds.shift();
+}
+
+/** Pick a random experiment, avoiding the last two shown. */
 export function getRandomExperiment() {
+  // Only filter if there are more options than the history window;
+  // otherwise we'd loop forever with very few active experiments.
+  const canFilter = ACTIVE_EXPERIMENTS.length > HISTORY_SIZE;
   let pick;
   do {
     pick = ACTIVE_EXPERIMENTS[Math.floor(Math.random() * ACTIVE_EXPERIMENTS.length)];
-  } while (pick.id === lastExperimentId && ACTIVE_EXPERIMENTS.length > 1);
-  lastExperimentId = pick.id;
+  } while (canFilter && recentIds.includes(pick.id));
+  pushRecent(pick.id);
   return pick;
 }
 
 /**
  * Record the experiment actually shown to the player this round, whether it
  * came from getRandomExperiment() or was reused from a locked pending
- * experiment. Keeps the "no repeat" check in getRandomExperiment honest —
- * without this, reused pending experiments don't update lastExperimentId,
- * so the next fresh pick could repeat the one the player just saw.
+ * experiment. Keeps the history honest — without this, reused pending
+ * experiments don't update recentIds, so the next fresh pick could repeat
+ * the one the player just saw.
  */
 export function recordShownExperiment(id) {
-  lastExperimentId = id;
+  pushRecent(id);
 }
 
 // ─── Pending-experiment persistence ──────────────────────────────────────────
