@@ -3,12 +3,14 @@
  * A segmented control at the top lets you browse any player's stats without
  * affecting the active game session.
  */
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { A } from '../gameReducer.js';
 import { TABLE_GROUPS, loadProgression } from '../progression.js';
 import { getFactIdsForTable, isFactMastered, loadSRSState } from '../srs.js';
 import { VISIBLE_PLAYERS, TEST_PLAYER } from '../players.js';
 import { getLevelFromPct } from '../levels.js';
+import { downloadBackup, validateBackup, restoreBackup } from '../backup.js';
+import { APP_VERSION } from 'virtual:build-info';
 
 // All 12 table numbers in display order
 const ALL_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -92,6 +94,34 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
   // or the first in the list if the active player is the test profile)
   const defaultViewed = VISIBLE_PLAYERS.includes(currentPlayer) ? currentPlayer : VISIBLE_PLAYERS[0];
   const [viewedPlayer, setViewedPlayer] = useState(defaultViewed);
+
+  // Backup / restore state
+  const fileInputRef    = useRef(null);
+  const [confirmBackup, setConfirmBackup] = useState(null);  // parsed JSON pending confirmation
+  const [importError,   setImportError]   = useState(null);
+
+  function handleFileChange(e) {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        const { ok, error } = validateBackup(parsed);
+        if (!ok) { setImportError(error); return; }
+        setConfirmBackup(parsed);
+      } catch {
+        setImportError('Could not read the file — make sure it is a valid .json backup.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function handleRestoreConfirm() {
+    restoreBackup(confirmBackup);
+    window.location.reload();
+  }
 
   // Always start un-armed — only the explicit "Test User" tap arms dev mode.
   useEffect(() => { onTestUserViewChange?.(false); }, []);
@@ -222,8 +252,74 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
         </div>
       </div>
 
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+
+      {/* ── Backup / restore ── */}
+      {confirmBackup ? (
+        /* Confirmation panel */
+        <div className="lab-panel px-4 py-3 shrink-0 flex flex-col gap-2">
+          <p className="font-body text-xs text-lab-chalk/70 text-center leading-snug">
+            Replace all progress with backup from{' '}
+            <span className="text-lab-chalk">
+              {new Date(confirmBackup.exportedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </span>
+            ?{' '}
+            <span className="text-red-400">This cannot be undone.</span>
+          </p>
+          <div className="flex gap-2">
+            <button
+              className="flex-1 font-body text-xs py-2 rounded-lg bg-red-700/60 hover:bg-red-700 text-white transition-colors"
+              onClick={handleRestoreConfirm}
+            >
+              Yes, restore
+            </button>
+            <button
+              className="flex-1 font-body text-xs py-2 rounded-lg bg-lab-border/30 hover:bg-lab-border/50 text-lab-chalk/60 transition-colors"
+              onClick={() => setConfirmBackup(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : importError ? (
+        /* Error panel */
+        <div className="lab-panel px-4 py-3 shrink-0 flex flex-col gap-2">
+          <p className="font-body text-xs text-red-400 text-center leading-snug">{importError}</p>
+          <button
+            className="font-body text-xs text-lab-chalk/40 hover:text-lab-chalk/70 transition-colors text-center"
+            onClick={() => setImportError(null)}
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : (
+        /* Export / restore buttons */
+        <div className="flex gap-3 justify-center shrink-0">
+          <button
+            className="font-body text-xs text-lab-chalk/25 hover:text-lab-chalk/50 transition-colors py-1"
+            onClick={() => downloadBackup(APP_VERSION)}
+          >
+            Export Progress (All Players)
+          </button>
+          <span className="text-lab-chalk/15 text-xs self-center">·</span>
+          <button
+            className="font-body text-xs text-lab-chalk/25 hover:text-lab-chalk/50 transition-colors py-1"
+            onClick={() => { setImportError(null); fileInputRef.current?.click(); }}
+          >
+            Restore Progress
+          </button>
+        </div>
+      )}
+
       {/* Test User link — only shown when viewing kids */}
-      {viewedPlayer !== TEST_PLAYER && (
+      {viewedPlayer !== TEST_PLAYER && !confirmBackup && !importError && (
         <button
           className="font-body text-xs text-lab-chalk/25 hover:text-lab-chalk/50 transition-colors shrink-0 py-1 text-center"
           onClick={() => { setViewedPlayer(TEST_PLAYER); onTestUserViewChange?.(true); }}

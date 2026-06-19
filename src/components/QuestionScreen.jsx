@@ -231,7 +231,7 @@ export default function QuestionScreen({ state, dispatch }) {
         {/* Dark overlay when hint is active */}
         {showHintOverlay && (
           <div
-            className="absolute inset-0 bg-black/50 z-20"
+            className="absolute inset-0 z-20"
             onClick={() => dispatch({ type: A.DISMISS_HINT })}
           />
         )}
