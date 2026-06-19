@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Exposes the iOS safe-area-inset-top to JavaScript via getComputedStyle. */
+    --sat: env(safe-area-inset-top, 0px);
+  }
+
   html,
   body,
   #root {

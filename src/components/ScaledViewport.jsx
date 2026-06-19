@@ -23,8 +23,28 @@
 
 import { useState, useEffect } from 'react';
 
-const DESIGN_W = 560;
-const DESIGN_H = 932;
+const DESIGN_W    = 560;
+const DESIGN_H    = 932;
+const EXTRA_TOP   = 10; // px of extra breathing room above scaled content
+
+/**
+ * Read the iOS safe-area-inset-top via the --sat CSS variable we set in
+ * index.css. Returns 0 in non-PWA contexts (where the env() resolves to 0).
+ */
+function getSafeAreaTop() {
+  try {
+    return parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue('--sat')
+    ) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function getTopPad() {
+  // Use whichever is larger: the device safe area or our minimum breathing room.
+  return Math.max(getSafeAreaTop(), EXTRA_TOP);
+}
 
 function getViewportSize() {
   // visualViewport excludes browser chrome (iOS address bar, bottom toolbar).
@@ -32,7 +52,8 @@ function getViewportSize() {
   const vv = window.visualViewport;
   return {
     w: vv ? vv.width  : window.innerWidth,
-    h: vv ? vv.height : window.innerHeight,
+    // Subtract top padding so the scale calculation matches the available space.
+    h: (vv ? vv.height : window.innerHeight) - getTopPad(),
   };
 }
 
@@ -42,12 +63,15 @@ function getScale() {
 }
 
 export default function ScaledViewport({ children }) {
-  const [scale, setScale] = useState(getScale);
+  const [scale,  setScale]  = useState(getScale);
+  const [topPad, setTopPad] = useState(getTopPad);
 
   useEffect(() => {
-    function onResize() { setScale(getScale()); }
+    function onResize() {
+      setTopPad(getTopPad());
+      setScale(getScale());
+    }
     window.addEventListener('resize', onResize);
-    // visualViewport fires its own resize when browser chrome shows/hides on iOS
     window.visualViewport?.addEventListener('resize', onResize);
     return () => {
       window.removeEventListener('resize', onResize);
@@ -59,16 +83,19 @@ export default function ScaledViewport({ children }) {
     /*
      * Outer shell: full viewport, lab-bg fill so letterbox bars match
      * the app background, flex-centred so the inner box sits in the middle.
+     * paddingTop reserves space for the iOS status bar (PWA mode) + extra room.
      */
     <div
       style={{
         width:           '100vw',
         height:          '100dvh',
+        paddingTop:      topPad,
         background:      '#0f1923',
         display:         'flex',
         alignItems:      'center',
         justifyContent:  'center',
         overflow:        'hidden',
+        boxSizing:       'border-box',
       }}
     >
       {/*
