@@ -27,99 +27,88 @@
  *   z=50  foreground launch smoke (highest — in front of everything)
  */
 
+import { useEffect, useState } from 'react';
+import DancingCat from './DancingCat.jsx';
+import { playRocketIgnitionBoom } from '../sounds.js';
+
+// Extra ms of stillness before ignition — lets Pudge dance visibly on the ground.
+// Must match bgMusicDelay in experiments.js / DevScreen.jsx.
+const LAUNCH_OFFSET = 1500;
+
+// ── Petey easter egg ───────────────────────────────────────────────────────
+const PETE_FRAMES   = ['/pete1.png','/pete2.png','/pete3.png','/pete4.png','/pete5.png','/pete6.png','/pete7.png','/pete8.png','/pete9.png','/pete10.png','/pete11.png','/pete12.png'];
+const PETE_FRAME_MS = 120;   // slightly faster than bomb-detonation for comedy
+const PETE_DELAY_MS = 20000; // 20 s from screen appearance (not affected by LAUNCH_OFFSET)
+const PETE_DUR_MS   = 9000;  // time to traverse the screen
+const PETE_SY       = -200;  // starts 200 px above viewport
+
 // ── Background star field ──────────────────────────────────────────────────
 // Small CSS pixel-dots at z=4 — behind emoji objects (z=5) and the ground
 // (z=10), so they only appear in the sky/space area.  Durations 9 – 14 s
 // make them drift noticeably slower than the foreground objects, adding
 // convincing depth.  Uses the same star-scroll keyframe (--sy, --op).
+// dur is inversely proportional to size (bigger = closer = faster), ×1.667 vs prior.
+// s:1 → ~22000-27000ms  s:2 → ~17000-19000ms  s:3 → ~12500-14000ms  s:4 → ~9000-10000ms
+// All delays offset by LAUNCH_OFFSET so stars only stream in after the rocket fires.
 const BG_STARS = [
   // ── On-screen (positive sy) ──
-  { left:  2, sy:  80, op: 0.65, s: 2, dur:  9800, delay:   0 },
-  { left:  8, sy: 200, op: 0.50, s: 1, dur:  8600, delay: 150 },
-  { left: 14, sy: 430, op: 0.60, s: 2, dur: 10400, delay: 300 },
-  { left: 20, sy: 690, op: 0.45, s: 1, dur:  9200, delay: 100 },
-  { left: 26, sy: 290, op: 0.70, s: 2, dur: 11000, delay: 450 },
-  { left: 33, sy: 560, op: 0.55, s: 1, dur:  9600, delay: 200 },
-  { left: 39, sy: 130, op: 0.65, s: 2, dur: 10800, delay: 350 },
-  { left: 45, sy: 790, op: 0.40, s: 1, dur:  8800, delay:  50 },
-  { left: 52, sy: 380, op: 0.72, s: 2, dur: 10200, delay: 500 },
-  { left: 58, sy: 220, op: 0.58, s: 1, dur:  9400, delay: 250 },
-  { left: 65, sy: 640, op: 0.62, s: 2, dur: 11200, delay: 400 },
-  { left: 71, sy: 100, op: 0.48, s: 1, dur:  9000, delay: 100 },
-  { left: 78, sy: 460, op: 0.68, s: 2, dur: 10600, delay: 300 },
-  { left: 84, sy: 320, op: 0.54, s: 1, dur:  9200, delay: 200 },
-  { left: 90, sy: 860, op: 0.42, s: 2, dur:  8600, delay: 600 },
-  { left: 96, sy: 180, op: 0.70, s: 2, dur: 10000, delay: 350 },
+  { left:  2, sy:  80, op: 0.65, s: 3, dur: 13000, delay:    0 + LAUNCH_OFFSET },
+  { left:  8, sy: 200, op: 0.50, s: 1, dur: 24200, delay:  150 + LAUNCH_OFFSET },
+  { left: 14, sy: 430, op: 0.60, s: 4, dur:  9700, delay:  300 + LAUNCH_OFFSET },
+  { left: 20, sy: 690, op: 0.45, s: 1, dur: 22500, delay:  100 + LAUNCH_OFFSET },
+  { left: 26, sy: 290, op: 0.70, s: 3, dur: 13300, delay:  450 + LAUNCH_OFFSET },
+  { left: 33, sy: 560, op: 0.55, s: 1, dur: 25000, delay:  200 + LAUNCH_OFFSET },
+  { left: 39, sy: 130, op: 0.65, s: 2, dur: 17500, delay:  350 + LAUNCH_OFFSET },
+  { left: 45, sy: 790, op: 0.40, s: 1, dur: 23300, delay:   50 + LAUNCH_OFFSET },
+  { left: 52, sy: 380, op: 0.72, s: 4, dur:  9200, delay:  500 + LAUNCH_OFFSET },
+  { left: 58, sy: 220, op: 0.58, s: 1, dur: 24200, delay:  250 + LAUNCH_OFFSET },
+  { left: 65, sy: 640, op: 0.62, s: 3, dur: 13700, delay:  400 + LAUNCH_OFFSET },
+  { left: 71, sy: 100, op: 0.48, s: 1, dur: 22500, delay:  100 + LAUNCH_OFFSET },
+  { left: 78, sy: 460, op: 0.68, s: 4, dur: 10000, delay:  300 + LAUNCH_OFFSET },
+  { left: 84, sy: 320, op: 0.54, s: 1, dur: 23300, delay:  200 + LAUNCH_OFFSET },
+  { left: 90, sy: 860, op: 0.42, s: 2, dur: 16700, delay:  600 + LAUNCH_OFFSET },
+  { left: 96, sy: 180, op: 0.70, s: 3, dur: 12500, delay:  350 + LAUNCH_OFFSET },
   // ── Streaming in from above (negative sy) ──
-  { left:  5, sy:  -100, op: 0.62, s: 2, dur: 10500, delay: 200 },
-  { left: 11, sy:  -280, op: 0.50, s: 1, dur:  9800, delay: 400 },
-  { left: 18, sy:  -520, op: 0.68, s: 2, dur: 11800, delay: 100 },
-  { left: 24, sy:  -170, op: 0.55, s: 1, dur: 10200, delay: 550 },
-  { left: 30, sy:  -650, op: 0.45, s: 2, dur: 12000, delay: 300 },
-  { left: 37, sy:  -390, op: 0.72, s: 2, dur: 11000, delay: 150 },
-  { left: 43, sy:  -820, op: 0.38, s: 1, dur: 13000, delay: 500 },
-  { left: 49, sy:  -230, op: 0.65, s: 2, dur: 10400, delay: 250 },
-  { left: 56, sy:  -450, op: 0.58, s: 1, dur: 11400, delay: 400 },
-  { left: 62, sy:  -310, op: 0.70, s: 2, dur: 10800, delay:  50 },
-  { left: 69, sy:  -680, op: 0.48, s: 2, dur: 12400, delay: 350 },
-  { left: 75, sy:  -140, op: 0.75, s: 2, dur:  9600, delay: 200 },
-  { left: 82, sy:  -520, op: 0.52, s: 1, dur: 11600, delay: 450 },
-  { left: 88, sy:  -850, op: 0.42, s: 2, dur: 13500, delay: 600 },
-  { left: 94, sy:  -360, op: 0.60, s: 2, dur: 10600, delay: 150 },
-  { left: 10, sy:  -730, op: 0.45, s: 1, dur: 12800, delay: 700 },
-  { left: 36, sy:  -160, op: 0.68, s: 2, dur: 10000, delay: 300 },
-  { left: 73, sy:  -990, op: 0.38, s: 2, dur: 14000, delay: 800 },
-  { left: 53, sy:  -580, op: 0.55, s: 1, dur: 11900, delay: 450 },
+  { left:  5, sy:  -100, op: 0.62, s: 2, dur: 16700, delay:  200 + LAUNCH_OFFSET },
+  { left: 11, sy:  -280, op: 0.50, s: 1, dur: 24200, delay:  400 + LAUNCH_OFFSET },
+  { left: 18, sy:  -520, op: 0.68, s: 4, dur:  9700, delay:  100 + LAUNCH_OFFSET },
+  { left: 24, sy:  -170, op: 0.55, s: 1, dur: 23300, delay:  550 + LAUNCH_OFFSET },
+  { left: 30, sy:  -650, op: 0.45, s: 2, dur: 18300, delay:  300 + LAUNCH_OFFSET },
+  { left: 37, sy:  -390, op: 0.72, s: 3, dur: 13300, delay:  150 + LAUNCH_OFFSET },
+  { left: 43, sy:  -820, op: 0.38, s: 1, dur: 26700, delay:  500 + LAUNCH_OFFSET },
+  { left: 49, sy:  -230, op: 0.65, s: 2, dur: 17500, delay:  250 + LAUNCH_OFFSET },
+  { left: 56, sy:  -450, op: 0.58, s: 1, dur: 25000, delay:  400 + LAUNCH_OFFSET },
+  { left: 62, sy:  -310, op: 0.70, s: 4, dur:  9200, delay:   50 + LAUNCH_OFFSET },
+  { left: 69, sy:  -680, op: 0.48, s: 2, dur: 18300, delay:  350 + LAUNCH_OFFSET },
+  { left: 75, sy:  -140, op: 0.75, s: 3, dur: 12500, delay:  200 + LAUNCH_OFFSET },
+  { left: 82, sy:  -520, op: 0.52, s: 1, dur: 24200, delay:  450 + LAUNCH_OFFSET },
+  { left: 88, sy:  -850, op: 0.42, s: 2, dur: 19200, delay:  600 + LAUNCH_OFFSET },
+  { left: 94, sy:  -360, op: 0.60, s: 2, dur: 17500, delay:  150 + LAUNCH_OFFSET },
+  { left: 10, sy:  -730, op: 0.45, s: 1, dur: 25800, delay:  700 + LAUNCH_OFFSET },
+  { left: 36, sy:  -160, op: 0.68, s: 4, dur:  9700, delay:  300 + LAUNCH_OFFSET },
+  { left: 73, sy:  -990, op: 0.38, s: 2, dur: 19200, delay:  800 + LAUNCH_OFFSET },
+  { left: 53, sy:  -580, op: 0.55, s: 1, dur: 25000, delay:  450 + LAUNCH_OFFSET },
 ];
 
 // ── Space objects ──────────────────────────────────────────────────────────
-// Emoji celestial bodies that stream downward as the rocket ascends.
-// sy = starting translateY in px: positive = already on-screen, negative = above viewport.
-// s  = font-size CSS string. Uses the star-scroll keyframe.
+// Parallax rule: larger = closer = faster (shorter dur). Excludes PNG_OBJECTS.
+// All delays include LAUNCH_OFFSET so nothing moves before the rocket fires.
+// dur values are ~1.67× prior pass (40% speed reduction).
 const SPACE_OBJECTS = [
-  // ── Stars / sparkles (small, numerous, fast) ──
-  { emoji: '⭐', left:  5, sy:  80, op: 0.90, s: '1.4rem', dur: 4800, delay:   0 },
-  { emoji: '✨', left: 18, sy: 250, op: 0.80, s: '1.2rem', dur: 4400, delay: 100 },
-  { emoji: '💫', left: 31, sy: 420, op: 0.85, s: '1.6rem', dur: 5000, delay: 200 },
-  { emoji: '🌟', left: 44, sy: 150, op: 0.92, s: '1.8rem', dur: 4600, delay: 150 },
-  { emoji: '⭐', left: 57, sy: 560, op: 0.78, s: '1.2rem', dur: 4200, delay:  50 },
-  { emoji: '✨', left: 70, sy: 330, op: 0.88, s: '1.4rem', dur: 4700, delay: 300 },
-  { emoji: '💫', left: 83, sy:  70, op: 0.82, s: '1.5rem', dur: 5100, delay: 400 },
-  { emoji: '🌟', left: 93, sy: 480, op: 0.70, s: '1.3rem', dur: 4300, delay: 250 },
-  { emoji: '⭐', left: 12, sy: 720, op: 0.65, s: '1.2rem', dur: 4100, delay: 500 },
-  { emoji: '✨', left: 25, sy: 130, op: 0.88, s: '1.6rem', dur: 4900, delay: 350 },
-  { emoji: '💫', left: 62, sy: 860, op: 0.55, s: '1.1rem', dur: 4000, delay: 100 },
-  { emoji: '⭐', left: 87, sy: 290, op: 0.80, s: '1.4rem', dur: 4600, delay: 450 },
-  { emoji: '✨', left:  8, sy: -150, op: 0.85, s: '1.3rem', dur: 5500, delay: 400 },
-  { emoji: '⭐', left: 22, sy: -320, op: 0.72, s: '1.5rem', dur: 5800, delay: 200 },
-  { emoji: '💫', left: 48, sy: -180, op: 0.88, s: '1.4rem', dur: 5200, delay: 600 },
-  { emoji: '🌟', left: 75, sy: -420, op: 0.76, s: '1.6rem', dur: 6000, delay: 350 },
-  { emoji: '⭐', left: 91, sy:  -90, op: 0.82, s: '1.2rem', dur: 5000, delay: 150 },
-  { emoji: '✨', left: 38, sy: -560, op: 0.68, s: '1.3rem', dur: 6300, delay: 500 },
-  { emoji: '💫', left: 65, sy: -280, op: 0.80, s: '1.5rem', dur: 5600, delay: 250 },
-  { emoji: '⭐', left: 14, sy: -700, op: 0.60, s: '1.2rem', dur: 6800, delay: 700 },
-  { emoji: '✨', left: 55, sy: 640,  op: 0.68, s: '1.1rem', dur: 4100, delay: 600 },
-  { emoji: '⭐', left: 40, sy: 380,  op: 0.75, s: '1.3rem', dur: 4500, delay: 450 },
-  { emoji: '💫', left: 96, sy: 180,  op: 0.80, s: '1.4rem', dur: 4700, delay: 200 },
-  // ── Planets & moons — delay until ground is off screen (~3000ms) ──
-  { emoji: '🪐', left: 15, sy: -200, op: 1.0,  s: '3.2rem', dur: 7200, delay: 3200 },
-  { emoji: '🌙', left: 78, sy:  200, op: 0.95, s: '2.8rem', dur: 6500, delay: 3000 },
-  { emoji: '🪐', left: 52, sy: -650, op: 1.0,  s: '2.5rem', dur: 8000, delay: 3800 },
-  { emoji: '🌕', left: 88, sy: -420, op: 0.90, s: '2.4rem', dur: 7400, delay: 3400 },
-  { emoji: '🌙', left:  4, sy:  450, op: 0.85, s: '2.2rem', dur: 6200, delay: 3200 },
-  { emoji: '🪐', left: 72, sy: -850, op: 1.0,  s: '3.0rem', dur: 8600, delay: 4200 },
-  // ── Comets — start appearing as sky fades ──
-  { emoji: '☄️', left: 32, sy: -380, op: 0.95, s: '2.6rem', dur: 6800, delay: 2900 },
-  { emoji: '☄️', left: 82, sy: -550, op: 1.0,  s: '2.8rem', dur: 7000, delay: 2800 },
-  { emoji: '☄️', left: 10, sy: -850, op: 0.95, s: '2.4rem', dur: 7800, delay: 3500 },
-  // ── Fun objects — aliens, UFOs, satellite — well after ground is gone ──
-  { emoji: '👽',  left: 73, sy:  -300, op: 1.0,  s: '3.5rem', dur: 8500, delay: 3800 },
-  { emoji: '🛸',  left: 20, sy:  -500, op: 1.0,  s: '3.8rem', dur: 9000, delay: 4200 },
-  { emoji: '🛰️', left: 62, sy:  -150, op: 1.0,  s: '3.0rem', dur: 7600, delay: 3500 },
-  { emoji: '👽',  left: 88, sy:  -800, op: 0.95, s: '2.8rem', dur: 8200, delay: 4800 },
-  { emoji: '🛸',  left:  7, sy:  -600, op: 1.0,  s: '3.2rem', dur: 8800, delay: 5200 },
-  { emoji: '🛰️', left: 45, sy:  -900, op: 0.90, s: '2.6rem', dur: 9200, delay: 4500 },
-  { emoji: '👾',  left: 36, sy: -1050, op: 1.0,  s: '3.4rem', dur: 9500, delay: 5500 },
+  // ── Stars / sparkles — small, slowest (far away) ──
+  { emoji: '⭐', left:  5, sy:  80, op: 0.90, s: '1.4rem', dur: 11700, delay:    0 + LAUNCH_OFFSET },
+  { emoji: '🌟', left: 44, sy: 150, op: 0.92, s: '1.8rem', dur:  9700, delay:  150 + LAUNCH_OFFSET },
+  { emoji: '💫', left: 83, sy:  70, op: 0.82, s: '1.5rem', dur: 10800, delay:  400 + LAUNCH_OFFSET },
+  // ── Planets & moons — medium size, medium speed ──
+  { emoji: '🪐', left: 15, sy: -200, op: 1.0,  s: '3.2rem', dur: 5300, delay: 3200 + LAUNCH_OFFSET },
+  { emoji: '🌙', left: 78, sy:  200, op: 0.95, s: '2.8rem', dur: 6000, delay: 3000 + LAUNCH_OFFSET },
+  // ── Comet — medium-large, noticeably faster ──
+  { emoji: '☄️', left: 32, sy: -380, op: 0.95, s: '2.6rem', dur: 6300, delay: 2900 + LAUNCH_OFFSET },
+  // ── Fun objects — large, fastest (closest layer) ──
+  { emoji: '👽',  left: 73, sy:  -300, op: 1.0,  s: '3.5rem', dur: 4300, delay: 3800 + LAUNCH_OFFSET },
+  { emoji: '🛸',  left: 20, sy:  -500, op: 1.0,  s: '3.8rem', dur: 4000, delay: 4200 + LAUNCH_OFFSET },
+  { emoji: '🛰️', left: 62, sy:  -150, op: 1.0,  s: '3.0rem', dur: 5300, delay: 3500 + LAUNCH_OFFSET },
+  { emoji: '👾',  left: 36, sy: -1050, op: 1.0,  s: '3.4rem', dur: 4700, delay: 5500 + LAUNCH_OFFSET },
 ];
 
 // ── PNG celestial drifters ─────────────────────────────────────────────────
@@ -133,10 +122,10 @@ const SPACE_OBJECTS = [
 // Each one is fully faded out before the next fades in.
 // Spin durations are intentionally slow (~16–22 s per rotation).
 const PNG_OBJECTS = [
-  { src: '/garfield.png',  left: 20, sy:  -350, op: 1.0, dur: 8000, delay:  3200, spin: 18000, reverse: false },
-  { src: '/spongebob.png', left: 62, sy:  -250, op: 1.0, dur: 8000, delay: 11500, spin: 16000, reverse: true  },
-  { src: '/garfield.png',  left: 75, sy:  -800, op: 0.9, dur: 8500, delay: 20000, spin: 22000, reverse: true  },
-  { src: '/spongebob.png', left:  8, sy:  -600, op: 0.9, dur: 8500, delay: 29000, spin: 20000, reverse: false },
+  { src: '/garfield.png',  left: 20, sy:  -350, op: 1.0, dur: 8000, delay:  3200 + LAUNCH_OFFSET, spin: 18000, reverse: false },
+  { src: '/spongebob.png', left: 62, sy:  -250, op: 1.0, dur: 8000, delay: 11500 + LAUNCH_OFFSET, spin: 16000, reverse: true  },
+  { src: '/garfield.png',  left: 75, sy:  -800, op: 0.9, dur: 8500, delay: 20000 + LAUNCH_OFFSET, spin: 22000, reverse: true  },
+  { src: '/spongebob.png', left:  8, sy:  -600, op: 0.9, dur: 8500, delay: 29000 + LAUNCH_OFFSET, spin: 20000, reverse: false },
 ];
 
 // ── Launch smoke ───────────────────────────────────────────────────────────
@@ -149,18 +138,18 @@ const PNG_OBJECTS = [
 // z=50 puts these in front of everything.
 const SMOKE_PUFFS = [
   // Central downward plume
-  { sdx:    '0px', sdy: '230px', ssc: 5.0, size: '3.5rem', delay: 400, dur: 1800 },
-  { sdx:   '22px', sdy: '310px', ssc: 4.8, size: '3.0rem', delay: 450, dur: 2000 },
-  { sdx:  '-18px', sdy: '360px', ssc: 5.4, size: '4.0rem', delay: 480, dur: 1700 },
+  { sdx:    '0px', sdy: '230px', ssc: 5.0, size: '3.5rem', delay: 400 + LAUNCH_OFFSET, dur: 1800 },
+  { sdx:   '22px', sdy: '310px', ssc: 4.8, size: '3.0rem', delay: 450 + LAUNCH_OFFSET, dur: 2000 },
+  { sdx:  '-18px', sdy: '360px', ssc: 5.4, size: '4.0rem', delay: 480 + LAUNCH_OFFSET, dur: 1700 },
   // Fanning outward as they go down
-  { sdx:   '75px', sdy: '260px', ssc: 4.2, size: '2.8rem', delay: 420, dur: 2200 },
-  { sdx:  '-85px', sdy: '280px', ssc: 4.4, size: '2.8rem', delay: 460, dur: 2100 },
-  { sdx:  '150px', sdy: '210px', ssc: 3.8, size: '2.4rem', delay: 500, dur: 2400 },
-  { sdx: '-155px', sdy: '220px', ssc: 3.6, size: '2.4rem', delay: 490, dur: 2300 },
+  { sdx:   '75px', sdy: '260px', ssc: 4.2, size: '2.8rem', delay: 420 + LAUNCH_OFFSET, dur: 2200 },
+  { sdx:  '-85px', sdy: '280px', ssc: 4.4, size: '2.8rem', delay: 460 + LAUNCH_OFFSET, dur: 2100 },
+  { sdx:  '150px', sdy: '210px', ssc: 3.8, size: '2.4rem', delay: 500 + LAUNCH_OFFSET, dur: 2400 },
+  { sdx: '-155px', sdy: '220px', ssc: 3.6, size: '2.4rem', delay: 490 + LAUNCH_OFFSET, dur: 2300 },
   // Trailing puffs — reach further down
-  { sdx:   '32px', sdy: '410px', ssc: 5.5, size: '3.8rem', delay: 600, dur: 1600 },
-  { sdx:  '-28px', sdy: '430px', ssc: 5.0, size: '3.5rem', delay: 650, dur: 1700 },
-  { sdx:  '105px', sdy: '350px', ssc: 4.0, size: '3.0rem', delay: 570, dur: 2000 },
+  { sdx:   '32px', sdy: '410px', ssc: 5.5, size: '3.8rem', delay: 600 + LAUNCH_OFFSET, dur: 1600 },
+  { sdx:  '-28px', sdy: '430px', ssc: 5.0, size: '3.5rem', delay: 650 + LAUNCH_OFFSET, dur: 1700 },
+  { sdx:  '105px', sdy: '350px', ssc: 4.0, size: '3.0rem', delay: 570 + LAUNCH_OFFSET, dur: 2000 },
 ];
 
 // ── Boom rings ────────────────────────────────────────────────────────────
@@ -168,9 +157,9 @@ const SMOKE_PUFFS = [
 // Positioned at the rocket center (left: 50%, top: 43%); the smoke-ring
 // keyframe's translate(-50%, -50%) centers each ring on that point.
 const BOOM_RINGS = [
-  { color: '#f97316', border: 9, size:  60, dur:  580, delay: 360 },
-  { color: '#fbbf24', border: 7, size:  70, dur:  740, delay: 420 },
-  { color: '#fde68a', border: 5, size:  60, dur:  920, delay: 490 },
+  { color: '#f97316', border: 9, size:  60, dur:  580, delay: 360 + LAUNCH_OFFSET },
+  { color: '#fbbf24', border: 7, size:  70, dur:  740, delay: 420 + LAUNCH_OFFSET },
+  { color: '#fde68a', border: 5, size:  60, dur:  920, delay: 490 + LAUNCH_OFFSET },
 ];
 
 // ── Clouds ─────────────────────────────────────────────────────────────────
@@ -185,12 +174,12 @@ const BOOM_RINGS = [
 // cop  : peak opacity
 // size : font-size CSS string
 const CLOUDS = [
-  { left:  '-8%', cy: -160, cdx:  '30px', cop: 0.70, size: '11rem', delay:  800, dur: 3600 },
-  { left:  '45%', cy: -300, cdx: '-28px', cop: 0.58, size:  '8rem', delay: 1300, dur: 4100 },
-  { left:   '8%', cy:  -80, cdx:  '24px', cop: 0.75, size: '10rem', delay: 2000, dur: 3500 },
-  { left: '-14%', cy: -430, cdx:  '42px', cop: 0.52, size: '12rem', delay: 2700, dur: 4500 },
-  { left:  '50%', cy: -240, cdx: '-30px', cop: 0.62, size:  '9rem', delay: 3300, dur: 3900 },
-  { left:   '4%', cy: -480, cdx:  '18px', cop: 0.48, size: '10rem', delay: 1600, dur: 4800 },
+  { left:  '-8%', cy: -160, cdx:  '30px', cop: 0.70, size: '11rem', delay:  800 + LAUNCH_OFFSET, dur: 3600 },
+  { left:  '45%', cy: -300, cdx: '-28px', cop: 0.58, size:  '8rem', delay: 1300 + LAUNCH_OFFSET, dur: 4100 },
+  { left:   '8%', cy:  -80, cdx:  '24px', cop: 0.75, size: '10rem', delay: 2000 + LAUNCH_OFFSET, dur: 3500 },
+  { left: '-14%', cy: -430, cdx:  '42px', cop: 0.52, size: '12rem', delay: 2700 + LAUNCH_OFFSET, dur: 4500 },
+  { left:  '50%', cy: -240, cdx: '-30px', cop: 0.62, size:  '9rem', delay: 3300 + LAUNCH_OFFSET, dur: 3900 },
+  { left:   '4%', cy: -480, cdx:  '18px', cop: 0.48, size: '10rem', delay: 1600 + LAUNCH_OFFSET, dur: 4800 },
 ];
 
 // ── Exhaust particles ──────────────────────────────────────────────────────
@@ -211,7 +200,7 @@ function buildExhaust() {
         dy:    `${170 + wave * 65}px`,
         sc:    isFire ? (0.55 + (pos % 3) * 0.18).toFixed(2) : (1.0 + (pos % 3) * 0.35).toFixed(2),
         size:  isFire ? 30 + (pos % 3) * 8 : 26 + (pos % 3) * 6,
-        delay: 380 + wave * 310,
+        delay: 380 + wave * 310 + LAUNCH_OFFSET,
         dur:   680 + pos * 55,
       });
     }
@@ -221,6 +210,37 @@ function buildExhaust() {
 const EXHAUST = buildExhaust();
 
 export default function SpaceLaunchAnimation() {
+  const [peteFrame,   setPeteFrame]   = useState(0);
+  const [peteVisible, setPeteVisible] = useState(false);
+
+  useEffect(() => {
+    // Preload Petey frames so there's no flicker when he arrives
+    PETE_FRAMES.forEach(src => { const img = new Image(); img.src = src; });
+
+    // Boom at ignition
+    const boomTimer = setTimeout(playRocketIgnitionBoom, LAUNCH_OFFSET + 400);
+
+    // Petey easter egg — appears at 20 s, exits ~9 s later
+    let frameInterval;
+    const showTimer = setTimeout(() => {
+      setPeteVisible(true);
+      frameInterval = setInterval(
+        () => setPeteFrame(f => (f + 1) % PETE_FRAMES.length),
+        PETE_FRAME_MS,
+      );
+      setTimeout(() => {
+        clearInterval(frameInterval);
+        setPeteVisible(false);
+      }, PETE_DUR_MS + 500);
+    }, PETE_DELAY_MS);
+
+    return () => {
+      clearTimeout(boomTimer);
+      clearTimeout(showTimer);
+      clearInterval(frameInterval);
+    };
+  }, []);
+
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
 
@@ -239,7 +259,7 @@ export default function SpaceLaunchAnimation() {
         style={{
           background: 'linear-gradient(to bottom, #0284c7 0%, #38bdf8 45%, #7dd3fc 75%, #bae6fd 100%)',
           zIndex: 2,
-          animation: 'sky-to-space 5500ms ease-in 600ms both',
+          animation: `sky-to-space 5500ms ease-in ${600 + LAUNCH_OFFSET}ms both`,
         }}
       />
 
@@ -257,7 +277,7 @@ export default function SpaceLaunchAnimation() {
             zIndex:          4,
             '--sy': `${star.sy}px`,
             '--op': star.op,
-            animation: `star-scroll ${star.dur}ms linear ${star.delay}ms both`,
+            animation: `star-scroll ${star.dur}ms linear ${star.delay}ms infinite both`,
           }}
         />
       ))}
@@ -274,7 +294,7 @@ export default function SpaceLaunchAnimation() {
             zIndex:   5,
             '--sy': `${obj.sy}px`,
             '--op': obj.op,
-            animation: `star-scroll ${obj.dur}ms linear ${obj.delay}ms both`,
+            animation: `star-scroll ${obj.dur}ms linear ${obj.delay}ms infinite both`,
           }}
         >
           {obj.emoji}
@@ -316,7 +336,7 @@ export default function SpaceLaunchAnimation() {
           top:       '52%',
           bottom:    0,
           zIndex:    10,
-          animation: 'ground-recede 2400ms ease-in 480ms both',
+          animation: `ground-recede 2400ms ease-in ${480 + LAUNCH_OFFSET}ms both`,
         }}
       >
         <div className="absolute inset-0" style={{ backgroundColor: '#15803d' }} />
@@ -324,6 +344,13 @@ export default function SpaceLaunchAnimation() {
           className="absolute inset-x-0"
           style={{ top: 0, height: 6, backgroundColor: '#166534' }}
         />
+        {/* Pudge stands at the ground horizon and recedes with it */}
+        <div
+          className="absolute select-none pointer-events-none"
+          style={{ right: '5%', bottom: '100%' }}
+        >
+          <DancingCat size={160} />
+        </div>
       </div>
 
       {/* ── 4b. Ground facade (z=33) — green cover + launchpad platform.
@@ -337,7 +364,7 @@ export default function SpaceLaunchAnimation() {
           top:       '52%',
           bottom:    0,
           zIndex:    33,
-          animation: 'ground-recede 2400ms ease-in 480ms both',
+          animation: `ground-recede 2400ms ease-in ${480 + LAUNCH_OFFSET}ms both`,
         }}
       >
         {/* Green cover — hides nozzle below horizon */}
@@ -413,7 +440,7 @@ export default function SpaceLaunchAnimation() {
           top:       'calc(46% + 45px)',
           fontSize:  '5.5rem',
           zIndex:    32,
-          animation: 'boom-burst 1300ms ease-out 340ms both',
+          animation: `boom-burst 1300ms ease-out ${340 + LAUNCH_OFFSET}ms both`,
         }}
       >
         💥
@@ -428,7 +455,7 @@ export default function SpaceLaunchAnimation() {
           left:      '50%',
           top:       '46%',
           zIndex:    30,
-          animation: 'rocket-ignite 520ms ease-out 300ms both',
+          animation: `rocket-ignite 520ms ease-out ${300 + LAUNCH_OFFSET}ms both`,
         }}
       >
         {/* Inner: center on pivot + rotate so rocket points up-left */}
@@ -449,13 +476,12 @@ export default function SpaceLaunchAnimation() {
         className="absolute inset-0 bg-white"
         style={{
           zIndex:    35,
-          animation: 'colour-wash 300ms ease-out 360ms both',
+          animation: `colour-wash 300ms ease-out ${360 + LAUNCH_OFFSET}ms both`,
           '--peak':  0.82,
         }}
       />
 
       {/* ── 9. Launch smoke — foreground puffs billowing from the pad ── */}
-      {/* z=39: above clouds (z=38) but below the dancing cat (z=40 DevScreen / z=50 PayoffScreen). */}
       {SMOKE_PUFFS.map((p, i) => (
         <div
           key={`smoke-${i}`}
@@ -495,7 +521,29 @@ export default function SpaceLaunchAnimation() {
         </div>
       ))}
 
-      {/* ── 11. Payoff text — amber glow, above the chaos ── */}
+      {/* ── 11. Petey easter egg — drifts down from above at 20 s ── */}
+      {peteVisible && (
+        <div
+          className="absolute select-none pointer-events-none"
+          style={{
+            left:      '70%',
+            top:       0,
+            zIndex:    5,
+            '--sy':    `${PETE_SY}px`,
+            '--op':    1.0,
+            animation: `star-scroll ${PETE_DUR_MS}ms linear 0ms both`,
+          }}
+        >
+          <img
+            src={PETE_FRAMES[peteFrame]}
+            alt=""
+            draggable={false}
+            style={{ width: 140, height: 'auto' }}
+          />
+        </div>
+      )}
+
+      {/* ── 12. Payoff text — amber glow, above the chaos ── */}
       <div
         className="absolute inset-x-0 flex flex-col items-center z-40"
         style={{ top: '11%' }}

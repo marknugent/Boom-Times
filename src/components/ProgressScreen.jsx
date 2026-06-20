@@ -327,6 +327,16 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
           Test User
         </button>
       )}
+
+      {/* Play link — only shown when viewing test user stats */}
+      {viewedPlayer === TEST_PLAYER && (
+        <button
+          className="font-body text-xs text-lab-chalk/25 hover:text-lab-chalk/50 transition-colors shrink-0 py-1 text-center"
+          onClick={() => dispatch({ type: A.SELECT_PLAYER, playerName: TEST_PLAYER })}
+        >
+          Play as Test User
+        </button>
+      )}
     </div>
   );
 }

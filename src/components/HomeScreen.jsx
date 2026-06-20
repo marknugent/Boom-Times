@@ -100,13 +100,6 @@ export default function HomeScreen({ state, dispatch }) {
           })}
         </div>
 
-        {/* Unobtrusive test-profile link */}
-        <button
-          className="font-body text-xs text-lab-chalk/25 hover:text-lab-chalk/50 transition-colors mt-1"
-          onClick={() => selectPlayer(TEST_PLAYER)}
-        >
-          test
-        </button>
       </div>
 
       {/* ── Progress link ── */}

@@ -70,7 +70,9 @@ export const EXPERIMENTS = [
     payoffText: 'SPACE LAUNCH!',
     ingredient: '🚀',
     emoji: '🚀',
-    bgMusic: 'space-launch',   // loops rocket.mp3 for the full payoff
+    bgMusic:      'space-launch',  // loops rocket.mp3 for the full payoff
+    bgMusicDelay: 1900,            // LAUNCH_OFFSET + 400ms visual-to-audio sync
+    hideCat:      true,            // DancingCat rendered inside the animation, on the ground
   },
   {
     id: 'bomb-detonation',

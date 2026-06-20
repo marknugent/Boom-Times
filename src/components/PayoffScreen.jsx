@@ -109,9 +109,15 @@ export default function PayoffScreen({ state, dispatch }) {
 
   // Background music — use the experiment's bgMusic track if specified,
   // otherwise default to pounce-pop-parade. Stop on unmount.
+  // bgMusicDelay (ms) defers start until the animation fires (e.g. space-launch).
   useEffect(() => {
     if (!round) return;
     const track = round.experiment.bgMusic ?? 'pounce-pop-parade';
+    const delay = round.experiment.bgMusicDelay ?? 0;
+    if (delay > 0) {
+      const t = setTimeout(() => playSound(track), delay);
+      return () => { clearTimeout(t); stopSound(track); };
+    }
     playSound(track);
     return () => stopSound(track);
   }, []);

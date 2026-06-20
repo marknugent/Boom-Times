@@ -27,7 +27,7 @@ import Pudge        from './Pudge.jsx';
 import SpeechBubble from './SpeechBubble.jsx';
 
 const CORRECT_FEEDBACK_MS = 2000;
-const WRONG_FEEDBACK_MS   = 3500;
+const WRONG_FEEDBACK_MS   = 5250;
 
 // Hearts that flutter up from Pudge on a correct answer.
 // Positions are % of the main area — calibrated to float from Pudge's body.
@@ -204,7 +204,7 @@ export default function QuestionScreen({ state, dispatch }) {
           {/* Wrong-answer reveal sits right below the question */}
           <div className="h-10 mt-2 flex items-center justify-end">
             {feedbackBad && (
-              <span className="font-display text-2xl text-red-400/80">
+              <span className="font-display text-2xl text-red-400 animate-answer-flash">
                 = {question.answer}
               </span>
             )}

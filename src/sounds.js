@@ -124,6 +124,18 @@ function stopLoop(id) {
 // ─── Unlock ───────────────────────────────────────────────────────────
 let unlocked = false;
 
+// iOS suspends the audio session whenever the page is hidden (app switch,
+// screen lock). Resetting `unlocked` here ensures the next tap re-runs the
+// full HTMLAudioElement unlock sequence. The AudioContext is also eagerly
+// resumed on return so Web Audio loops don't need a gesture to restart.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    unlocked = false;
+  } else if (audioCtx) {
+    audioCtx.resume().catch(() => {});
+  }
+});
+
 /** Call this inside any real user-gesture handler (onPointerDown, onClick…). */
 export function unlockAudio() {
   if (unlocked) return;
@@ -260,6 +272,93 @@ export function playCountdownBeep() {
   gain.connect(ctx.destination);
   osc.start(t);
   osc.stop(t + 0.10);
+}
+
+/**
+ * Synthesised rocket ignition thud — fired at launch moment.
+ * Lighter and shorter than the explosion boom: sub-bass pulse + low rumble
+ * + sharp ignition crack. Designed to punch through the rocket.mp3 loop.
+ */
+export function playRocketIgnitionBoom() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -4;
+  comp.knee.value      = 8;
+  comp.ratio.value     = 18;
+  comp.attack.value    = 0.001;
+  comp.release.value   = 0.30;
+  comp.connect(ctx.destination);
+
+  function noise(durationSec) {
+    const len  = Math.floor(ctx.sampleRate * durationSec);
+    const buf  = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src  = ctx.createBufferSource();
+    src.buffer = buf;
+    return src;
+  }
+
+  // 1. Ultra-low sub pulse — deepest thud
+  const sub1     = ctx.createOscillator();
+  const sub1Gain = ctx.createGain();
+  sub1.type = 'sine';
+  sub1.frequency.setValueAtTime(42, now);
+  sub1.frequency.exponentialRampToValueAtTime(10, now + 0.9);
+  sub1Gain.gain.setValueAtTime(5.0, now);
+  sub1Gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+  sub1.connect(sub1Gain); sub1Gain.connect(comp);
+  sub1.start(now); sub1.stop(now + 0.9);
+
+  // 2. Sub-bass sweep — chest thump
+  const sub2     = ctx.createOscillator();
+  const sub2Gain = ctx.createGain();
+  sub2.type = 'sine';
+  sub2.frequency.setValueAtTime(75, now);
+  sub2.frequency.exponentialRampToValueAtTime(20, now + 1.3);
+  sub2Gain.gain.setValueAtTime(4.0, now);
+  sub2Gain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+  sub2.connect(sub2Gain); sub2Gain.connect(comp);
+  sub2.start(now); sub2.stop(now + 1.3);
+
+  // 3. Mid-bass punch noise — adds body to the low end
+  const punch     = noise(0.6);
+  const punchBP   = ctx.createBiquadFilter();
+  punchBP.type    = 'bandpass';
+  punchBP.frequency.value = 90;
+  punchBP.Q.value = 0.7;
+  const punchGain = ctx.createGain();
+  punchGain.gain.setValueAtTime(3.0, now);
+  punchGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+  punch.connect(punchBP); punchBP.connect(punchGain); punchGain.connect(comp);
+  punch.start(now); punch.stop(now + 0.6);
+
+  // 4. Heavy low rumble — sustaining ignition roar
+  const rumble     = noise(2.8);
+  const rumbleLP   = ctx.createBiquadFilter();
+  rumbleLP.type    = 'lowpass';
+  rumbleLP.frequency.value = 320;
+  const rumbleGain = ctx.createGain();
+  rumbleGain.gain.setValueAtTime(3.2, now);
+  rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + 2.8);
+  rumble.connect(rumbleLP); rumbleLP.connect(rumbleGain); rumbleGain.connect(comp);
+  rumble.start(now); rumble.stop(now + 2.8);
+
+  // 5. Ignition crack — brief high transient
+  const crack     = noise(0.08);
+  const crackBP   = ctx.createBiquadFilter();
+  crackBP.type    = 'bandpass';
+  crackBP.frequency.value = 1800;
+  crackBP.Q.value = 0.5;
+  const crackGain = ctx.createGain();
+  crackGain.gain.setValueAtTime(1.4, now);
+  crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  crack.connect(crackBP); crackBP.connect(crackGain); crackGain.connect(comp);
+  crack.start(now); crack.stop(now + 0.08);
 }
 
 /**

@@ -6,7 +6,7 @@
  * beaker (top-left), dancing cat (bottom-right), and sound — so what you
  * see here is what players see.
  */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { A }        from '../gameReducer.js';
 import { APP_VERSION, BUILD_ID, BUILD_TIME } from 'virtual:build-info';
 import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
@@ -49,7 +49,7 @@ const EXPERIMENTS = [
   { id: 'smoke-bomb',      label: 'SMOKE BOMB 🌫️',      Anim: SmokeBombAnimation, disabled: true },
   { id: 'toilet-attack',   label: 'TOILET ATTACK 🚽',   Anim: ToiletAttackAnimation   },
   { id: 'dance-party',     label: 'DANCE PARTY 🪩',       Anim: DancePartyAnimation, bgMusic: 'dance-party', danceCat: true },
-  { id: 'space-launch',   label: 'SPACE LAUNCH 🚀',      Anim: SpaceLaunchAnimation, bgMusic: 'space-launch' },
+  { id: 'space-launch',   label: 'SPACE LAUNCH 🚀',      Anim: SpaceLaunchAnimation, bgMusic: 'space-launch', bgMusicDelay: 1900, hideCat: true },
   { id: 'usa-usa-usa',       label: 'USA! USA! USA! 🎆',     Anim: UsaAnimation,            bgMusic: 'nyan',             hideCat: true },
   { id: 'bomb-detonation',  label: 'BOMB DETONATION 💥',   Anim: BombDetonationAnimation, bgMusic: 'bomb-detonation',  hideCat: true },
   { id: 'brewing',          label: 'BREWING... 🧫',        isBrewing: true               },
@@ -153,7 +153,19 @@ export default function DevScreen({ dispatch }) {
   // 'Louisa' | 'Marjorie' | null — which player's "is awesome" cameo to preview
   const [showAwesomeCameo, setShowAwesomeCameo] = useState(null);
 
+  // Tracks any pending delayed bgMusic start so it can be cancelled on exit.
+  const musicTimerRef = useRef(null);
+
+  function stopCurrentTrack(exp) {
+    if (musicTimerRef.current) {
+      clearTimeout(musicTimerRef.current);
+      musicTimerRef.current = null;
+    }
+    if (exp?.bgMusic) stopSound(exp.bgMusic);
+  }
+
   function launch(exp) {
+    stopCurrentTrack(playing); // cancel / stop whatever was playing
     setPlaying(exp);
     setPlayKey(k => k + 1);
     if (exp.isBrewing) return;
@@ -166,9 +178,16 @@ export default function DevScreen({ dispatch }) {
         playSound(exp.id);
       }
     }
-    // Background music
+    // Background music (some experiments delay bgMusic until their animation fires)
     const track = exp.bgMusic ?? 'pounce-pop-parade';
-    playSound(track);
+    if (exp.bgMusicDelay) {
+      musicTimerRef.current = setTimeout(() => {
+        musicTimerRef.current = null;
+        playSound(track);
+      }, exp.bgMusicDelay);
+    } else {
+      playSound(track);
+    }
   }
 
   // Shared controls bar used in both preview modes
@@ -179,7 +198,7 @@ export default function DevScreen({ dispatch }) {
           {label}
         </div>
         <div className="flex gap-3 pointer-events-auto">
-          <button className="btn-secondary text-sm" onClick={() => { stopSound(playing.bgMusic ?? 'pounce-pop-parade'); setPlaying(null); }}>
+          <button className="btn-secondary text-sm" onClick={() => { stopCurrentTrack(playing); setPlaying(null); }}>
             ← experiments
           </button>
           <button className="btn-secondary text-sm" onClick={() => launch(playing)}>
@@ -217,7 +236,7 @@ export default function DevScreen({ dispatch }) {
         key={playKey}
         playing={playing}
         playKey={playKey}
-        onBack={() => { stopSound(playing.bgMusic ?? 'pounce-pop-parade'); setPlaying(null); }}
+        onBack={() => { stopCurrentTrack(playing); setPlaying(null); }}
         onReplay={() => launch(playing)}
       />
     );
