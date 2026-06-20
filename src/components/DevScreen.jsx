@@ -8,6 +8,7 @@
  */
 import { useState, useRef } from 'react';
 import { A }        from '../gameReducer.js';
+import { TEST_PLAYER } from '../players.js';
 import { APP_VERSION, BUILD_ID, BUILD_TIME } from 'virtual:build-info';
 import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
 import SpongeBobCameo  from './SpongeBobCameo.jsx';
@@ -368,7 +369,14 @@ export default function DevScreen({ dispatch }) {
       )}
 
       <button
-        className="btn-secondary mt-2 px-8"
+        className="btn-primary mt-2 px-8 bg-zinc-600 hover:bg-zinc-500 active:bg-zinc-700"
+        onClick={() => dispatch({ type: A.SELECT_PLAYER, playerName: TEST_PLAYER })}
+      >
+        Play as Test User 🧪
+      </button>
+
+      <button
+        className="btn-secondary mt-1 px-8"
         onClick={() => dispatch({ type: A.NAVIGATE, screen: 'home' })}
       >
         ← Exit dev mode

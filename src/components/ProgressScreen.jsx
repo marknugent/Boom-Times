@@ -261,6 +261,16 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
         onChange={handleFileChange}
       />
 
+      {/* Test User link — arms dev-mode triple-tap; only shown when viewing kids */}
+      {viewedPlayer !== TEST_PLAYER && !confirmBackup && !importError && (
+        <button
+          className="font-body text-xs text-lab-chalk/25 hover:text-lab-chalk/50 transition-colors shrink-0 py-1 text-center"
+          onClick={() => { setViewedPlayer(TEST_PLAYER); onTestUserViewChange?.(true); }}
+        >
+          Test User
+        </button>
+      )}
+
       {/* ── Backup / restore ── */}
       {confirmBackup ? (
         /* Confirmation panel */
@@ -318,25 +328,6 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
         </div>
       )}
 
-      {/* Test User link — only shown when viewing kids */}
-      {viewedPlayer !== TEST_PLAYER && !confirmBackup && !importError && (
-        <button
-          className="font-body text-xs text-lab-chalk/25 hover:text-lab-chalk/50 transition-colors shrink-0 py-1 text-center"
-          onClick={() => { setViewedPlayer(TEST_PLAYER); onTestUserViewChange?.(true); }}
-        >
-          Test User
-        </button>
-      )}
-
-      {/* Play link — only shown when viewing test user stats */}
-      {viewedPlayer === TEST_PLAYER && (
-        <button
-          className="font-body text-xs text-lab-chalk/25 hover:text-lab-chalk/50 transition-colors shrink-0 py-1 text-center"
-          onClick={() => dispatch({ type: A.SELECT_PLAYER, playerName: TEST_PLAYER })}
-        >
-          Play as Test User
-        </button>
-      )}
     </div>
   );
 }
