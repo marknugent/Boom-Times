@@ -26,6 +26,7 @@ export const EXPERIMENTS = [
     payoffText: 'SLIME EXPLOSION!',
     ingredient: '💚',
     emoji: '🟢',
+    disabled: true,
   },
   {
     id: 'fuzz-bomb',
