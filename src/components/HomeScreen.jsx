@@ -41,7 +41,7 @@ export default function HomeScreen({ state, dispatch }) {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-between px-6 py-8 relative">
+    <div className="w-full h-full flex flex-col items-center justify-between px-6 pt-8 pb-20 relative">
 
       {/* ── Game title — triple-tap opens test profile ── */}
       <div
@@ -81,7 +81,7 @@ export default function HomeScreen({ state, dispatch }) {
         <div className="font-display text-lg text-lab-chalk/60 tracking-widest uppercase">
           Run Experiment
         </div>
-        <div className="flex flex-col gap-3 w-full">
+        <div className="flex flex-col gap-5 w-full">
           {VISIBLE_PLAYERS.map(name => {
             const lvl = getPlayerLevel(name);
             return (
