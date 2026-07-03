@@ -30,7 +30,6 @@ const SOUNDS = {
   'smoke-bomb':      new Audio('/poof.mp3'),
   'toilet-attack':   new Audio('/toilet.mp3'),
   'success':         new Audio('/success.mp3'),
-  'wrong':           new Audio('/wrong.mp3'),
   'fanfare':         new Audio('/fanfare.mp3'),
   'meow':            new Audio('/meow.mp3'),
   'success-beep':    new Audio('/success-beep.mp3'),
@@ -248,6 +247,36 @@ export function stopSound(id) {
   a.pause();
   a.currentTime = 0;
   a.volume = BASE_VOLUME[id] ?? 0.8;
+}
+
+/**
+ * Wrong-answer feedback — two soft, neutral "boop-boop" sine tones
+ * (descending a whole step). Replaces the old buzzer sample with something
+ * that reads as "try again" rather than a punishing alarm.
+ */
+export function playWrongAnswerBoop() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+  function boop(startOffset, freq) {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+
+    const t = ctx.currentTime + startOffset;
+    gain.gain.setValueAtTime(0.001, t);
+    gain.gain.exponentialRampToValueAtTime(0.28, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.12);
+  }
+
+  boop(0,    330); // E4
+  boop(0.15, 294); // D4
 }
 
 /**

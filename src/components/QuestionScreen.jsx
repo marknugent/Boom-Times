@@ -13,7 +13,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { A } from '../gameReducer.js';
-import { playSound } from '../sounds.js';
+import { playSound, playWrongAnswerBoop } from '../sounds.js';
 import SpongeBobCameo  from './SpongeBobCameo.jsx';
 import CatCloseupCameo from './CatCloseupCameo.jsx';
 import DoggieCameo          from './DoggieCameo.jsx';
@@ -67,7 +67,11 @@ export default function QuestionScreen({ state, dispatch }) {
   // Play correct / wrong sound as soon as feedback lands
   useEffect(() => {
     if (!question?.feedback) return;
-    playSound(question.feedback.correct ? 'success' : 'wrong');
+    if (question.feedback.correct) {
+      playSound('success');
+    } else {
+      playWrongAnswerBoop();
+    }
   }, [question?.feedback]);
 
   // Auto-advance after feedback delay.
