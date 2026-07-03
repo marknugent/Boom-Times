@@ -124,6 +124,15 @@ function stopLoop(id) {
 // ─── Unlock ───────────────────────────────────────────────────────────
 let unlocked = false;
 
+// Guards the race between unlockAudio()'s silent play+pause and a real
+// playSound() call landing on the same shared <audio> element before the
+// unlock's play() promise has resolved (likely for larger, not-yet-cached
+// files like train-dog.mp3 on a cold load). Each real playSound() call
+// bumps the element's generation; the unlock .then() only pauses/resets
+// if it's still the most recent request for that element — otherwise a
+// slow-to-resolve unlock would silently stop audio that's already playing.
+const playGeneration = new WeakMap();
+
 // iOS suspends the audio session whenever the page is hidden (app switch,
 // screen lock). Resetting `unlocked` here ensures the next tap re-runs the
 // full HTMLAudioElement unlock sequence. The AudioContext is also eagerly
@@ -156,9 +165,20 @@ export function unlockAudio() {
   // Zero volume before play so there's no audible blip if the .then() callback
   // is slow — iOS Safari resolves the Promise later than desktop, leaking audio.
   Object.values(SOUNDS).forEach(a => {
+    const myGen = (playGeneration.get(a) ?? 0) + 1;
+    playGeneration.set(a, myGen);
     a.volume = 0;
     a.play()
-      .then(() => { a.pause(); a.currentTime = 0; a.volume = 0.8; })
+      .then(() => {
+        // Only pause/reset if no real playSound() call has superseded this
+        // unlock attempt in the meantime — otherwise we'd silently stop
+        // audio that's already legitimately playing.
+        if (playGeneration.get(a) === myGen) {
+          a.pause();
+          a.currentTime = 0;
+        }
+        a.volume = 0.8;
+      })
       .catch(() => { a.volume = 0.8; });
   });
 }
@@ -186,6 +206,9 @@ export function playSound(id, { fadeStartMs = null, fadeDurationMs = 2000 } = {}
   const a    = SOUNDS[id];
   if (!a) return;
   const base = BASE_VOLUME[id] ?? 0.8;
+
+  // Supersede any pending unlockAudio() reset so it can't stomp this real play.
+  playGeneration.set(a, (playGeneration.get(a) ?? 0) + 1);
 
   // Cancel any in-progress fade for this sound
   const existing = FADE_TIMERS[id];
