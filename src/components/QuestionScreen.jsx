@@ -104,9 +104,9 @@ export default function QuestionScreen({ state, dispatch }) {
           : ['spongebob', 'cat', 'doggie', 'dad', 'traindog'];
         const pick = cameoPool[Math.floor(Math.random() * cameoPool.length)];
         setActiveCameo(pick);
-        // traindog has no separate SFX — its video audio track is muted for
-        // reliable autoplay, and it doesn't need a sting on top of that.
-        const sfx  = { spongebob: 'fanfare', cat: 'meow', doggie: 'barking', dad: 'creepy', awesome: 'awesome' };
+        // traindog's video track is muted for reliable iOS autoplay, so its
+        // audio is the extracted track played through the SFX system instead.
+        const sfx  = { spongebob: 'fanfare', cat: 'meow', doggie: 'barking', dad: 'creepy', awesome: 'awesome', traindog: 'traindog' };
         playSound(sfx[pick]);
         return; // cameo's onDismiss fires NEXT_QUESTION when it ends
       }

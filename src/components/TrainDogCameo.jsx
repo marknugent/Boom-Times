@@ -42,8 +42,8 @@ export default function TrainDogCameo({ onDismiss }) {
 
       {/* ── z=252: Headline — bottom third, skewed + blinking ── */}
       <div
-        className="fixed inset-x-0 bottom-[8%] flex items-center justify-center pointer-events-none select-none"
-        style={{ zIndex: 252 }}
+        className="fixed inset-x-0 flex items-center justify-center pointer-events-none select-none"
+        style={{ zIndex: 252, bottom: 'calc(8% + 90px)' }}
       >
         <div
           className="font-display text-5xl text-center leading-tight"

@@ -356,7 +356,7 @@ export default function DevScreen({ dispatch }) {
 
         <button
           className="btn-primary col-span-2 w-full text-sm py-4 leading-tight bg-amber-800 hover:bg-amber-700 active:bg-amber-900"
-          onClick={() => { setShowTrainDogCameo(true); playSound('traindog'); }}
+          onClick={() => { setShowTrainDogCameo(true); playSound('barking'); }}
         >
           TRAIN DOG BREAK 🐕‍🦺🚂
         </button>

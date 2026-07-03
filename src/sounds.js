@@ -36,6 +36,7 @@ const SOUNDS = {
   'barking':         new Audio('/barking.mp3'),
   'creepy':          new Audio('/creepy.mp3'),
   'awesome':         new Audio('/awesome.mp3'),
+  'traindog':        new Audio('/train-dog.mp3'),
 };
 
 // Per-sound base volumes (defaults to 0.8)
