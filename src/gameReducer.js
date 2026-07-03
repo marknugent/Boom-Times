@@ -135,6 +135,56 @@ export function createInitialState() {
 }
 
 // ─────────────────────────────────────────────
+// In-progress round persistence
+// ─────────────────────────────────────────────
+// Namespaced per player, mirroring experiments.js's pending-experiment lock.
+// Saved whenever a new question becomes current (SELECT_PLAYER, START_ROUND,
+// NEXT_QUESTION) so a round survives app exits, refreshes, or backgrounding.
+// Cleared on normal round completion. Deliberately NOT saved on KEYPAD_CONFIRM —
+// leaving the snapshot pointed at the still-unanswered current question means
+// an app kill during the brief feedback window just re-asks that one question
+// rather than risking a duplicate entry in answeredCorrectly.
+
+const ROUND_KEY_BASE = 'pudge_round_v1';
+
+function roundKey(playerName) {
+  return playerName ? `${ROUND_KEY_BASE}__${playerName}` : ROUND_KEY_BASE;
+}
+
+function saveInProgressRound(playerName, round, question, hintsShownThisSession) {
+  try {
+    localStorage.setItem(roundKey(playerName), JSON.stringify({
+      upcomingFacts:         round.upcomingFacts,
+      answeredCorrectly:     round.answeredCorrectly,
+      firstAttemptFacts:     round.firstAttemptFacts,
+      firstAttemptCorrect:   round.firstAttemptCorrect,
+      totalAttempts:         round.totalAttempts,
+      levelAtRoundStart:     round.levelAtRoundStart,
+      currentFactId:         question.factId,
+      currentIsFirstAttempt: question.isFirstAttemptThisRound,
+      hintsShownThisSession,
+    }));
+  } catch { /* storage full — non-fatal */ }
+}
+
+function loadInProgressRound(playerName) {
+  try {
+    const raw = localStorage.getItem(roundKey(playerName));
+    if (!raw) return null;
+    const saved = JSON.parse(raw);
+    return saved?.currentFactId ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearInProgressRound(playerName) {
+  try {
+    localStorage.removeItem(roundKey(playerName));
+  } catch { /* non-fatal */ }
+}
+
+// ─────────────────────────────────────────────
 // Internal helpers
 // ─────────────────────────────────────────────
 
@@ -236,13 +286,55 @@ export function gameReducer(state, action) {
       return { ...state, screen: action.screen };
     }
 
-    // ── Select player + immediately start round ────────────────
+    // ── Select player + immediately start (or resume) round ────
     case A.SELECT_PLAYER: {
       const { playerName } = action;
 
       // Load this player's saved data from localStorage
       const rawSrs         = loadSRSState(playerName);
       const rawProgression = loadProgression(playerName);
+
+      // Resume an in-progress round if one exists and its locked experiment
+      // is still intact. srsState is already fully up to date (every answer
+      // saves immediately), so no re-introduction of facts is needed here.
+      const savedRound       = loadInProgressRound(playerName);
+      const resumeExperiment = savedRound ? loadPendingExperiment(playerName) : null;
+
+      if (savedRound && resumeExperiment) {
+        const question = buildQuestion(
+          savedRound.currentFactId,
+          rawSrs,
+          [],   // overridden below with the persisted flag
+          savedRound.hintsShownThisSession ?? [],
+        );
+        question.isFirstAttemptThisRound = savedRound.currentIsFirstAttempt;
+
+        const round = {
+          experiment:          resumeExperiment,
+          upcomingFacts:       savedRound.upcomingFacts ?? [],
+          answeredCorrectly:   savedRound.answeredCorrectly ?? [],
+          firstAttemptFacts:   savedRound.firstAttemptFacts ?? [savedRound.currentFactId],
+          firstAttemptCorrect: savedRound.firstAttemptCorrect ?? 0,
+          totalAttempts:       savedRound.totalAttempts ?? 0,
+          levelAtRoundStart:   savedRound.levelAtRoundStart ?? getLevelFromSrs(rawSrs).level,
+        };
+
+        return {
+          ...state,
+          currentPlayer:         playerName,
+          srsState:              rawSrs,
+          progression:           rawProgression,
+          screen:                'question',
+          round,
+          question,
+          pudgeState:            question.showHint ? PUDGE.HINT : PUDGE.SUSPICIOUS,
+          speechBubble:          question.showHint
+            ? { text: question.hintText, type: 'hint' }
+            : { text: pudge.roundStart(), type: 'reaction' },
+          hintsShownThisSession: savedRound.hintsShownThisSession ?? [],
+          newUnlock:             null,
+        };
+      }
 
       // Introduce new facts and pre-seed easy tables for this player
       const { progression: updatedProgression, srsState: updatedSrsState } =
@@ -279,6 +371,9 @@ export function gameReducer(state, action) {
         [],   // hintsShownThisSession — fresh session
       );
 
+      const hintsShownThisSession = question.hintText ? [firstFactId] : [];
+      saveInProgressRound(playerName, round, question, hintsShownThisSession);
+
       return {
         ...state,
         currentPlayer:         playerName,
@@ -291,7 +386,7 @@ export function gameReducer(state, action) {
         speechBubble:          question.showHint
           ? { text: question.hintText, type: 'hint' }
           : { text: pudge.roundStart(), type: 'reaction' },
-        hintsShownThisSession: question.hintText ? [firstFactId] : [],
+        hintsShownThisSession,
         newUnlock:             null,
       };
     }
@@ -347,6 +442,8 @@ export function gameReducer(state, action) {
         firstAttemptFacts: [firstFactId],
         upcomingFacts: queue.slice(1), // consumed; append re-queues here
       };
+
+      saveInProgressRound(state.currentPlayer, roundWithFirstFact, question, newHints);
 
       return {
         ...state,
@@ -481,6 +578,8 @@ export function gameReducer(state, action) {
         ? [...state.hintsShownThisSession, nextFactId]
         : state.hintsShownThisSession;
 
+      saveInProgressRound(state.currentPlayer, updatedRound, question, newHints);
+
       return {
         ...state,
         round: updatedRound,
@@ -550,8 +649,10 @@ function handleRoundComplete(state) {
     };
   }
 
-  // Round completed — unlock a fresh experiment for next time
+  // Round completed — unlock a fresh experiment for next time, and drop the
+  // in-progress-round snapshot since there's nothing left to resume.
   clearPendingExperiment(currentPlayer);
+  clearInProgressRound(currentPlayer);
 
   // Detect level-up: compare level at round start with level now
   const newLevelObj = getLevelFromSrs(state.srsState);
