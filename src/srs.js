@@ -16,6 +16,8 @@
  *   SLOW   > 6 000ms  → interval × 0.65 modifier, ease factor −0.05
  */
 
+import { syncField } from './sync.js';
+
 const SRS_KEY_BASE = 'pudge_srs_v1';
 
 /** Returns the localStorage key for a given player (or the legacy global key). */
@@ -85,6 +87,7 @@ export function saveSRSState(state, playerName = null) {
   } catch (e) {
     console.warn('SRS save failed:', e);
   }
+  syncField(playerName, 'srs', state);
 }
 
 /** Get record for a fact, returning default if unseen. */

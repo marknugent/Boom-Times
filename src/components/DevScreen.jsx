@@ -9,6 +9,7 @@
 import { useState, useRef } from 'react';
 import { A }        from '../gameReducer.js';
 import { TEST_PLAYER } from '../players.js';
+import { healFromServer, syncAllToServer } from '../serverBackup.js';
 import { APP_VERSION, BUILD_ID, BUILD_TIME } from 'virtual:build-info';
 import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
 import SpongeBobCameo  from './SpongeBobCameo.jsx';
@@ -16,6 +17,7 @@ import CatCloseupCameo from './CatCloseupCameo.jsx';
 import DoggieCameo        from './DoggieCameo.jsx';
 import DadIsWatchingCameo from './DadIsWatchingCameo.jsx';
 import AwesomeCameo from './AwesomeCameo.jsx';
+import TrainDogCameo from './TrainDogCameo.jsx';
 import { LEVELS } from '../levels.js';
 import FireworksEffect from './FireworksEffect.jsx';
 import Beaker       from './Beaker.jsx';
@@ -151,6 +153,7 @@ export default function DevScreen({ dispatch }) {
   const [showCatCameo, setShowCatCameo] = useState(false);
   const [showDogCameo, setShowDogCameo] = useState(false);
   const [showDadCameo, setShowDadCameo] = useState(false);
+  const [showTrainDogCameo, setShowTrainDogCameo] = useState(false);
   // 'Louisa' | 'Marjorie' | null — which player's "is awesome" cameo to preview
   const [showAwesomeCameo, setShowAwesomeCameo] = useState(null);
 
@@ -350,6 +353,13 @@ export default function DevScreen({ dispatch }) {
         >
           MARJORIE IS AWESOME 🌟
         </button>
+
+        <button
+          className="btn-primary col-span-2 w-full text-sm py-4 leading-tight bg-amber-800 hover:bg-amber-700 active:bg-amber-900"
+          onClick={() => setShowTrainDogCameo(true)}
+        >
+          TRAIN DOG BREAK 🐕‍🦺🚂
+        </button>
       </div>
 
       {showCameo && (
@@ -367,10 +377,17 @@ export default function DevScreen({ dispatch }) {
       {showAwesomeCameo && (
         <AwesomeCameo player={showAwesomeCameo} onDismiss={() => setShowAwesomeCameo(null)} />
       )}
+      {showTrainDogCameo && (
+        <TrainDogCameo onDismiss={() => setShowTrainDogCameo(false)} />
+      )}
 
       <button
         className="btn-primary mt-2 px-8 bg-zinc-600 hover:bg-zinc-500 active:bg-zinc-700"
-        onClick={() => dispatch({ type: A.SELECT_PLAYER, playerName: TEST_PLAYER })}
+        onClick={async () => {
+          await healFromServer(TEST_PLAYER);
+          dispatch({ type: A.SELECT_PLAYER, playerName: TEST_PLAYER });
+          syncAllToServer(TEST_PLAYER);
+        }}
       >
         Play as Test User 🧪
       </button>

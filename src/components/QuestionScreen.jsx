@@ -19,6 +19,7 @@ import CatCloseupCameo from './CatCloseupCameo.jsx';
 import DoggieCameo          from './DoggieCameo.jsx';
 import DadIsWatchingCameo   from './DadIsWatchingCameo.jsx';
 import AwesomeCameo         from './AwesomeCameo.jsx';
+import TrainDogCameo        from './TrainDogCameo.jsx';
 import HotStreakBanner from './HotStreakBanner.jsx';
 import { TEST_PLAYER, VISIBLE_PLAYERS } from '../players.js';
 import Keypad       from './Keypad.jsx';
@@ -83,22 +84,24 @@ export default function QuestionScreen({ state, dispatch }) {
         playSound('success-beep');
       }
 
-      // Bonus cameo chance — 11% baseline, with a "pity timer" floor that
+      // Bonus cameo chance — 18% baseline, with a "pity timer" floor that
       // ramps up the odds the longer the player goes without one.
       sinceBonusRef.current += 1;
       const bonusChance =
-        sinceBonusRef.current < 8  ? 0.12 :
-        sinceBonusRef.current < 15 ? 0.20 :
-        0.60;
+        sinceBonusRef.current < 8  ? 0.18 :
+        sinceBonusRef.current < 15 ? 0.30 :
+        0.75;
 
       if (Math.random() < bonusChance) {
         sinceBonusRef.current = 0;
         // "<player> is awesome" is only valid for Louisa/Marjorie, not the test profile
         const cameoPool = VISIBLE_PLAYERS.includes(currentPlayer)
-          ? ['spongebob', 'cat', 'doggie', 'dad', 'awesome']
-          : ['spongebob', 'cat', 'doggie', 'dad'];
+          ? ['spongebob', 'cat', 'doggie', 'dad', 'awesome', 'traindog']
+          : ['spongebob', 'cat', 'doggie', 'dad', 'traindog'];
         const pick = cameoPool[Math.floor(Math.random() * cameoPool.length)];
         setActiveCameo(pick);
+        // traindog has no separate SFX — its video audio track is muted for
+        // reliable autoplay, and it doesn't need a sting on top of that.
         const sfx  = { spongebob: 'fanfare', cat: 'meow', doggie: 'barking', dad: 'creepy', awesome: 'awesome' };
         playSound(sfx[pick]);
         return; // cameo's onDismiss fires NEXT_QUESTION when it ends
@@ -314,6 +317,11 @@ export default function QuestionScreen({ state, dispatch }) {
       {activeCameo === 'awesome' && (
         <AwesomeCameo
           player={currentPlayer}
+          onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
+        />
+      )}
+      {activeCameo === 'traindog' && (
+        <TrainDogCameo
           onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
         />
       )}

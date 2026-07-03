@@ -42,6 +42,11 @@ import {
 import { shouldShowHint, getHintText } from './hints.js';
 import { pudge, PUDGE } from './pudge.js';
 import { getLevelFromSrs } from './levels.js';
+import {
+  saveInProgressRound,
+  loadInProgressRound,
+  clearInProgressRound,
+} from './roundPersistence.js';
 
 // ─────────────────────────────────────────────
 // Action type constants
@@ -135,53 +140,23 @@ export function createInitialState() {
 }
 
 // ─────────────────────────────────────────────
-// In-progress round persistence
+// In-progress round snapshot builder
 // ─────────────────────────────────────────────
-// Namespaced per player, mirroring experiments.js's pending-experiment lock.
-// Saved whenever a new question becomes current (SELECT_PLAYER, START_ROUND,
-// NEXT_QUESTION) so a round survives app exits, refreshes, or backgrounding.
-// Cleared on normal round completion. Deliberately NOT saved on KEYPAD_CONFIRM —
-// leaving the snapshot pointed at the still-unanswered current question means
-// an app kill during the brief feedback window just re-asks that one question
-// rather than risking a duplicate entry in answeredCorrectly.
+// Persistence itself lives in roundPersistence.js (separate module so it
+// can depend on sync.js without creating an import cycle back into this file).
 
-const ROUND_KEY_BASE = 'pudge_round_v1';
-
-function roundKey(playerName) {
-  return playerName ? `${ROUND_KEY_BASE}__${playerName}` : ROUND_KEY_BASE;
-}
-
-function saveInProgressRound(playerName, round, question, hintsShownThisSession) {
-  try {
-    localStorage.setItem(roundKey(playerName), JSON.stringify({
-      upcomingFacts:         round.upcomingFacts,
-      answeredCorrectly:     round.answeredCorrectly,
-      firstAttemptFacts:     round.firstAttemptFacts,
-      firstAttemptCorrect:   round.firstAttemptCorrect,
-      totalAttempts:         round.totalAttempts,
-      levelAtRoundStart:     round.levelAtRoundStart,
-      currentFactId:         question.factId,
-      currentIsFirstAttempt: question.isFirstAttemptThisRound,
-      hintsShownThisSession,
-    }));
-  } catch { /* storage full — non-fatal */ }
-}
-
-function loadInProgressRound(playerName) {
-  try {
-    const raw = localStorage.getItem(roundKey(playerName));
-    if (!raw) return null;
-    const saved = JSON.parse(raw);
-    return saved?.currentFactId ? saved : null;
-  } catch {
-    return null;
-  }
-}
-
-function clearInProgressRound(playerName) {
-  try {
-    localStorage.removeItem(roundKey(playerName));
-  } catch { /* non-fatal */ }
+function roundSnapshot(round, question, hintsShownThisSession) {
+  return {
+    upcomingFacts:         round.upcomingFacts,
+    answeredCorrectly:     round.answeredCorrectly,
+    firstAttemptFacts:     round.firstAttemptFacts,
+    firstAttemptCorrect:   round.firstAttemptCorrect,
+    totalAttempts:         round.totalAttempts,
+    levelAtRoundStart:     round.levelAtRoundStart,
+    currentFactId:         question.factId,
+    currentIsFirstAttempt: question.isFirstAttemptThisRound,
+    hintsShownThisSession,
+  };
 }
 
 // ─────────────────────────────────────────────
@@ -372,7 +347,7 @@ export function gameReducer(state, action) {
       );
 
       const hintsShownThisSession = question.hintText ? [firstFactId] : [];
-      saveInProgressRound(playerName, round, question, hintsShownThisSession);
+      saveInProgressRound(playerName, roundSnapshot(round, question, hintsShownThisSession));
 
       return {
         ...state,
@@ -443,7 +418,7 @@ export function gameReducer(state, action) {
         upcomingFacts: queue.slice(1), // consumed; append re-queues here
       };
 
-      saveInProgressRound(state.currentPlayer, roundWithFirstFact, question, newHints);
+      saveInProgressRound(state.currentPlayer, roundSnapshot(roundWithFirstFact, question, newHints));
 
       return {
         ...state,
@@ -578,7 +553,7 @@ export function gameReducer(state, action) {
         ? [...state.hintsShownThisSession, nextFactId]
         : state.hintsShownThisSession;
 
-      saveInProgressRound(state.currentPlayer, updatedRound, question, newHints);
+      saveInProgressRound(state.currentPlayer, roundSnapshot(updatedRound, question, newHints));
 
       return {
         ...state,

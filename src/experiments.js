@@ -10,6 +10,8 @@
  * Experiment" presses before payoff all return the same locked experiment.
  */
 
+import { syncField } from './sync.js';
+
 export const EXPERIMENTS = [
   {
     id: 'fart-bomb',
@@ -103,7 +105,7 @@ export const EXPERIMENTS = [
 const ACTIVE_EXPERIMENTS = EXPERIMENTS.filter(e => !e.disabled);
 
 // How many recent picks to exclude from the next selection.
-// With 7 active experiments this comfortably avoids A→B→A patterns.
+// With 6 active experiments this comfortably avoids A→B→A patterns.
 const HISTORY_SIZE = 2;
 const recentIds = [];
 
@@ -171,6 +173,7 @@ export function savePendingExperiment(playerName, experiment) {
   try {
     localStorage.setItem(pendingKey(playerName), JSON.stringify({ id: experiment.id }));
   } catch { /* storage full — non-fatal */ }
+  syncField(playerName, 'pendingExperiment', experiment.id);
 }
 
 /**
@@ -181,4 +184,5 @@ export function clearPendingExperiment(playerName) {
   try {
     localStorage.removeItem(pendingKey(playerName));
   } catch { /* non-fatal */ }
+  syncField(playerName, 'pendingExperiment', null);
 }

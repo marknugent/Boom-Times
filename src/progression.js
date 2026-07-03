@@ -14,6 +14,7 @@
  */
 
 import { getFactIdsForTable } from './srs.js';
+import { syncField } from './sync.js';
 
 const PROGRESSION_KEY_BASE = 'pudge_progression_v1';
 
@@ -123,6 +124,7 @@ export function saveProgression(progression, playerName = null) {
   } catch (e) {
     console.warn('Progression save failed:', e);
   }
+  syncField(playerName, 'progression', progression);
 }
 
 // ─────────────────────────────────────────────

@@ -633,6 +633,12 @@
   50%       { transform: rotate(10deg) scale(1.18); }
 }
 
+/* ── Train Dog headline — blinking opacity, skew stays fixed inline ── */
+@keyframes headline-blink {
+  0%, 45%, 100% { opacity: 1; }
+  55%, 90%      { opacity: 0.12; }
+}
+
 @keyframes cat-closeup {
   0%   { opacity: 0; transform: scale(1.00); }
   12%  { opacity: 1; transform: scale(1.00); }
