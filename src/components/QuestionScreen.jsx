@@ -209,9 +209,9 @@ export default function QuestionScreen({ state, dispatch }) {
             {question.a} × {question.b}
           </div>
           {/* Wrong-answer reveal sits right below the question */}
-          <div className="h-10 mt-2 flex items-center justify-end">
+          <div className="h-16 mt-2 flex items-center justify-end">
             {feedbackBad && (
-              <span className="font-display text-2xl text-red-400 animate-answer-flash">
+              <span className="font-display text-5xl text-yellow-300 animate-answer-flash">
                 = {question.answer}
               </span>
             )}

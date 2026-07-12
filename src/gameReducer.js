@@ -276,6 +276,10 @@ export function gameReducer(state, action) {
       const resumeExperiment = savedRound ? loadPendingExperiment(playerName) : null;
 
       if (savedRound && resumeExperiment) {
+        // Keeps the anti-repeat history honest — this round's experiment was
+        // already locked in, so it counts as "shown" for the next fresh pick.
+        recordShownExperiment(playerName, resumeExperiment.id);
+
         const question = buildQuestion(
           savedRound.currentFactId,
           rawSrs,
@@ -323,8 +327,8 @@ export function gameReducer(state, action) {
 
       // Use a locked pending experiment if one exists (prevents gaming payoffs
       // by restarting rounds), otherwise pick a fresh random one and lock it.
-      const experiment = loadPendingExperiment(playerName) ?? getRandomExperiment();
-      recordShownExperiment(experiment.id);
+      const experiment = loadPendingExperiment(playerName) ?? getRandomExperiment(playerName);
+      recordShownExperiment(playerName, experiment.id);
       savePendingExperiment(playerName, experiment);
 
       const firstFactId = queue[0];
@@ -383,8 +387,8 @@ export function gameReducer(state, action) {
 
       // 3. Use locked pending experiment if one exists, otherwise pick fresh
       const experiment =
-        loadPendingExperiment(state.currentPlayer) ?? getRandomExperiment();
-      recordShownExperiment(experiment.id);
+        loadPendingExperiment(state.currentPlayer) ?? getRandomExperiment(state.currentPlayer);
+      recordShownExperiment(state.currentPlayer, experiment.id);
       savePendingExperiment(state.currentPlayer, experiment);
 
       // 4. Build round state

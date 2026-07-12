@@ -107,15 +107,43 @@ const ACTIVE_EXPERIMENTS = EXPERIMENTS.filter(e => !e.disabled);
 // How many recent picks to exclude from the next selection.
 // With 6 active experiments this comfortably avoids A→B→A patterns.
 const HISTORY_SIZE = 2;
-const recentIds = [];
 
-function pushRecent(id) {
-  recentIds.push(id);
-  if (recentIds.length > HISTORY_SIZE) recentIds.shift();
+// Namespaced per player and persisted to localStorage — without this, the
+// "avoid the last two shown" history lived only in memory and reset to
+// empty on every app reload/relaunch, letting a repeat slip through the
+// very next time the app was reopened.
+const HISTORY_KEY_BASE = 'pudge_recent_exp';
+
+function historyKey(playerName) {
+  return playerName ? `${HISTORY_KEY_BASE}__${playerName}` : HISTORY_KEY_BASE;
 }
 
-/** Pick a random experiment, avoiding the last two shown. */
-export function getRandomExperiment() {
+function loadRecentIds(playerName) {
+  try {
+    const raw = localStorage.getItem(historyKey(playerName));
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function pushRecent(playerName, id) {
+  const ids = loadRecentIds(playerName);
+  ids.push(id);
+  if (ids.length > HISTORY_SIZE) ids.shift();
+  try {
+    localStorage.setItem(historyKey(playerName), JSON.stringify(ids));
+  } catch { /* non-fatal */ }
+}
+
+/**
+ * Pick a random experiment, avoiding the last two shown to this player.
+ * Does NOT record the pick — every call site is responsible for calling
+ * recordShownExperiment() afterward (it must also cover picks reused from
+ * a locked pending experiment, so recording lives in one place, not here).
+ */
+export function getRandomExperiment(playerName) {
+  const recentIds = loadRecentIds(playerName);
   // Only filter if there are more options than the history window;
   // otherwise we'd loop forever with very few active experiments.
   const canFilter = ACTIVE_EXPERIMENTS.length > HISTORY_SIZE;
@@ -123,7 +151,6 @@ export function getRandomExperiment() {
   do {
     pick = ACTIVE_EXPERIMENTS[Math.floor(Math.random() * ACTIVE_EXPERIMENTS.length)];
   } while (canFilter && recentIds.includes(pick.id));
-  pushRecent(pick.id);
   return pick;
 }
 
@@ -134,8 +161,8 @@ export function getRandomExperiment() {
  * experiments don't update recentIds, so the next fresh pick could repeat
  * the one the player just saw.
  */
-export function recordShownExperiment(id) {
-  pushRecent(id);
+export function recordShownExperiment(playerName, id) {
+  pushRecent(playerName, id);
 }
 
 // ─── Pending-experiment persistence ──────────────────────────────────────────
