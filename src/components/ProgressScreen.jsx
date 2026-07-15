@@ -10,6 +10,7 @@ import { getFactIdsForTable, isFactMastered, loadSRSState } from '../srs.js';
 import { VISIBLE_PLAYERS, TEST_PLAYER } from '../players.js';
 import { getLevelFromPct } from '../levels.js';
 import { downloadBackup, validateBackup, restoreBackup } from '../backup.js';
+import { getCorrectStats } from '../playStats.js';
 import { APP_VERSION } from 'virtual:build-info';
 
 // All 12 table numbers in display order
@@ -29,6 +30,37 @@ function getTableStatus(tableNum, progression, srsState) {
   }).length;
 
   return masteredCount === 12 ? 'mastered' : 'active';
+}
+
+// Rounds-completed stats are derived from roundHistory (each entry is one
+// completed round = one payoff screen fired), scoped to rounds completed on
+// or after this feature's ship date. Excludes older history — including
+// dev/test rounds played before this existed — so the counters start clean
+// instead of silently folding in noise.
+//
+// Correct-answer counts come from playStats.js instead of roundHistory —
+// see that file for why: a round's completion timestamp doesn't reflect
+// when its answers were actually submitted, since round-persistence lets a
+// round resume across days.
+const STATS_START = new Date('2026-07-15T00:00:00').getTime();
+
+function getRoundStats(roundHistory) {
+  const now = new Date();
+  const todayY = now.getFullYear(), todayM = now.getMonth(), todayD = now.getDate();
+
+  let roundsToday = 0, roundsTotal = 0;
+
+  roundHistory.forEach(r => {
+    if (r.timestamp < STATS_START) return;
+    roundsTotal += 1;
+
+    const d = new Date(r.timestamp);
+    if (d.getFullYear() === todayY && d.getMonth() === todayM && d.getDate() === todayD) {
+      roundsToday += 1;
+    }
+  });
+
+  return { roundsToday, roundsTotal };
 }
 
 function getConfidencePct(tableNum, progression, srsState) {
@@ -145,6 +177,12 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
     ? TABLE_GROUPS[unlockedGroupIndex]
     : null;
 
+  // Rounds completed (payoff screens fired) + correct answers submitted,
+  // today and cumulative — two independent signals since a round's
+  // completion day and its answers' submission days can differ.
+  const roundStats   = getRoundStats(viewedProgression.roundHistory);
+  const correctStats = getCorrectStats(viewedPlayer);
+
   return (
     <div className="w-full h-full flex flex-col px-4 py-4 gap-4 overflow-hidden">
 
@@ -156,7 +194,7 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
         >
           ← Back
         </button>
-        <h2 className="font-display text-xl text-lab-chalk">Blueprint 📊</h2>
+        <h2 className="font-display text-xl text-lab-chalk">Progress 📊</h2>
         <div className="w-16" /> {/* spacer */}
       </div>
 
@@ -204,6 +242,27 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
           <div className="font-display text-base text-lab-chalk leading-tight">
             {currentLevel.name}
           </div>
+        </div>
+      </div>
+
+      {/* Play stats — rounds completed & correct answers submitted, today + cumulative */}
+      <div className="lab-panel px-4 py-3 shrink-0">
+        <div className="grid grid-cols-2 gap-3 text-center">
+          <div>
+            <div className="font-display text-3xl text-lab-green">{roundStats.roundsToday}</div>
+            <div className="font-body text-[10px] text-lab-chalk/40 uppercase tracking-widest mt-0.5">
+              Rounds Today
+            </div>
+          </div>
+          <div>
+            <div className="font-display text-3xl text-lab-green">{correctStats.correctToday}</div>
+            <div className="font-body text-[10px] text-lab-chalk/40 uppercase tracking-widest mt-0.5">
+              Correct Today
+            </div>
+          </div>
+        </div>
+        <div className="text-xs text-lab-chalk/40 font-body text-center mt-3 pt-2 border-t border-lab-border/30">
+          All-time: {roundStats.roundsTotal} rounds · {correctStats.correctTotal} correct
         </div>
       </div>
 

@@ -58,7 +58,9 @@ Object.values(SOUNDS).forEach(a => {
 let audioCtx = null;
 
 function getAudioCtx() {
-  if (!audioCtx) {
+  // A 'closed' context can never be resumed — only a fresh instance works.
+  // Rare, but can happen after a severe iOS audio-session interruption.
+  if (!audioCtx || audioCtx.state === 'closed') {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
   return audioCtx;
@@ -134,27 +136,49 @@ let unlocked = false;
 const playGeneration = new WeakMap();
 
 // iOS suspends the audio session whenever the page is hidden (app switch,
-// screen lock). Resetting `unlocked` here ensures the next tap re-runs the
-// full HTMLAudioElement unlock sequence. The AudioContext is also eagerly
-// resumed on return so Web Audio loops don't need a gesture to restart.
+// screen lock) — resetting `unlocked` here ensures the next tap re-runs the
+// full HTMLAudioElement unlock sequence.
+//
+// Standalone "Add to Home Screen" web apps on iOS are known to sometimes
+// NOT fire visibilitychange reliably around an interruption (a documented
+// WebKit quirk for homescreen-launched apps specifically, as opposed to a
+// normal Safari tab) — so this alone isn't trustworthy as the only signal.
+// pageshow and window focus are added as extra re-arm triggers to catch
+// cases visibilitychange misses; all three are safe to fire redundantly.
+function rearm() {
+  unlocked = false;
+  if (audioCtx) audioCtx.resume().catch(() => {});
+}
+
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     unlocked = false;
-  } else if (audioCtx) {
-    audioCtx.resume().catch(() => {});
+  } else {
+    rearm();
   }
 });
+window.addEventListener('pageshow', rearm);
+window.addEventListener('focus', rearm);
 
-/** Call this inside any real user-gesture handler (onPointerDown, onClick…). */
+/**
+ * Call this inside any real user-gesture handler (onPointerDown, onClick…).
+ *
+ * The AudioContext resume is cheap and idempotent, so it runs on EVERY call
+ * regardless of `unlocked` — relying solely on visibilitychange/pageshow/focus
+ * to catch every possible interruption is fragile on iOS, so this gives every
+ * single tap a chance to self-heal a silently-dead audio session, not just
+ * the first tap after a caught event. The expensive per-sound HTMLAudioElement
+ * priming below still only runs once per unlock cycle.
+ */
 export function unlockAudio() {
+  const ctx = getAudioCtx();
+  ctx.resume().catch(() => {});
+
   if (unlocked) return;
   unlocked = true;
 
-  const ctx = getAudioCtx();
-
-  // Primary unlock: resume AudioContext + play a silent 1-sample buffer.
-  // This is the correct iOS Safari technique — no audible output.
-  ctx.resume().catch(() => {});
+  // Primary unlock: play a silent 1-sample buffer. This is the correct
+  // iOS Safari technique — no audible output.
   const silentBuf = ctx.createBuffer(1, 1, 22050);
   const silentSrc = ctx.createBufferSource();
   silentSrc.buffer = silentBuf;

@@ -47,6 +47,7 @@ import {
   loadInProgressRound,
   clearInProgressRound,
 } from './roundPersistence.js';
+import { recordCorrectAnswer } from './playStats.js';
 
 // ─────────────────────────────────────────────
 // Action type constants
@@ -498,6 +499,7 @@ export function gameReducer(state, action) {
         if (isFirstAttemptThisRound) {
           updatedRound.firstAttemptCorrect += 1;
         }
+        recordCorrectAnswer(state.currentPlayer);
       } else {
         // Re-queue at the end: will be shown again after remaining facts
         if (!updatedRound.upcomingFacts.includes(factId)) {
