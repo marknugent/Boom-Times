@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "silverwood-points",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd '/Users/marknugent/Documents/Projects/Code/silverwood-points' && npm run dev"],
+      "port": 5174
     }
   ]
 }
