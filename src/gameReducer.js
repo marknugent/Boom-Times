@@ -277,10 +277,13 @@ export function gameReducer(state, action) {
       const resumeExperiment = savedRound ? loadPendingExperiment(playerName) : null;
 
       if (savedRound && resumeExperiment) {
-        // Keeps the anti-repeat history honest — this round's experiment was
-        // already locked in, so it counts as "shown" for the next fresh pick.
-        recordShownExperiment(playerName, resumeExperiment.id);
-
+        // Deliberately NOT calling recordShownExperiment here — it was already
+        // recorded once when this experiment was originally picked (below, or
+        // in START_ROUND). Re-recording on every resume duplicates the same
+        // id into the 2-slot anti-repeat history, degrading "avoid the last
+        // 2 distinct experiments" down to "avoid the last 1" — a real bug
+        // that fired routinely, since exiting and resuming an unfinished
+        // round is completely normal play, not an edge case.
         const question = buildQuestion(
           savedRound.currentFactId,
           rawSrs,
@@ -505,6 +508,41 @@ export function gameReducer(state, action) {
         if (!updatedRound.upcomingFacts.includes(factId)) {
           updatedRound.upcomingFacts = [...updatedRound.upcomingFacts, factId];
         }
+      }
+
+      // Peek ahead and persist what the round will look like once
+      // NEXT_QUESTION fires, rather than waiting for that (delayed, timer-
+      // driven) dispatch to do it. Without this, the persisted snapshot
+      // still points at the just-answered question during the ~2s feedback
+      // window — exiting the round in that window and resuming replayed the
+      // same question, letting it be answered (and counted) repeatedly.
+      // This doesn't touch what's actually rendered — the live feedback
+      // animation and the real NEXT_QUESTION transition are unaffected.
+      const peekNextFactId = updatedRound.upcomingFacts[0];
+      if (peekNextFactId) {
+        const peekQuestion = buildQuestion(
+          peekNextFactId,
+          newSrsState,
+          updatedRound.firstAttemptFacts,   // snapshot without peekNextFactId yet
+          state.hintsShownThisSession,
+        );
+        const peekFirstAttemptFacts = updatedRound.firstAttemptFacts.includes(peekNextFactId)
+          ? updatedRound.firstAttemptFacts
+          : [...updatedRound.firstAttemptFacts, peekNextFactId];
+        const peekHints = peekQuestion.hintText
+          ? [...state.hintsShownThisSession, peekNextFactId]
+          : state.hintsShownThisSession;
+
+        saveInProgressRound(state.currentPlayer, roundSnapshot(
+          { ...updatedRound, upcomingFacts: updatedRound.upcomingFacts.slice(1), firstAttemptFacts: peekFirstAttemptFacts },
+          peekQuestion,
+          peekHints,
+        ));
+      } else {
+        // No facts left — the round is about to complete. Clear the snapshot
+        // so exiting in this window can't resume back into a finished round;
+        // it'll just start a fresh one next time instead of stale-repeating.
+        clearInProgressRound(state.currentPlayer);
       }
 
       return {

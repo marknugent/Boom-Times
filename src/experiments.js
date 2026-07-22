@@ -118,7 +118,7 @@ function historyKey(playerName) {
   return playerName ? `${HISTORY_KEY_BASE}__${playerName}` : HISTORY_KEY_BASE;
 }
 
-function loadRecentIds(playerName) {
+export function loadRecentIds(playerName) {
   try {
     const raw = localStorage.getItem(historyKey(playerName));
     return raw ? JSON.parse(raw) : [];
@@ -129,8 +129,27 @@ function loadRecentIds(playerName) {
 
 function pushRecent(playerName, id) {
   const ids = loadRecentIds(playerName);
+  // Guard against recording the same "shown" experiment twice in a row —
+  // e.g. if a locked pendingExperiment ever gets reused across two separate
+  // recordShownExperiment calls for what's really one continuous pick. A
+  // duplicate here would fill both anti-repeat history slots with the same
+  // id, silently degrading "avoid the last 2 distinct experiments" down to
+  // "avoid the last 1".
+  if (ids[ids.length - 1] === id) return;
   ids.push(id);
   if (ids.length > HISTORY_SIZE) ids.shift();
+  try {
+    localStorage.setItem(historyKey(playerName), JSON.stringify(ids));
+  } catch { /* non-fatal */ }
+  syncField(playerName, 'recentExperiments', ids);
+}
+
+/**
+ * Write the recent-picks history directly (no push/shift) — used only to
+ * restore a heal payload pulled from the server wholesale, as opposed to
+ * pushRecent's incremental "record one more pick" role.
+ */
+export function restoreRecentIds(playerName, ids) {
   try {
     localStorage.setItem(historyKey(playerName), JSON.stringify(ids));
   } catch { /* non-fatal */ }

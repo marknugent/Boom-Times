@@ -18,7 +18,7 @@
 import { syncField } from './sync.js';
 import { loadSRSState, saveSRSState } from './srs.js';
 import { loadProgression, saveProgression } from './progression.js';
-import { loadPendingExperiment, savePendingExperiment } from './experiments.js';
+import { loadPendingExperiment, savePendingExperiment, loadRecentIds, restoreRecentIds } from './experiments.js';
 import { loadInProgressRound, saveInProgressRound } from './roundPersistence.js';
 
 export function syncAllToServer(playerName) {
@@ -27,6 +27,7 @@ export function syncAllToServer(playerName) {
   syncField(playerName, 'progression', loadProgression(playerName));
   syncField(playerName, 'round', loadInProgressRound(playerName));
   syncField(playerName, 'pendingExperiment', loadPendingExperiment(playerName)?.id ?? null);
+  syncField(playerName, 'recentExperiments', loadRecentIds(playerName));
 }
 
 /** Resolves once healing (if any) is complete. Never throws. */
@@ -46,6 +47,7 @@ export async function healFromServer(playerName) {
     if (data.progression)       saveProgression(data.progression, playerName);
     if (data.round)             saveInProgressRound(playerName, data.round);
     if (data.pendingExperiment) savePendingExperiment(playerName, { id: data.pendingExperiment });
+    if (data.recentExperiments) restoreRecentIds(playerName, data.recentExperiments);
   } catch {
     // offline / API down — proceed with empty local state, same as before this existed
   }
