@@ -1,15 +1,24 @@
 /**
- * Session-start backup/heal for the Redis-backed server copy.
+ * Session-start reconciliation with the Redis-backed server copy.
  *
- * localStorage remains the source of truth during play (see sync.js for the
- * per-write pushes). This module only runs at the moment a player is
- * selected:
- *   - healFromServer  — if local storage is empty for this player (iOS
- *     cleared it after inactivity, or a fresh device), pull the server
- *     copy and hydrate localStorage from it before the round is built.
- *   - syncAllToServer — push everything currently in localStorage up to
- *     the server. Covers first deploy (backs up whatever history already
- *     exists locally) and just generally keeps the two in step.
+ * localStorage remains the fast path during play (see sync.js for the
+ * per-write pushes). This module runs once, at the moment a player is
+ * selected, and answers "which copy — local or server — is further along?":
+ *
+ *   - If local has no data at all (iOS wiped it, app was deleted and
+ *     re-added, or this is a brand new device), the server copy always wins.
+ *   - Otherwise, both sides are compared by total rounds completed — a
+ *     monotonic count that only ever increases — and whichever is ahead is
+ *     adopted wholesale, overwriting the other. This is what makes it safe
+ *     to open the game in a browser other than the primary device: a
+ *     behind-or-equal local copy can never silently fork away from the
+ *     real progress and later overwrite it.
+ *
+ * The empty-local case retries the fetch a few times with backoff, since
+ * that's the highest-stakes moment (a transient blip there would otherwise
+ * look like total data loss). The already-has-data case only tries once —
+ * local is presumably fine either way, so there's no reason to make every
+ * single "tap a name to play" action wait on retries, especially offline.
  *
  * Imported only by UI components (HomeScreen, DevScreen) — never by the
  * data modules themselves, so it can safely import all of them without
@@ -18,8 +27,12 @@
 import { syncField } from './sync.js';
 import { loadSRSState, saveSRSState } from './srs.js';
 import { loadProgression, saveProgression } from './progression.js';
-import { loadPendingExperiment, savePendingExperiment, loadRecentIds, restoreRecentIds } from './experiments.js';
-import { loadInProgressRound, saveInProgressRound } from './roundPersistence.js';
+import {
+  loadPendingExperiment, savePendingExperiment, clearPendingExperiment,
+  loadRecentIds, restoreRecentIds,
+} from './experiments.js';
+import { loadInProgressRound, saveInProgressRound, clearInProgressRound } from './roundPersistence.js';
+import { loadRawStats, restoreStats } from './playStats.js';
 
 export function syncAllToServer(playerName) {
   if (!playerName) return;
@@ -28,49 +41,83 @@ export function syncAllToServer(playerName) {
   syncField(playerName, 'round', loadInProgressRound(playerName));
   syncField(playerName, 'pendingExperiment', loadPendingExperiment(playerName)?.id ?? null);
   syncField(playerName, 'recentExperiments', loadRecentIds(playerName));
+  syncField(playerName, 'correctStats', loadRawStats(playerName));
 }
 
-// Local storage being empty is exactly the moment healing matters most
-// (iOS wiped it, or the app was deleted and re-added), which makes it the
-// worst possible moment to give up after a single transient network blip —
-// e.g. WiFi still reconnecting right as the app launches. A few quick
-// retries turn "one bad request = silently starts from zero" into a much
-// rarer failure, at negligible cost (a couple hundred ms, only when local
-// data is already empty).
-const HEAL_RETRY_DELAYS_MS = [0, 400, 1000];
+const RETRY_DELAYS_MS = [0, 400, 1000];
+const FETCH_TIMEOUT_MS = 2500;
 
-async function fetchHealData(playerName) {
-  for (let attempt = 0; attempt < HEAL_RETRY_DELAYS_MS.length; attempt++) {
-    if (HEAL_RETRY_DELAYS_MS[attempt] > 0) {
-      await new Promise(r => setTimeout(r, HEAL_RETRY_DELAYS_MS[attempt]));
-    }
+async function fetchWithTimeout(url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * @param {boolean} retry — true for the empty-local case (worth waiting for),
+ *   false for the already-has-data case (one quick attempt, fail fast).
+ */
+async function fetchServerData(playerName, retry) {
+  const delays = retry ? RETRY_DELAYS_MS : [0];
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
     try {
-      const res = await fetch(`/api/sync?player=${encodeURIComponent(playerName)}`);
+      const res = await fetchWithTimeout(`/api/sync?player=${encodeURIComponent(playerName)}`);
       if (res.ok) return await res.json();
-      console.warn(`[serverBackup] heal fetch returned ${res.status} (attempt ${attempt + 1}/${HEAL_RETRY_DELAYS_MS.length})`);
+      console.warn(`[serverBackup] fetch returned ${res.status} (attempt ${attempt + 1}/${delays.length})`);
     } catch (err) {
-      console.warn(`[serverBackup] heal fetch failed (attempt ${attempt + 1}/${HEAL_RETRY_DELAYS_MS.length}):`, err);
+      console.warn(`[serverBackup] fetch failed (attempt ${attempt + 1}/${delays.length}):`, err);
     }
   }
   return null;
 }
 
-/** Resolves once healing (if any) is complete. Never throws. */
-export async function healFromServer(playerName) {
+function adoptServerBundle(playerName, data) {
+  if (data.srs)          saveSRSState(data.srs, playerName);
+  if (data.progression)  saveProgression(data.progression, playerName);
+
+  if (data.round) saveInProgressRound(playerName, data.round);
+  else            clearInProgressRound(playerName);
+
+  if (data.pendingExperiment) savePendingExperiment(playerName, { id: data.pendingExperiment });
+  else                        clearPendingExperiment(playerName);
+
+  if (data.recentExperiments) restoreRecentIds(playerName, data.recentExperiments);
+  if (data.correctStats)      restoreStats(playerName, data.correctStats);
+}
+
+/** Resolves once reconciliation (if any) is complete. Never throws. */
+export async function reconcileWithServer(playerName) {
   if (!playerName) return;
 
   const hasLocalData = Object.keys(loadSRSState(playerName)).length > 0;
-  if (hasLocalData) return; // local storage is intact — nothing to heal
+  const data = await fetchServerData(playerName, /* retry */ !hasLocalData);
 
-  const data = await fetchHealData(playerName);
   if (!data) {
-    console.warn(`[serverBackup] no heal data for ${playerName} after ${HEAL_RETRY_DELAYS_MS.length} attempts — proceeding with empty local state`);
+    if (!hasLocalData) {
+      console.warn(`[serverBackup] no server data for ${playerName} after retries — proceeding with empty local state`);
+    }
+    return; // offline / server down — proceed with local as-is either way
+  }
+
+  if (!hasLocalData) {
+    adoptServerBundle(playerName, data);
     return;
   }
 
-  if (data.srs)               saveSRSState(data.srs, playerName);
-  if (data.progression)       saveProgression(data.progression, playerName);
-  if (data.round)             saveInProgressRound(playerName, data.round);
-  if (data.pendingExperiment) savePendingExperiment(playerName, { id: data.pendingExperiment });
-  if (data.recentExperiments) restoreRecentIds(playerName, data.recentExperiments);
+  // Both sides have data — whichever has completed more rounds wins outright.
+  // Comparing wholesale (not merging field-by-field) avoids ending up with,
+  // say, a newer progression paired with a round-in-progress that no longer
+  // matches it.
+  const serverRounds = data.progression?.roundHistory?.length ?? 0;
+  const localRounds  = loadProgression(playerName).roundHistory.length;
+
+  if (serverRounds > localRounds) {
+    adoptServerBundle(playerName, data);
+  }
+  // else: local is ahead or tied — keep local, nothing to do.
 }

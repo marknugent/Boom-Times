@@ -9,7 +9,7 @@
 import { useState, useRef } from 'react';
 import { A }        from '../gameReducer.js';
 import { TEST_PLAYER } from '../players.js';
-import { healFromServer, syncAllToServer } from '../serverBackup.js';
+import { reconcileWithServer, syncAllToServer } from '../serverBackup.js';
 import { APP_VERSION, BUILD_ID, BUILD_TIME } from 'virtual:build-info';
 import { playSound, stopSound, playLevelUpSound } from '../sounds.js';
 import SpongeBobCameo  from './SpongeBobCameo.jsx';
@@ -384,7 +384,7 @@ export default function DevScreen({ dispatch }) {
       <button
         className="btn-primary mt-2 px-8 bg-zinc-600 hover:bg-zinc-500 active:bg-zinc-700"
         onClick={async () => {
-          await healFromServer(TEST_PLAYER);
+          await reconcileWithServer(TEST_PLAYER);
           dispatch({ type: A.SELECT_PLAYER, playerName: TEST_PLAYER });
           syncAllToServer(TEST_PLAYER);
         }}

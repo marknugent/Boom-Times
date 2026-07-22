@@ -6,7 +6,7 @@ import SpeechBubble   from './SpeechBubble.jsx';
 import { PUDGE }      from '../pudge.js';
 import { getLevelFromSrs } from '../levels.js';
 import { loadSRSState }    from '../srs.js';
-import { healFromServer, syncAllToServer } from '../serverBackup.js';
+import { reconcileWithServer, syncAllToServer } from '../serverBackup.js';
 
 // Load each player's current level once at render time.
 // localStorage reads are synchronous so this is safe outside a hook.
@@ -37,12 +37,13 @@ export default function HomeScreen({ state, dispatch }) {
     }
   }
 
-  // Pull from the server backup first if local storage is empty for this
-  // player (fresh device, or iOS cleared storage after inactivity), then
-  // push whatever's now local back up — covers first deploy and keeps the
-  // two in step going forward.
+  // Reconcile against the server copy first — whichever (local or server)
+  // has completed more rounds wins outright, so a behind-or-stale local copy
+  // (a fresh device, iOS having cleared storage, or someone poking at the
+  // site on a browser that was never the primary device) can never silently
+  // fork away from the real progress. Then push whatever's now local back up.
   async function selectPlayer(name) {
-    await healFromServer(name);
+    await reconcileWithServer(name);
     dispatch({ type: A.SELECT_PLAYER, playerName: name });
     syncAllToServer(name);
   }
