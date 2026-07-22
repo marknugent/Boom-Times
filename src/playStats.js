@@ -64,3 +64,15 @@ export function getCorrectStats(playerName) {
     correctTotal: stats.cumulativeCorrect,
   };
 }
+
+/** Raw stats object, for pushing the full thing to the server as-is. */
+export function loadRawStats(playerName) {
+  return loadStats(playerName);
+}
+
+/** Write a stats object directly (no increment) — used to adopt a server copy. */
+export function restoreStats(playerName, stats) {
+  try {
+    localStorage.setItem(statsKey(playerName), JSON.stringify(stats));
+  } catch { /* non-fatal */ }
+}
