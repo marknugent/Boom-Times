@@ -30,6 +30,31 @@ export function syncAllToServer(playerName) {
   syncField(playerName, 'recentExperiments', loadRecentIds(playerName));
 }
 
+// Local storage being empty is exactly the moment healing matters most
+// (iOS wiped it, or the app was deleted and re-added), which makes it the
+// worst possible moment to give up after a single transient network blip —
+// e.g. WiFi still reconnecting right as the app launches. A few quick
+// retries turn "one bad request = silently starts from zero" into a much
+// rarer failure, at negligible cost (a couple hundred ms, only when local
+// data is already empty).
+const HEAL_RETRY_DELAYS_MS = [0, 400, 1000];
+
+async function fetchHealData(playerName) {
+  for (let attempt = 0; attempt < HEAL_RETRY_DELAYS_MS.length; attempt++) {
+    if (HEAL_RETRY_DELAYS_MS[attempt] > 0) {
+      await new Promise(r => setTimeout(r, HEAL_RETRY_DELAYS_MS[attempt]));
+    }
+    try {
+      const res = await fetch(`/api/sync?player=${encodeURIComponent(playerName)}`);
+      if (res.ok) return await res.json();
+      console.warn(`[serverBackup] heal fetch returned ${res.status} (attempt ${attempt + 1}/${HEAL_RETRY_DELAYS_MS.length})`);
+    } catch (err) {
+      console.warn(`[serverBackup] heal fetch failed (attempt ${attempt + 1}/${HEAL_RETRY_DELAYS_MS.length}):`, err);
+    }
+  }
+  return null;
+}
+
 /** Resolves once healing (if any) is complete. Never throws. */
 export async function healFromServer(playerName) {
   if (!playerName) return;
@@ -37,18 +62,15 @@ export async function healFromServer(playerName) {
   const hasLocalData = Object.keys(loadSRSState(playerName)).length > 0;
   if (hasLocalData) return; // local storage is intact — nothing to heal
 
-  try {
-    const res = await fetch(`/api/sync?player=${encodeURIComponent(playerName)}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data) return;
-
-    if (data.srs)               saveSRSState(data.srs, playerName);
-    if (data.progression)       saveProgression(data.progression, playerName);
-    if (data.round)             saveInProgressRound(playerName, data.round);
-    if (data.pendingExperiment) savePendingExperiment(playerName, { id: data.pendingExperiment });
-    if (data.recentExperiments) restoreRecentIds(playerName, data.recentExperiments);
-  } catch {
-    // offline / API down — proceed with empty local state, same as before this existed
+  const data = await fetchHealData(playerName);
+  if (!data) {
+    console.warn(`[serverBackup] no heal data for ${playerName} after ${HEAL_RETRY_DELAYS_MS.length} attempts — proceeding with empty local state`);
+    return;
   }
+
+  if (data.srs)               saveSRSState(data.srs, playerName);
+  if (data.progression)       saveProgression(data.progression, playerName);
+  if (data.round)             saveInProgressRound(playerName, data.round);
+  if (data.pendingExperiment) savePendingExperiment(playerName, { id: data.pendingExperiment });
+  if (data.recentExperiments) restoreRecentIds(playerName, data.recentExperiments);
 }
