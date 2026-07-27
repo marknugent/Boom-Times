@@ -303,9 +303,9 @@ export function stopSound(id) {
  * (descending a whole step). Replaces the old buzzer sample with something
  * that reads as "try again" rather than a punishing alarm.
  */
-export function playWrongAnswerBoop() {
+export async function playWrongAnswerBoop() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
 
   function boop(startOffset, freq) {
     const osc  = ctx.createOscillator();
@@ -332,9 +332,9 @@ export function playWrongAnswerBoop() {
  * Single countdown beep — clean electronic tick for the bomb countdown.
  * Call at each step: 5, 4, 3, 2, 1.
  */
-export function playCountdownBeep() {
+export async function playCountdownBeep() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
 
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -357,9 +357,9 @@ export function playCountdownBeep() {
  * Lighter and shorter than the explosion boom: sub-bass pulse + low rumble
  * + sharp ignition crack. Designed to punch through the rocket.mp3 loop.
  */
-export function playRocketIgnitionBoom() {
+export async function playRocketIgnitionBoom() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
 
   const now = ctx.currentTime;
 
@@ -451,9 +451,9 @@ export function playRocketIgnitionBoom() {
  *   5. Sharp crack                (3000 Hz bandpass, 0.15 s)
  *   6. High-frequency debris hiss (5000 Hz highpass, 2 s)
  */
-export function playExplosionBoom() {
+export async function playExplosionBoom() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
 
   const now = ctx.currentTime;
 
@@ -552,9 +552,9 @@ export function playExplosionBoom() {
  * Each shell is bandpass-filtered white noise with an exponential
  * volume decay, giving a realistic firework crack/pop.
  */
-export function playLevelUpSound() {
+export async function playLevelUpSound() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
 
   function shell(offsetSec, freq, vol) {
     const dur    = 0.6;
