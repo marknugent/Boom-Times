@@ -18,6 +18,7 @@ import DoggieCameo        from './DoggieCameo.jsx';
 import DadIsWatchingCameo from './DadIsWatchingCameo.jsx';
 import AwesomeCameo from './AwesomeCameo.jsx';
 import TrainDogCameo from './TrainDogCameo.jsx';
+import DadJokeCameo from './DadJokeCameo.jsx';
 import { LEVELS } from '../levels.js';
 import FireworksEffect from './FireworksEffect.jsx';
 import Beaker       from './Beaker.jsx';
@@ -154,6 +155,7 @@ export default function DevScreen({ dispatch }) {
   const [showDogCameo, setShowDogCameo] = useState(false);
   const [showDadCameo, setShowDadCameo] = useState(false);
   const [showTrainDogCameo, setShowTrainDogCameo] = useState(false);
+  const [showDadJokeCameo, setShowDadJokeCameo] = useState(false);
   // 'Louisa' | 'Marjorie' | null — which player's "is awesome" cameo to preview
   const [showAwesomeCameo, setShowAwesomeCameo] = useState(null);
 
@@ -355,10 +357,17 @@ export default function DevScreen({ dispatch }) {
         </button>
 
         <button
-          className="btn-primary col-span-2 w-full text-sm py-4 leading-tight bg-amber-800 hover:bg-amber-700 active:bg-amber-900"
+          className="btn-primary w-full text-sm py-4 leading-tight bg-amber-800 hover:bg-amber-700 active:bg-amber-900"
           onClick={() => { setShowTrainDogCameo(true); playSound('traindog'); }}
         >
           TRAIN DOG BREAK 🐕‍🦺🚂
+        </button>
+
+        <button
+          className="btn-primary w-full text-sm py-4 leading-tight bg-yellow-800 hover:bg-yellow-700 active:bg-yellow-900"
+          onClick={() => setShowDadJokeCameo(true)}
+        >
+          DAD JOKE BREAK 🃏
         </button>
       </div>
 
@@ -379,6 +388,9 @@ export default function DevScreen({ dispatch }) {
       )}
       {showTrainDogCameo && (
         <TrainDogCameo onDismiss={() => setShowTrainDogCameo(false)} />
+      )}
+      {showDadJokeCameo && (
+        <DadJokeCameo onDismiss={() => setShowDadJokeCameo(false)} />
       )}
 
       <button

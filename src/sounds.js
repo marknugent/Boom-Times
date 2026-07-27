@@ -72,6 +72,7 @@ const LOOP_URLS = {
   'dance-party':       '/dance.mp3',
   'space-launch':      '/rocket.mp3',
   'nyan':              '/nyan.mp3',
+  'dad-joke-break':    '/elevator-music.mp3',
 };
 
 // id → Promise<AudioBuffer | null>  (resolved once at module load)

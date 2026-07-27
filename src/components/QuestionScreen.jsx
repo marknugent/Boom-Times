@@ -20,6 +20,7 @@ import DoggieCameo          from './DoggieCameo.jsx';
 import DadIsWatchingCameo   from './DadIsWatchingCameo.jsx';
 import AwesomeCameo         from './AwesomeCameo.jsx';
 import TrainDogCameo        from './TrainDogCameo.jsx';
+import DadJokeCameo         from './DadJokeCameo.jsx';
 import HotStreakBanner from './HotStreakBanner.jsx';
 import { TEST_PLAYER, VISIBLE_PLAYERS } from '../players.js';
 import Keypad       from './Keypad.jsx';
@@ -100,12 +101,14 @@ export default function QuestionScreen({ state, dispatch }) {
         sinceBonusRef.current = 0;
         // "<player> is awesome" is only valid for Louisa/Marjorie, not the test profile
         const cameoPool = VISIBLE_PLAYERS.includes(currentPlayer)
-          ? ['spongebob', 'cat', 'doggie', 'dad', 'awesome', 'traindog']
-          : ['spongebob', 'cat', 'doggie', 'dad', 'traindog'];
+          ? ['spongebob', 'cat', 'doggie', 'dad', 'awesome', 'traindog', 'dadjoke']
+          : ['spongebob', 'cat', 'doggie', 'dad', 'traindog', 'dadjoke'];
         const pick = cameoPool[Math.floor(Math.random() * cameoPool.length)];
         setActiveCameo(pick);
         // traindog's video track is muted for reliable iOS autoplay, so its
         // audio is the extracted track played through the SFX system instead.
+        // dadjoke has no sting here — it starts its own looping bgMusic in
+        // its own mount effect instead (see DadJokeCameo.jsx).
         const sfx  = { spongebob: 'fanfare', cat: 'meow', doggie: 'barking', dad: 'creepy', awesome: 'awesome', traindog: 'traindog' };
         playSound(sfx[pick]);
         return; // cameo's onDismiss fires NEXT_QUESTION when it ends
@@ -326,6 +329,11 @@ export default function QuestionScreen({ state, dispatch }) {
       )}
       {activeCameo === 'traindog' && (
         <TrainDogCameo
+          onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
+        />
+      )}
+      {activeCameo === 'dadjoke' && (
+        <DadJokeCameo
           onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
         />
       )}
