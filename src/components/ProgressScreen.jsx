@@ -10,6 +10,8 @@ import { getFactIdsForTable, isFactMastered, loadSRSState } from '../srs.js';
 import { VISIBLE_PLAYERS, TEST_PLAYER } from '../players.js';
 import { getLevelFromPct } from '../levels.js';
 import { downloadBackup, validateBackup, restoreBackup } from '../backup.js';
+import { allowSync } from '../sync.js';
+import { syncAllToServer } from '../serverBackup.js';
 import { getCorrectStats } from '../playStats.js';
 import { APP_VERSION } from 'virtual:build-info';
 
@@ -150,8 +152,18 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
     reader.readAsText(file);
   }
 
-  function handleRestoreConfirm() {
+  async function handleRestoreConfirm() {
     restoreBackup(confirmBackup);
+    // A manual restore is an explicit, authoritative statement of what the
+    // data should be — push it to the server now so it doesn't just get
+    // silently overwritten again the next time reconcileWithServer runs
+    // (restoreBackup only ever touches localStorage on its own).
+    await Promise.all(
+      Object.keys(confirmBackup.players).map((name) => {
+        allowSync(name);
+        return syncAllToServer(name);
+      })
+    );
     window.location.reload();
   }
 
@@ -169,7 +181,7 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
     .filter(rec => isFactMastered(rec))
     .length;
   const overallPct    = Math.round((masteredCount / totalFacts) * 100);
-  const currentLevel  = getLevelFromPct(overallPct);
+  const currentLevel  = getLevelFromPct(Math.max(overallPct, viewedProgression.highestMasteryPct ?? 0));
 
   // Current active group label
   const { unlockedGroupIndex } = viewedProgression;

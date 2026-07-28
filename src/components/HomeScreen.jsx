@@ -4,14 +4,14 @@ import { VISIBLE_PLAYERS, TEST_PLAYER } from '../players.js';
 import Pudge          from './Pudge.jsx';
 import SpeechBubble   from './SpeechBubble.jsx';
 import { PUDGE }      from '../pudge.js';
-import { getLevelFromSrs } from '../levels.js';
+import { getRatchetedLevel } from '../levels.js';
 import { loadSRSState }    from '../srs.js';
 import { reconcileWithServer, syncAllToServer } from '../serverBackup.js';
 
 // Load each player's current level once at render time.
 // localStorage reads are synchronous so this is safe outside a hook.
 function getPlayerLevel(name) {
-  return getLevelFromSrs(loadSRSState(name));
+  return getRatchetedLevel(name, loadSRSState(name));
 }
 
 const TRIPLE_TAP_MS = 600;

@@ -24,7 +24,7 @@
  * data modules themselves, so it can safely import all of them without
  * creating a cycle back through sync.js.
  */
-import { syncField } from './sync.js';
+import { syncField, allowSync } from './sync.js';
 import { loadSRSState, saveSRSState } from './srs.js';
 import { loadProgression, saveProgression } from './progression.js';
 import {
@@ -35,13 +35,15 @@ import { loadInProgressRound, saveInProgressRound, clearInProgressRound } from '
 import { loadRawStats, restoreStats } from './playStats.js';
 
 export function syncAllToServer(playerName) {
-  if (!playerName) return;
-  syncField(playerName, 'srs', loadSRSState(playerName));
-  syncField(playerName, 'progression', loadProgression(playerName));
-  syncField(playerName, 'round', loadInProgressRound(playerName));
-  syncField(playerName, 'pendingExperiment', loadPendingExperiment(playerName)?.id ?? null);
-  syncField(playerName, 'recentExperiments', loadRecentIds(playerName));
-  syncField(playerName, 'correctStats', loadRawStats(playerName));
+  if (!playerName) return Promise.resolve();
+  return Promise.all([
+    syncField(playerName, 'srs', loadSRSState(playerName)),
+    syncField(playerName, 'progression', loadProgression(playerName)),
+    syncField(playerName, 'round', loadInProgressRound(playerName)),
+    syncField(playerName, 'pendingExperiment', loadPendingExperiment(playerName)?.id ?? null),
+    syncField(playerName, 'recentExperiments', loadRecentIds(playerName)),
+    syncField(playerName, 'correctStats', loadRawStats(playerName)),
+  ]);
 }
 
 const RETRY_DELAYS_MS = [0, 400, 1000];
@@ -101,8 +103,13 @@ export async function reconcileWithServer(playerName) {
     if (!hasLocalData) {
       console.warn(`[serverBackup] no server data for ${playerName} after retries — proceeding with empty local state`);
     }
-    return; // offline / server down — proceed with local as-is either way
+    return; // offline / server down — proceed with local as-is; do NOT allowSync, we
+            // have no confirmed basis for knowing local is safe to push upstream
   }
+
+  // We got a real round-trip with the server, so we now know where local
+  // stands relative to it — safe to resume pushing local writes upstream.
+  allowSync(playerName);
 
   if (!hasLocalData) {
     adoptServerBundle(playerName, data);

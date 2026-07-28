@@ -99,6 +99,9 @@ export function defaultProgression() {
 
     /** ISO date string of last activity (for daily counter). */
     lastActivityDate: null,
+
+    /** All-time-high mastery % (0–100) — see levels.js. Ratchets up only. */
+    highestMasteryPct: 0,
   };
 }
 

@@ -41,7 +41,7 @@ import {
 } from './experiments.js';
 import { shouldShowHint, getHintText } from './hints.js';
 import { pudge, PUDGE } from './pudge.js';
-import { getLevelFromSrs } from './levels.js';
+import { getRatchetedLevel, ratchetMasteryHigh } from './levels.js';
 import {
   saveInProgressRound,
   loadInProgressRound,
@@ -299,7 +299,7 @@ export function gameReducer(state, action) {
           firstAttemptFacts:   savedRound.firstAttemptFacts ?? [savedRound.currentFactId],
           firstAttemptCorrect: savedRound.firstAttemptCorrect ?? 0,
           totalAttempts:       savedRound.totalAttempts ?? 0,
-          levelAtRoundStart:   savedRound.levelAtRoundStart ?? getLevelFromSrs(rawSrs).level,
+          levelAtRoundStart:   savedRound.levelAtRoundStart ?? getRatchetedLevel(playerName, rawSrs).level,
         };
 
         return {
@@ -344,7 +344,7 @@ export function gameReducer(state, action) {
         firstAttemptFacts:   [firstFactId],
         firstAttemptCorrect: 0,
         totalAttempts:       0,
-        levelAtRoundStart:   getLevelFromSrs(updatedSrsState).level,
+        levelAtRoundStart:   getRatchetedLevel(playerName, updatedSrsState).level,
       };
 
       const question = buildQuestion(
@@ -403,7 +403,7 @@ export function gameReducer(state, action) {
         firstAttemptFacts: [],        // facts presented at least once (for first-attempt tracking)
         firstAttemptCorrect: 0,       // first-attempt correct count
         totalAttempts: 0,             // every confirmed answer (correct + re-tries)
-        levelAtRoundStart: getLevelFromSrs(updatedSrsState).level,
+        levelAtRoundStart: getRatchetedLevel(state.currentPlayer, updatedSrsState).level,
       };
 
       // 5. Build first question (use updatedSrsState so hint logic sees presets)
@@ -683,8 +683,12 @@ function handleRoundComplete(state) {
   clearPendingExperiment(currentPlayer);
   clearInProgressRound(currentPlayer);
 
-  // Detect level-up: compare level at round start with level now
-  const newLevelObj = getLevelFromSrs(state.srsState);
+  // Record any new all-time-high mastery %, then detect level-up by
+  // comparing the (ratcheted) level at round start with the level now —
+  // this way a level, once reached, never appears to regress, and the
+  // banner never re-fires for a level already reached before.
+  ratchetMasteryHigh(currentPlayer, state.srsState);
+  const newLevelObj = getRatchetedLevel(currentPlayer, state.srsState);
   const levelUp = newLevelObj.level > round.levelAtRoundStart ? newLevelObj : null;
 
   const highAccuracy = total > 0 && correct / total >= 0.8;
