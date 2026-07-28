@@ -99,6 +99,20 @@ export const EXPERIMENTS = [
     bgMusic:  'nyan',
     hideCat:  true,
   },
+  {
+    id: 'pudge-man',
+    name: 'PUDGE-MAN',
+    brewingLabel: 'Brewing: PUDGE-MAN 🕹️',
+    payoffText: 'PUDGE-MAN!',
+    ingredient: '🕹️',
+    emoji: '🕹️',
+    // bgMusic is a fake ID (matches no LOOP_URLS/SOUNDS entry, so this is a
+    // safe no-op) — PudgeManGame self-manages all audio, same pattern as
+    // bomb-detonation.
+    bgMusic:    'pudge-man',
+    hideCat:    true,
+    interactive: true, // PayoffScreen renders the game instead of a passive animation
+  },
 ];
 
 // Experiments currently in rotation — excludes anything flagged `disabled`.

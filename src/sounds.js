@@ -592,3 +592,169 @@ export async function playLevelUpSound() {
   shell(0.60,  650, 0.35);
   shell(0.82, 1000, 0.30);
 }
+
+/**
+ * PUDGE-MAN — synthesised 8-bit SFX + looping "boop-boop" bassline.
+ * No audio files; everything below is generated Web Audio.
+ */
+
+/** Short rising blip — eating a dot. */
+export async function playPudgeDotEat() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+
+  const t = ctx.currentTime;
+  osc.frequency.setValueAtTime(500, t);
+  osc.frequency.exponentialRampToValueAtTime(750, t + 0.05);
+  gain.gain.setValueAtTime(0.18, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.07);
+}
+
+/** Longer rising sweep — eating a power pellet. */
+export async function playPudgePowerPellet() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+
+  const t = ctx.currentTime;
+  osc.frequency.setValueAtTime(220, t);
+  osc.frequency.exponentialRampToValueAtTime(880, t + 0.28);
+  gain.gain.setValueAtTime(0.22, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.3);
+}
+
+/** Two quick ascending blips — eating a vulnerable ghost. */
+export async function playPudgeGhostEat() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+
+  const t = ctx.currentTime;
+  [0, 0.09].forEach((offset, i) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    const start = t + offset;
+    osc.frequency.setValueAtTime(300 + i * 150, start);
+    osc.frequency.exponentialRampToValueAtTime(900 + i * 150, start + 0.08);
+    gain.gain.setValueAtTime(0.22, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.09);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.09);
+  });
+}
+
+/** Long descending "womp" — caught by a ghost. */
+export async function playPudgeDeath() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sawtooth';
+
+  const t = ctx.currentTime;
+  osc.frequency.setValueAtTime(500, t);
+  osc.frequency.exponentialRampToValueAtTime(60, t + 0.9);
+  gain.gain.setValueAtTime(0.25, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 1.0);
+}
+
+// 8-bit loop scheduler factory — a standard lookahead scheduler (always
+// scheduling ~150ms ahead against ctx.currentTime) so it stays tight even
+// if the driving setInterval itself is throttled. Used for both the normal
+// bassline and the faster/higher "ghosts are vulnerable" loop below, so the
+// two are trivially swappable without fighting over shared timer state.
+function createPudgeManLoop(pattern, stepSec, peakGain) {
+  let timer     = null;
+  let nextTime  = 0;
+  let noteIndex = 0;
+  const lookaheadSec = 0.15;
+
+  function scheduleNote(ctx, freq, time) {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = freq;
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.linearRampToValueAtTime(peakGain, time + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + stepSec * 0.85);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(time);
+    osc.stop(time + stepSec);
+  }
+
+  async function start() {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+    stop();
+
+    noteIndex = 0;
+    nextTime  = ctx.currentTime + 0.05;
+
+    function scheduler() {
+      while (nextTime < ctx.currentTime + lookaheadSec) {
+        scheduleNote(ctx, pattern[noteIndex % pattern.length], nextTime);
+        nextTime += stepSec;
+        noteIndex += 1;
+      }
+    }
+    scheduler();
+    timer = setInterval(scheduler, 100);
+  }
+
+  function stop() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  return { start, stop };
+}
+
+// Normal loop — simple 8-bit walking bassline: C3 C3 G3 F3 C3 C3 E3 D3.
+const pudgeManLoop = createPudgeManLoop(
+  [130.81, 130.81, 196.00, 174.61, 130.81, 130.81, 164.81, 146.83],
+  0.22, 0.10,
+);
+
+// "Ghosts are vulnerable" loop — faster tempo, higher register, alternating
+// two-note siren (classic frightened-mode feel) so the window is obvious by
+// ear, distinct from the normal bassline, and its end is just as audible.
+const pudgeManVulnerableLoop = createPudgeManLoop(
+  [392.00, 523.25, 392.00, 523.25], // G4 C5 G4 C5
+  0.12, 0.09,
+);
+
+export function startPudgeManMusic() { return pudgeManLoop.start(); }
+export function stopPudgeManMusic()  { pudgeManLoop.stop(); }
+
+export function startPudgeManVulnerableMusic() { return pudgeManVulnerableLoop.start(); }
+export function stopPudgeManVulnerableMusic()  { pudgeManVulnerableLoop.stop(); }

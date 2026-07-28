@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { playSound, stopSound } from '../sounds.js';
 import { getRandomJokes } from '../dadJokes.js';
 
-const REVEAL_PAUSE_MS = 2200; // let joke 1's punchline sink in before joke 2 appears
+const REVEAL_PAUSE_MS = 3400; // let joke 1's punchline sink in before joke 2 appears
 
 export default function DadJokeCameo({ onDismiss }) {
   const [jokes] = useState(() => getRandomJokes(2));

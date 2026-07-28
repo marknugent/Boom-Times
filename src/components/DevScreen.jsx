@@ -19,6 +19,7 @@ import DadIsWatchingCameo from './DadIsWatchingCameo.jsx';
 import AwesomeCameo from './AwesomeCameo.jsx';
 import TrainDogCameo from './TrainDogCameo.jsx';
 import DadJokeCameo from './DadJokeCameo.jsx';
+import PudgeManGame from './PudgeManGame.jsx';
 import { LEVELS } from '../levels.js';
 import FireworksEffect from './FireworksEffect.jsx';
 import Beaker       from './Beaker.jsx';
@@ -156,6 +157,7 @@ export default function DevScreen({ dispatch }) {
   const [showDadCameo, setShowDadCameo] = useState(false);
   const [showTrainDogCameo, setShowTrainDogCameo] = useState(false);
   const [showDadJokeCameo, setShowDadJokeCameo] = useState(false);
+  const [showPudgeMan, setShowPudgeMan] = useState(false);
   // 'Louisa' | 'Marjorie' | null — which player's "is awesome" cameo to preview
   const [showAwesomeCameo, setShowAwesomeCameo] = useState(null);
 
@@ -284,23 +286,23 @@ export default function DevScreen({ dispatch }) {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center gap-3 bg-lab-bg px-4 pt-6 pb-4 overflow-y-auto">
+    <div className="w-full h-full flex flex-col items-center gap-2 bg-lab-bg px-4 pt-4 pb-3 overflow-y-auto">
       <div className="font-body text-lab-chalk/30 text-xs tracking-[0.3em] uppercase">
         🔧 dev mode
       </div>
       <div className="font-body text-lab-chalk/40 text-[10px] tracking-wide -mt-2">
         v{APP_VERSION} · build {BUILD_ID}
       </div>
-      <div className="font-display text-3xl text-lab-chalk">
+      <div className="font-display text-2xl text-lab-chalk">
         Experiment Lab
       </div>
 
       {/* ── Two-column button grid ── */}
-      <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
+      <div className="grid grid-cols-2 gap-1.5 w-full max-w-sm">
         {EXPERIMENTS.map(exp => (
           <button
             key={exp.id}
-            className="btn-primary w-full text-sm py-4 leading-tight"
+            className="btn-primary w-full text-sm py-2 min-h-0 leading-tight"
             onClick={() => launch(exp)}
           >
             {exp.disabled ? `🚫 ${exp.label}` : exp.label}
@@ -308,66 +310,73 @@ export default function DevScreen({ dispatch }) {
         ))}
 
         <button
-          className="btn-primary w-full text-sm py-4 leading-tight bg-purple-600 hover:bg-purple-500 active:bg-purple-700"
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-purple-600 hover:bg-purple-500 active:bg-purple-700"
           onClick={() => { setLevelIndex(0); setPreviewLevel(LEVELS[0]); }}
         >
           LEVEL UP BANNER 🎖️
         </button>
 
         <button
-          className="btn-primary w-full text-sm py-4 leading-tight bg-cyan-700 hover:bg-cyan-600 active:bg-cyan-800"
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-cyan-700 hover:bg-cyan-600 active:bg-cyan-800"
           onClick={() => { setShowCameo(true); playSound('fanfare'); }}
         >
           SPONGEBOB BREAK 🧽
         </button>
 
         <button
-          className="btn-primary w-full text-sm py-4 leading-tight bg-orange-700 hover:bg-orange-600 active:bg-orange-800"
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-orange-700 hover:bg-orange-600 active:bg-orange-800"
           onClick={() => { setShowCatCameo(true); playSound('meow'); }}
         >
           CAT CLOSEUP 🐱
         </button>
 
         <button
-          className="btn-primary w-full text-sm py-4 leading-tight bg-amber-700 hover:bg-amber-600 active:bg-amber-800"
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-amber-700 hover:bg-amber-600 active:bg-amber-800"
           onClick={() => { setShowDogCameo(true); playSound('barking'); }}
         >
           DOGGIE BREAK 🐶
         </button>
 
         <button
-          className="btn-primary col-span-2 w-full text-sm py-4 leading-tight bg-slate-700 hover:bg-slate-600 active:bg-slate-800"
+          className="btn-primary col-span-2 w-full text-sm py-2 min-h-0 leading-tight bg-slate-700 hover:bg-slate-600 active:bg-slate-800"
           onClick={() => { setShowDadCameo(true); playSound('creepy'); }}
         >
           DAD IS WATCHING 👁️
         </button>
 
         <button
-          className="btn-primary w-full text-sm py-4 leading-tight bg-pink-700 hover:bg-pink-600 active:bg-pink-800"
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-pink-700 hover:bg-pink-600 active:bg-pink-800"
           onClick={() => { setShowAwesomeCameo('Louisa'); playSound('awesome'); }}
         >
           LOUISA IS AWESOME 🌟
         </button>
 
         <button
-          className="btn-primary w-full text-sm py-4 leading-tight bg-pink-700 hover:bg-pink-600 active:bg-pink-800"
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-pink-700 hover:bg-pink-600 active:bg-pink-800"
           onClick={() => { setShowAwesomeCameo('Marjorie'); playSound('awesome'); }}
         >
           MARJORIE IS AWESOME 🌟
         </button>
 
         <button
-          className="btn-primary w-full text-sm py-4 leading-tight bg-amber-800 hover:bg-amber-700 active:bg-amber-900"
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-amber-800 hover:bg-amber-700 active:bg-amber-900"
           onClick={() => { setShowTrainDogCameo(true); playSound('traindog'); }}
         >
           TRAIN DOG BREAK 🐕‍🦺🚂
         </button>
 
         <button
-          className="btn-primary w-full text-sm py-4 leading-tight bg-yellow-800 hover:bg-yellow-700 active:bg-yellow-900"
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-yellow-800 hover:bg-yellow-700 active:bg-yellow-900"
           onClick={() => setShowDadJokeCameo(true)}
         >
           DAD JOKE BREAK 🃏
+        </button>
+
+        <button
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-orange-800 hover:bg-orange-700 active:bg-orange-900"
+          onClick={() => setShowPudgeMan(true)}
+        >
+          PUDGE-MAN 🕹️
         </button>
       </div>
 
@@ -392,9 +401,14 @@ export default function DevScreen({ dispatch }) {
       {showDadJokeCameo && (
         <DadJokeCameo onDismiss={() => setShowDadJokeCameo(false)} />
       )}
+      {showPudgeMan && (
+        <div className="fixed inset-0 z-[250]">
+          <PudgeManGame onGameEnd={() => setShowPudgeMan(false)} />
+        </div>
+      )}
 
       <button
-        className="btn-primary mt-2 px-8 bg-zinc-600 hover:bg-zinc-500 active:bg-zinc-700"
+        className="btn-primary py-2 min-h-0 mt-1 px-8 bg-zinc-600 hover:bg-zinc-500 active:bg-zinc-700"
         onClick={async () => {
           await reconcileWithServer(TEST_PLAYER);
           dispatch({ type: A.SELECT_PLAYER, playerName: TEST_PLAYER });
@@ -405,7 +419,7 @@ export default function DevScreen({ dispatch }) {
       </button>
 
       <button
-        className="btn-secondary mt-1 px-8"
+        className="btn-secondary py-2 min-h-0 mb-2 px-8"
         onClick={() => dispatch({ type: A.NAVIGATE, screen: 'home' })}
       >
         ← Exit dev mode

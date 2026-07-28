@@ -19,6 +19,8 @@ import SpaceLaunchAnimation    from './SpaceLaunchAnimation.jsx';
 import UsaAnimation            from './UsaAnimation.jsx';
 import BombDetonationAnimation from './BombDetonationAnimation.jsx';
 import FireworksEffect   from './FireworksEffect.jsx';
+import PudgeManGame      from './PudgeManGame.jsx';
+import PudgeManResult    from './PudgeManResult.jsx';
 import { TABLE_GROUPS }  from '../progression.js';
 
 const ANIMATION_MAP = {
@@ -40,6 +42,12 @@ export default function PayoffScreen({ state, dispatch }) {
 
   // Incrementing this key remounts <PayoffAnim />, restarting the animation
   const [animKey, setAnimKey] = useState(0);
+
+  // PUDGE-MAN is interactive — it takes over the whole screen while playing
+  // and only settles into the normal score-card layout once it ends.
+  const isPudgeMan = round?.experiment.id === 'pudge-man';
+  const [pudgeManOutcome, setPudgeManOutcome] = useState(null); // null while playing
+  const [pudgeManKey, setPudgeManKey]         = useState(0);    // bump to force a fresh game
 
   // Level-up banner — shown only when the player actively tries to move on,
   // so it never cuts into an in-progress animation.
@@ -82,9 +90,15 @@ export default function PayoffScreen({ state, dispatch }) {
 
     if (tapCountRef.current >= 3) {
       tapCountRef.current = 0;
-      // Remount animation + replay sound
-      setAnimKey(k => k + 1);
-      playSound(round?.experiment.id);
+      if (isPudgeMan) {
+        // Replay = a fresh game, not just a re-shown result screen
+        setPudgeManOutcome(null);
+        setPudgeManKey(k => k + 1);
+      } else {
+        // Remount animation + replay sound
+        setAnimKey(k => k + 1);
+        playSound(round?.experiment.id);
+      }
     } else {
       tapTimerRef.current = setTimeout(() => {
         tapCountRef.current = 0;
@@ -98,8 +112,9 @@ export default function PayoffScreen({ state, dispatch }) {
   useEffect(() => {
     if (!round) return;
     const id = round.experiment.id;
-    // dance-party, space-launch, and usa-usa-usa use bgMusic only — no separate SFX
-    if (id === 'dance-party' || id === 'space-launch' || id === 'usa-usa-usa') return;
+    // dance-party, space-launch, and usa-usa-usa use bgMusic only — no separate SFX.
+    // pudge-man self-manages all its own audio (see PudgeManGame.jsx).
+    if (id === 'dance-party' || id === 'space-launch' || id === 'usa-usa-usa' || id === 'pudge-man') return;
     if (id === 'toilet-attack') {
       playSound(id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
     } else {
@@ -123,6 +138,18 @@ export default function PayoffScreen({ state, dispatch }) {
   }, []);
 
   if (!round) return null;
+
+  // PUDGE-MAN takes over the whole screen while it's actually being played —
+  // none of the normal score-card/beaker/cat/nav-button chrome applies until
+  // it settles (won/lost/skipped).
+  if (isPudgeMan && pudgeManOutcome === null) {
+    return (
+      <PudgeManGame
+        key={pudgeManKey}
+        onGameEnd={(outcome) => setPudgeManOutcome(outcome)}
+      />
+    );
+  }
 
   const { experiment, firstAttemptCorrect, answeredCorrectly, totalAttempts } = round;
   // correct = facts eventually answered correctly (= round size, always)
@@ -174,7 +201,7 @@ export default function PayoffScreen({ state, dispatch }) {
       onPointerDown={handleTap}
     >
       {/* ── Full-screen animation — key forces full remount on replay ── */}
-      <PayoffAnim key={animKey} />
+      {isPudgeMan ? <PudgeManResult outcome={pudgeManOutcome} /> : <PayoffAnim key={animKey} />}
 
       {/* ── Beaker — same position as QuestionScreen, glowing ── */}
       <div className="absolute z-20 animate-beaker-glow beaker-payoff-glow" style={{ top: 56, left: 16 }}>
