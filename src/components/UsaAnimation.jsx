@@ -94,8 +94,11 @@ function Shell({ cx, cy, delay }) {
 const USA_GIFS = [
   { src: '/usa1.gif', style: { width: 260, top:    '3%', left:  '2%' }, bobDur: '0.62s', bobDelay: '0.00s' },
   { src: '/usa2.gif', style: { width: 260, top:    '3%', right: '2%' }, bobDur: '0.58s', bobDelay: '0.15s' },
-  { src: '/usa3.gif', style: { width: 260, bottom: '3%', left:  '2%' }, bobDur: '0.64s', bobDelay: '0.30s' },
-  { src: '/usa4.gif', style: { width: 260, bottom: '3%', right: '2%' }, bobDur: '0.60s', bobDelay: '0.45s' },
+  // Bottom two sit 100px higher than the top two — in the real game the
+  // on-screen buttons eat into the bottom of the screen and would otherwise
+  // cover them.
+  { src: '/usa3.gif', style: { width: 260, bottom: 'calc(3% + 100px)', left:  '2%' }, bobDur: '0.64s', bobDelay: '0.30s' },
+  { src: '/usa4.gif', style: { width: 260, bottom: 'calc(3% + 100px)', right: '2%' }, bobDur: '0.60s', bobDelay: '0.45s' },
 ];
 
 export default function UsaAnimation() {
@@ -164,8 +167,13 @@ export default function UsaAnimation() {
         />
       ))}
 
-      {/* ── Center video ─────────────────────────────────────────────── */}
-      <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 20 }}>
+      {/* ── Center video — shifted up 50px so the on-screen buttons in the
+          real game (which eat into the bottom of the screen) obscure less
+          of it ────────────────────────────────────────────────────────── */}
+      <div
+        className="absolute inset-0 flex items-center justify-center"
+        style={{ zIndex: 20, transform: 'translateY(-50px)' }}
+      >
         <video
           src="/nyan.mp4"
           autoPlay
