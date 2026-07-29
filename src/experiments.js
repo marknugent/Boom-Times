@@ -113,6 +113,20 @@ export const EXPERIMENTS = [
     hideCat:    true,
     interactive: true, // PayoffScreen renders the game instead of a passive animation
   },
+  {
+    id: 'mouse-invaders',
+    name: 'MOUSE INVADERS',
+    brewingLabel: 'Brewing: MOUSE INVADERS 👾',
+    payoffText: 'MOUSE INVADERS!',
+    ingredient: '👾',
+    emoji: '👾',
+    // bgMusic is a fake ID (matches no LOOP_URLS/SOUNDS entry, so this is a
+    // safe no-op) — MouseInvadersGame self-manages all audio, same pattern
+    // as pudge-man.
+    bgMusic:    'mouse-invaders',
+    hideCat:    true,
+    interactive: true, // PayoffScreen renders the game instead of a passive animation
+  },
 ];
 
 // Experiments currently in rotation — excludes anything flagged `disabled`.

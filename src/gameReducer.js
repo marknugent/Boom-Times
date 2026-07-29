@@ -545,14 +545,45 @@ export function gameReducer(state, action) {
         if (!updatedRound.upcomingFacts.includes(factId)) {
           updatedRound.upcomingFacts = [...updatedRound.upcomingFacts, factId];
         }
-        // Deliberately do NOT touch the persisted round snapshot here. It
-        // still points at this same fact as "current" from when it first
-        // became current — exactly what we want. Advancing it now (like the
-        // correct-answer path does) would let a kid submit a wrong guess,
-        // immediately quit during the feedback window, and resume onto a
-        // DIFFERENT question — dodging the one they just got wrong. Leaving
-        // the old snapshot in place means quitting mid-feedback re-shows the
-        // exact same question, whether or not they'd already attempted it.
+
+        // Peek ahead here too, same as the correct-answer branch — the
+        // persisted snapshot should reflect whatever NEXT_QUESTION would
+        // actually show once the feedback delay elapses. An earlier version
+        // deliberately left the snapshot pointing at this same fact instead,
+        // to stop a kid from quitting mid-feedback and resuming onto a
+        // different question. But the just-missed fact is *already* requeued
+        // at the back regardless of whether they quit — so peeking ahead
+        // doesn't let anyone dodge it, it still surfaces later in the round
+        // exactly as it would without quitting. Leaving the stale snapshot
+        // in place had a worse side effect: the correct answer is shown on
+        // screen for ~2s right after a wrong guess, so quitting in that
+        // window and resuming re-asked the exact fact whose answer they'd
+        // just seen — a free "correct" answer from short-term memory, not
+        // genuine recall.
+        const peekNextFactId = updatedRound.upcomingFacts[0];
+        if (peekNextFactId) {
+          const peekQuestion = buildQuestion(
+            peekNextFactId,
+            newSrsState,
+            updatedRound.firstAttemptFacts,   // snapshot without peekNextFactId yet
+            state.hintsShownThisSession,
+          );
+          const peekFirstAttemptFacts = updatedRound.firstAttemptFacts.includes(peekNextFactId)
+            ? updatedRound.firstAttemptFacts
+            : [...updatedRound.firstAttemptFacts, peekNextFactId];
+          const peekHints = peekQuestion.hintText
+            ? [...state.hintsShownThisSession, peekNextFactId]
+            : state.hintsShownThisSession;
+
+          saveInProgressRound(state.currentPlayer, roundSnapshot(
+            { ...updatedRound, upcomingFacts: updatedRound.upcomingFacts.slice(1), firstAttemptFacts: peekFirstAttemptFacts },
+            peekQuestion,
+            peekHints,
+          ));
+        }
+        // else: the just-missed fact was the only thing left in the queue
+        // (requeuing it made upcomingFacts non-empty), so there's nothing
+        // else to peek ahead to — leave the existing snapshot as-is.
       }
 
       return {

@@ -66,6 +66,22 @@ function getAudioCtx() {
   return audioCtx;
 }
 
+const RESUME_TIMEOUT_MS = 500;
+
+// Bounded, never-throwing wrapper around ctx.resume(). A suspended context
+// must be resumed before scheduling anything, but resume() can in rare
+// cases reject or hang — racing it against a short timeout means a stuck
+// or failed resume can never permanently block playback (and, critically,
+// can never surface as an unhandled promise rejection that silently kills
+// the calling function before it schedules any sound).
+async function ensureRunning(ctx) {
+  if (ctx.state !== 'suspended') return;
+  await Promise.race([
+    ctx.resume().catch(() => {}),
+    new Promise((resolve) => setTimeout(resolve, RESUME_TIMEOUT_MS)),
+  ]);
+}
+
 // Tracks whose looping must be gapless
 const LOOP_URLS = {
   'pounce-pop-parade': '/pounce_pop_parade.mp3',
@@ -80,23 +96,41 @@ const loopBuffers = {};
 // id → { source: AudioBufferSourceNode, gain: GainNode }
 const loopNodes   = {};
 
+const LOOP_LOAD_RETRY_DELAYS_MS = [0, 500, 1500];
+
+// Fetch + decode with retry — this all happens well before the user could
+// reach any payoff screen, so the ~2s worst-case cost is free. Without
+// retry, a single flaky-network moment at page load permanently disables
+// that track's music for the rest of the session (no later retry point),
+// even though everything else on the page recovers fine.
+async function loadLoopBuffer(id, url) {
+  for (let attempt = 0; attempt < LOOP_LOAD_RETRY_DELAYS_MS.length; attempt++) {
+    if (LOOP_LOAD_RETRY_DELAYS_MS[attempt] > 0) {
+      await new Promise((r) => setTimeout(r, LOOP_LOAD_RETRY_DELAYS_MS[attempt]));
+    }
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const arr = await res.arrayBuffer();
+      return await getAudioCtx().decodeAudioData(arr);
+    } catch (err) {
+      console.warn(`[sounds] loop buffer load failed for ${id} (attempt ${attempt + 1}/${LOOP_LOAD_RETRY_DELAYS_MS.length}):`, err);
+    }
+  }
+  return null;
+}
+
 // Kick off decoding immediately — buffers will be ready well before
 // the user reaches a payoff screen.
 Object.entries(LOOP_URLS).forEach(([id, url]) => {
-  loopBuffers[id] = fetch(url)
-    .then(r => r.arrayBuffer())
-    .then(arr => getAudioCtx().decodeAudioData(arr))
-    .catch(err => {
-      console.warn('[sounds] loop buffer failed to load:', id, err);
-      return null;
-    });
+  loopBuffers[id] = loadLoopBuffer(id, url);
 });
 
 async function playLoop(id) {
   const ctx = getAudioCtx();
   // Resume context if it was suspended (iOS requires this inside a gesture;
   // unlockAudio() handles the primary resume — this is a safety net).
-  if (ctx.state === 'suspended') await ctx.resume();
+  await ensureRunning(ctx);
 
   const buf = await loopBuffers[id];
   if (!buf) return; // decode failed — silent fallback
@@ -305,7 +339,7 @@ export function stopSound(id) {
  */
 export async function playWrongAnswerBoop() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  await ensureRunning(ctx);
 
   function boop(startOffset, freq) {
     const osc  = ctx.createOscillator();
@@ -334,7 +368,7 @@ export async function playWrongAnswerBoop() {
  */
 export async function playCountdownBeep() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  await ensureRunning(ctx);
 
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -359,7 +393,7 @@ export async function playCountdownBeep() {
  */
 export async function playRocketIgnitionBoom() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  await ensureRunning(ctx);
 
   const now = ctx.currentTime;
 
@@ -453,7 +487,7 @@ export async function playRocketIgnitionBoom() {
  */
 export async function playExplosionBoom() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  await ensureRunning(ctx);
 
   const now = ctx.currentTime;
 
@@ -554,7 +588,7 @@ export async function playExplosionBoom() {
  */
 export async function playLevelUpSound() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  await ensureRunning(ctx);
 
   function shell(offsetSec, freq, vol) {
     const dur    = 0.6;
@@ -601,7 +635,7 @@ export async function playLevelUpSound() {
 /** Short rising blip — eating a dot. */
 export async function playPudgeDotEat() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  await ensureRunning(ctx);
 
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -622,7 +656,7 @@ export async function playPudgeDotEat() {
 /** Longer rising sweep — eating a power pellet. */
 export async function playPudgePowerPellet() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  await ensureRunning(ctx);
 
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -643,7 +677,7 @@ export async function playPudgePowerPellet() {
 /** Two quick ascending blips — eating a vulnerable ghost. */
 export async function playPudgeGhostEat() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  await ensureRunning(ctx);
 
   const t = ctx.currentTime;
   [0, 0.09].forEach((offset, i) => {
@@ -665,7 +699,7 @@ export async function playPudgeGhostEat() {
 /** Long descending "womp" — caught by a ghost. */
 export async function playPudgeDeath() {
   const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  await ensureRunning(ctx);
 
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -712,7 +746,7 @@ function createPudgeManLoop(pattern, stepSec, peakGain) {
 
   async function start() {
     const ctx = getAudioCtx();
-    if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+    await ensureRunning(ctx);
     stop();
 
     noteIndex = 0;
@@ -758,3 +792,99 @@ export function stopPudgeManMusic()  { pudgeManLoop.stop(); }
 
 export function startPudgeManVulnerableMusic() { return pudgeManVulnerableLoop.start(); }
 export function stopPudgeManVulnerableMusic()  { pudgeManVulnerableLoop.stop(); }
+
+/**
+ * MOUSE INVADERS — synthesised 8-bit SFX. Reuses playPudgeDeath for Pudge's
+ * loss (same "long descending womp" fits both games).
+ */
+
+/** Quick descending zap — Pudge's shot leaving the barrel. */
+export async function playInvaderShoot() {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+
+  const t = ctx.currentTime;
+  osc.frequency.setValueAtTime(900, t);
+  osc.frequency.exponentialRampToValueAtTime(300, t + 0.09);
+  gain.gain.setValueAtTime(0.16, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.1);
+}
+
+/** Short low pop — an invader destroyed. */
+export async function playInvaderPop() {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sawtooth';
+
+  const t = ctx.currentTime;
+  osc.frequency.setValueAtTime(400, t);
+  osc.frequency.exponentialRampToValueAtTime(120, t + 0.12);
+  gain.gain.setValueAtTime(0.2, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.13);
+}
+
+// Four low tones cycled on every formation row-drop — a nod to the classic
+// "doo doo doo doo" march, minus the tempo-synced scheduler (a per-drop
+// pulse is enough character without a full lookahead loop like PUDGE-MAN's).
+const MARCH_TONES = [110, 98, 87, 82];
+let marchStepIndex = 0;
+
+export async function playInvaderMarchStep() {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+
+  const t    = ctx.currentTime;
+  const freq = MARCH_TONES[marchStepIndex % MARCH_TONES.length];
+  marchStepIndex += 1;
+
+  osc.frequency.setValueAtTime(freq, t);
+  gain.gain.setValueAtTime(0.14, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.11);
+}
+
+/** Quick ascending three-note arpeggio — the field's cleared. */
+export async function playInvadersWin() {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+
+  const t = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach((freq, i) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    const start = t + i * 0.1;
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.2, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.18);
+  });
+}

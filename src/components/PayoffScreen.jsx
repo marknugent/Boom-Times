@@ -19,9 +19,18 @@ import SpaceLaunchAnimation    from './SpaceLaunchAnimation.jsx';
 import UsaAnimation            from './UsaAnimation.jsx';
 import BombDetonationAnimation from './BombDetonationAnimation.jsx';
 import FireworksEffect   from './FireworksEffect.jsx';
-import PudgeManGame      from './PudgeManGame.jsx';
-import PudgeManResult    from './PudgeManResult.jsx';
+import PudgeManGame       from './PudgeManGame.jsx';
+import PudgeManResult     from './PudgeManResult.jsx';
+import MouseInvadersGame   from './MouseInvadersGame.jsx';
+import MouseInvadersResult from './MouseInvadersResult.jsx';
 import { TABLE_GROUPS }  from '../progression.js';
+
+// Experiments flagged `interactive: true` render one of these full-screen
+// games instead of a passive animation — see the isInteractive block below.
+const INTERACTIVE_GAMES = {
+  'pudge-man':       { Game: PudgeManGame,       Result: PudgeManResult },
+  'mouse-invaders':  { Game: MouseInvadersGame,  Result: MouseInvadersResult },
+};
 
 const ANIMATION_MAP = {
   'fart-bomb':       FartBombAnimation,
@@ -43,11 +52,12 @@ export default function PayoffScreen({ state, dispatch }) {
   // Incrementing this key remounts <PayoffAnim />, restarting the animation
   const [animKey, setAnimKey] = useState(0);
 
-  // PUDGE-MAN is interactive — it takes over the whole screen while playing
-  // and only settles into the normal score-card layout once it ends.
-  const isPudgeMan = round?.experiment.id === 'pudge-man';
-  const [pudgeManOutcome, setPudgeManOutcome] = useState(null); // null while playing
-  const [pudgeManKey, setPudgeManKey]         = useState(0);    // bump to force a fresh game
+  // Interactive experiments (PUDGE-MAN, MOUSE INVADERS, ...) take over the
+  // whole screen while playing, and only settle into the normal score-card
+  // layout once they end.
+  const interactiveGame = round?.experiment.interactive ? INTERACTIVE_GAMES[round.experiment.id] : null;
+  const [interactiveOutcome, setInteractiveOutcome] = useState(null); // null while playing
+  const [interactiveKey, setInteractiveKey]         = useState(0);    // bump to force a fresh game
 
   // Level-up banner — shown only when the player actively tries to move on,
   // so it never cuts into an in-progress animation.
@@ -90,10 +100,10 @@ export default function PayoffScreen({ state, dispatch }) {
 
     if (tapCountRef.current >= 3) {
       tapCountRef.current = 0;
-      if (isPudgeMan) {
+      if (interactiveGame) {
         // Replay = a fresh game, not just a re-shown result screen
-        setPudgeManOutcome(null);
-        setPudgeManKey(k => k + 1);
+        setInteractiveOutcome(null);
+        setInteractiveKey(k => k + 1);
       } else {
         // Remount animation + replay sound
         setAnimKey(k => k + 1);
@@ -113,8 +123,10 @@ export default function PayoffScreen({ state, dispatch }) {
     if (!round) return;
     const id = round.experiment.id;
     // dance-party, space-launch, and usa-usa-usa use bgMusic only — no separate SFX.
-    // pudge-man self-manages all its own audio (see PudgeManGame.jsx).
-    if (id === 'dance-party' || id === 'space-launch' || id === 'usa-usa-usa' || id === 'pudge-man') return;
+    // pudge-man and mouse-invaders self-manage all their own audio (see
+    // PudgeManGame.jsx / MouseInvadersGame.jsx).
+    if (id === 'dance-party' || id === 'space-launch' || id === 'usa-usa-usa'
+        || id === 'pudge-man' || id === 'mouse-invaders') return;
     if (id === 'toilet-attack') {
       playSound(id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
     } else {
@@ -139,14 +151,15 @@ export default function PayoffScreen({ state, dispatch }) {
 
   if (!round) return null;
 
-  // PUDGE-MAN takes over the whole screen while it's actually being played —
-  // none of the normal score-card/beaker/cat/nav-button chrome applies until
-  // it settles (won/lost/skipped).
-  if (isPudgeMan && pudgeManOutcome === null) {
+  // An interactive experiment takes over the whole screen while it's
+  // actually being played — none of the normal score-card/beaker/cat/
+  // nav-button chrome applies until it settles (won/lost/skipped).
+  if (interactiveGame && interactiveOutcome === null) {
+    const { Game } = interactiveGame;
     return (
-      <PudgeManGame
-        key={pudgeManKey}
-        onGameEnd={(outcome) => setPudgeManOutcome(outcome)}
+      <Game
+        key={interactiveKey}
+        onGameEnd={(outcome) => setInteractiveOutcome(outcome)}
       />
     );
   }
@@ -201,7 +214,9 @@ export default function PayoffScreen({ state, dispatch }) {
       onPointerDown={handleTap}
     >
       {/* ── Full-screen animation — key forces full remount on replay ── */}
-      {isPudgeMan ? <PudgeManResult outcome={pudgeManOutcome} /> : <PayoffAnim key={animKey} />}
+      {interactiveGame
+        ? <interactiveGame.Result outcome={interactiveOutcome} />
+        : <PayoffAnim key={animKey} />}
 
       {/* ── Beaker — same position as QuestionScreen, glowing ── */}
       <div className="absolute z-20 animate-beaker-glow beaker-payoff-glow" style={{ top: 56, left: 16 }}>

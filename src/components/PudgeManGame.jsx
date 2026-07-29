@@ -34,7 +34,7 @@ const GHOST_STEP_MS_BY_INDEX = [270, 330];  // one slightly faster, one slightly
 const POWER_DURATION_MS      = 7000;
 const GHOST_RELEASE_DELAY_MS = 500;
 const MOUTH_TOGGLE_MS        = 150;
-const END_FREEZE_MS          = 900;  // beat to see the final frame before handing off (win/skip)
+const END_FREEZE_MS          = 3000; // beat to see the "board cleared" banner before handing off (win only — skip is instant)
 const DEATH_FREEZE_MS        = 1000; // everything holds still right where it was on collision
 const DEATH_BEAT_MS          = 500;  // pause between the mice vanishing and Pudge starting to shrink
 const DEATH_SHRINK_MS        = 650;  // how long Pudge's shrink-to-nothing takes
@@ -266,7 +266,9 @@ export default function PudgeManGame({ onGameEnd }) {
       </div>
 
       {/* Maze */}
-      <div className="relative mt-1" style={{ width: 'min(90vw, 320px)' }}>
+      {/* ~15% larger than before (320px cap is what actually binds on
+          nearly all phone widths, since 90vw typically exceeds it) */}
+      <div className="relative mt-1" style={{ width: 'min(97vw, 368px)' }}>
         <div
           className="relative"
           style={{
@@ -349,6 +351,14 @@ export default function PudgeManGame({ onGameEnd }) {
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="font-body text-xs text-lab-chalk bg-lab-bg/80 px-3 py-1.5 rounded-full animate-pulse">
               tap a direction to start!
+            </div>
+          </div>
+        )}
+
+        {status === 'won' && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="font-display text-2xl text-lab-green text-center px-5 py-3 rounded-2xl bg-lab-bg/85 animate-pop-in">
+              BOARD CLEARED!
             </div>
           </div>
         )}
