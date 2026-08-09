@@ -21,6 +21,7 @@ import TrainDogCameo from './TrainDogCameo.jsx';
 import DadJokeCameo from './DadJokeCameo.jsx';
 import PudgeManGame from './PudgeManGame.jsx';
 import MouseInvadersGame from './MouseInvadersGame.jsx';
+import WhackAMouseGame from './WhackAMouseGame.jsx';
 import { LEVELS } from '../levels.js';
 import FireworksEffect from './FireworksEffect.jsx';
 import Beaker       from './Beaker.jsx';
@@ -160,6 +161,7 @@ export default function DevScreen({ dispatch }) {
   const [showDadJokeCameo, setShowDadJokeCameo] = useState(false);
   const [showPudgeMan, setShowPudgeMan] = useState(false);
   const [showMouseInvaders, setShowMouseInvaders] = useState(false);
+  const [showWhackAMouse, setShowWhackAMouse] = useState(false);
   // 'Louisa' | 'Marjorie' | null — which player's "is awesome" cameo to preview
   const [showAwesomeCameo, setShowAwesomeCameo] = useState(null);
 
@@ -387,6 +389,13 @@ export default function DevScreen({ dispatch }) {
         >
           MOUSE INVADERS 👾
         </button>
+
+        <button
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-amber-900 hover:bg-amber-800 active:bg-amber-950"
+          onClick={() => setShowWhackAMouse(true)}
+        >
+          WHACK-A-MOUSE 🔨
+        </button>
       </div>
 
       {showCameo && (
@@ -418,6 +427,11 @@ export default function DevScreen({ dispatch }) {
       {showMouseInvaders && (
         <div className="fixed inset-0 z-[250]">
           <MouseInvadersGame onGameEnd={() => setShowMouseInvaders(false)} />
+        </div>
+      )}
+      {showWhackAMouse && (
+        <div className="fixed inset-0 z-[250]">
+          <WhackAMouseGame playerName={TEST_PLAYER} onGameEnd={() => setShowWhackAMouse(false)} />
         </div>
       )}
 

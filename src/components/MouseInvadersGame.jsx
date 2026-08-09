@@ -117,14 +117,16 @@ export default function MouseInvadersGame({ onGameEnd }) {
   }, [status]);
 
   // Pudge's shot — one in flight at a time; moves up a row at a time and
-  // is cleared on a hit or on leaving the field.
+  // is cleared on a hit or on leaving the field. Checked *before* stepping,
+  // not after — the shot spawns already sitting on the bottom row an
+  // invader can occupy, and checking post-decrement skipped that starting
+  // row every time, so a bottom-row invader could never be hit even when
+  // it visibly lined up with the shot.
   useEffect(() => {
     if (status !== 'playing') return;
     const id = setInterval(() => {
       const g = gameRef.current;
       if (!g.projectile) return;
-      g.projectile.row -= 1;
-      if (g.projectile.row < 0) { g.projectile = null; bump(); return; }
 
       for (const key of g.formation.alive) {
         const { col, row } = parseCellKey(key);
@@ -135,9 +137,13 @@ export default function MouseInvadersGame({ onGameEnd }) {
           g.projectile = null;
           playInvaderPop();
           if (g.formation.alive.size === 0) endGame('won');
-          break;
+          bump();
+          return;
         }
       }
+
+      g.projectile.row -= 1;
+      if (g.projectile.row < 0) g.projectile = null;
       bump();
     }, PROJECTILE_STEP_MS);
     return () => clearInterval(id);
@@ -331,24 +337,28 @@ export default function MouseInvadersGame({ onGameEnd }) {
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="flex-1 flex items-center justify-center gap-4">
-        <DpadBtn
-          label="◀"
-          onDown={() => setMoveDir('left')}
-          onUp={clearMoveDir}
-        />
+      {/* Controls — direction on the left (thumb toggles ◀/▶), fire on the
+          right, rather than all three inline. Splitting them across hands
+          reads much easier than reaching across the middle for FIRE. */}
+      <div className="w-full flex-1 flex items-center justify-between px-6">
+        <div className="flex items-center gap-3">
+          <DpadBtn
+            label="◀"
+            onDown={() => setMoveDir('left')}
+            onUp={clearMoveDir}
+          />
+          <DpadBtn
+            label="▶"
+            onDown={() => setMoveDir('right')}
+            onUp={clearMoveDir}
+          />
+        </div>
         <button
           className="keypad-btn text-lg min-h-[76px] min-w-[76px] bg-red-800 hover:bg-red-700 active:bg-red-900"
           onPointerDown={(e) => { e.preventDefault(); fire(); }}
         >
           FIRE
         </button>
-        <DpadBtn
-          label="▶"
-          onDown={() => setMoveDir('right')}
-          onUp={clearMoveDir}
-        />
       </div>
     </div>
   );

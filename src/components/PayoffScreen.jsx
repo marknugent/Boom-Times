@@ -23,6 +23,8 @@ import PudgeManGame       from './PudgeManGame.jsx';
 import PudgeManResult     from './PudgeManResult.jsx';
 import MouseInvadersGame   from './MouseInvadersGame.jsx';
 import MouseInvadersResult from './MouseInvadersResult.jsx';
+import WhackAMouseGame     from './WhackAMouseGame.jsx';
+import WhackAMouseResult   from './WhackAMouseResult.jsx';
 import { TABLE_GROUPS }  from '../progression.js';
 
 // Experiments flagged `interactive: true` render one of these full-screen
@@ -30,6 +32,7 @@ import { TABLE_GROUPS }  from '../progression.js';
 const INTERACTIVE_GAMES = {
   'pudge-man':       { Game: PudgeManGame,       Result: PudgeManResult },
   'mouse-invaders':  { Game: MouseInvadersGame,  Result: MouseInvadersResult },
+  'whack-a-mouse':   { Game: WhackAMouseGame,    Result: WhackAMouseResult },
 };
 
 const ANIMATION_MAP = {
@@ -47,7 +50,7 @@ const ANIMATION_MAP = {
 const TRIPLE_TAP_MS = 600;
 
 export default function PayoffScreen({ state, dispatch }) {
-  const { round, newUnlock, levelUp } = state;
+  const { round, newUnlock, levelUp, currentPlayer } = state;
 
   // Incrementing this key remounts <PayoffAnim />, restarting the animation
   const [animKey, setAnimKey] = useState(0);
@@ -123,10 +126,10 @@ export default function PayoffScreen({ state, dispatch }) {
     if (!round) return;
     const id = round.experiment.id;
     // dance-party, space-launch, and usa-usa-usa use bgMusic only — no separate SFX.
-    // pudge-man and mouse-invaders self-manage all their own audio (see
-    // PudgeManGame.jsx / MouseInvadersGame.jsx).
+    // Interactive experiments (PUDGE-MAN, MOUSE INVADERS, WHACK-A-MOUSE, ...)
+    // self-manage all their own audio.
     if (id === 'dance-party' || id === 'space-launch' || id === 'usa-usa-usa'
-        || id === 'pudge-man' || id === 'mouse-invaders') return;
+        || round.experiment.interactive) return;
     if (id === 'toilet-attack') {
       playSound(id, { fadeStartMs: 7000, fadeDurationMs: 3000 });
     } else {
@@ -159,6 +162,7 @@ export default function PayoffScreen({ state, dispatch }) {
     return (
       <Game
         key={interactiveKey}
+        playerName={currentPlayer}
         onGameEnd={(outcome) => setInteractiveOutcome(outcome)}
       />
     );

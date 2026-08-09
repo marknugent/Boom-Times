@@ -59,4 +59,10 @@ function buildInfoPlugin() {
 
 export default defineConfig({
   plugins: [react(), buildInfoPlugin()],
+  // Honor $PORT (e.g. when another dev server already holds 5173) instead of
+  // Vite's own silent auto-increment, which picks a port the caller has no
+  // way to discover.
+  server: {
+    port: Number(process.env.PORT) || 5173,
+  },
 })

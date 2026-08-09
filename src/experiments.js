@@ -127,6 +127,20 @@ export const EXPERIMENTS = [
     hideCat:    true,
     interactive: true, // PayoffScreen renders the game instead of a passive animation
   },
+  {
+    id: 'whack-a-mouse',
+    name: 'WHACK-A-MOUSE',
+    brewingLabel: 'Brewing: WHACK-A-MOUSE 🔨',
+    payoffText: 'WHACK-A-MOUSE!',
+    ingredient: '🔨',
+    emoji: '🔨',
+    // bgMusic is a fake ID (matches no LOOP_URLS/SOUNDS entry, so this is a
+    // safe no-op) — WhackAMouseGame self-manages all audio, same pattern as
+    // pudge-man / mouse-invaders.
+    bgMusic:    'whack-a-mouse',
+    hideCat:    true,
+    interactive: true, // PayoffScreen renders the game instead of a passive animation
+  },
 ];
 
 // Experiments currently in rotation — excludes anything flagged `disabled`.

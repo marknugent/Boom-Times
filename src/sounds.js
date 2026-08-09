@@ -888,3 +888,70 @@ export async function playInvadersWin() {
     osc.stop(start + 0.18);
   });
 }
+
+/**
+ * WHACK-A-MOUSE — synthesised 8-bit SFX.
+ */
+
+/** Punchy noise thump + a short buzzy "raspberry" wobble — a satisfying hit. */
+export async function playWhackHit() {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+  const t = ctx.currentTime;
+
+  // Thump — short filtered noise burst, the "impact."
+  const bufLen = Math.floor(ctx.sampleRate * 0.08);
+  const buf    = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+  const data   = buf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+  const noise  = ctx.createBufferSource();
+  noise.buffer = buf;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 900;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.35, t);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+  noise.connect(filter);
+  filter.connect(noiseGain);
+  noiseGain.connect(ctx.destination);
+  noise.start(t);
+  noise.stop(t + 0.08);
+
+  // Buzz — rapid pitch wobble right after impact, the comedic "raspberry."
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sawtooth';
+  const buzzStart = t + 0.02;
+  osc.frequency.setValueAtTime(140, buzzStart);
+  for (let i = 0; i < 6; i++) {
+    const at = buzzStart + i * 0.018;
+    osc.frequency.setValueAtTime(i % 2 === 0 ? 110 : 170, at);
+  }
+  gain.gain.setValueAtTime(0.16, buzzStart);
+  gain.gain.exponentialRampToValueAtTime(0.001, buzzStart + 0.13);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(buzzStart);
+  osc.stop(buzzStart + 0.13);
+}
+
+/** Three quick descending dings — the round's timer hits zero. */
+export async function playWhackRoundEnd() {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+  const t = ctx.currentTime;
+  [880, 698.46, 587.33].forEach((freq, i) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    const start = t + i * 0.13;
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.22, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.22);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.22);
+  });
+}
