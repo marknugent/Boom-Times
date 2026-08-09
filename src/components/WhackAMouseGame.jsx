@@ -1,5 +1,5 @@
 /**
- * WhackAMouseGame — WHACK-A-MOUSE, a timed reflex mini-game. A grid of six
+ * WhackAMouseGame — WHACK-A-MOUSE, a timed reflex mini-game. A grid of
  * holes; mice pop up in random holes at irregular intervals — including
  * genuine gaps of no mice at all, and the occasional very brief flash — and
  * more than one at a time once the round is underway. Score is persisted
@@ -28,7 +28,8 @@ import { playWhackHit, playWhackRoundEnd } from '../sounds.js';
 import { addScore } from '../whackAMouseScores.js';
 
 const GRID_COLS = 3;
-const GRID_ROWS = 2;
+const GRID_ROWS = 3; // +1 row over the original 2 — spreads holes across more of the screen,
+                      // closer to how a physical board makes you watch a wider area
 const HOLE_COUNT = GRID_COLS * GRID_ROWS;
 
 const ROUND_DURATION_MS = 30000; // +10s over the original 20s, to give the slower/gappier cadence room to breathe
