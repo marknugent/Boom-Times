@@ -19,6 +19,16 @@
  * in a puff of smoke instead, since the point is smashing it, not just
  * pushing it back in its hole.
  *
+ * Every tap anywhere on the board — hit or miss — also has to clear a
+ * short global cooldown (SWING_COOLDOWN_MS) before the next one registers
+ * at all. A touchscreen has no equivalent of a mallet needing to be lifted
+ * and swung again, so without this a kid can just smash the whole board
+ * with a flat hand and guarantee a "hit" the instant anything appears,
+ * regardless of any actual reaction or aim. No separate feedback is shown
+ * when a tap is swallowed by the cooldown — the hit sound only firing on
+ * real hits, and the score visibly not keeping pace with the mashing, is
+ * signal enough on its own.
+ *
  * Props:
  *   onGameEnd:  ({ skipped: true } | { skipped: false, score, madeTop10, rank, leaderboard }) => void
  *   playerName: string — whose score this is, for the leaderboard entry
@@ -53,6 +63,8 @@ const POP_UP_MS   = 140; // quick rise
 const POP_DOWN_MS = 220; // slower settle — only for a miss; a whack is instant (see retreatMode)
 
 const END_FREEZE_MS = 3000; // beat to see the final score before handing off
+
+const SWING_COOLDOWN_MS = 180; // minimum time between any two registered taps, board-wide
 
 const MOUSE_IMAGES = ['/mouseghost-vulnerable.png', '/mouseghost-scary.png'];
 
@@ -95,6 +107,7 @@ function createInitialGame() {
   const now = Date.now();
   return {
     score: 0,
+    lastSwingAt: 0, // last time any tap registered (hit or miss) — gates the next one
     holes: Array.from({ length: HOLE_COUNT }, () => ({
       img: randomMouseImg(),
       up: false,
@@ -182,9 +195,14 @@ export default function WhackAMouseGame({ onGameEnd, playerName }) {
 
   function whack(idx) {
     const g = gameRef.current;
-    const hole = g.holes[idx];
-    if (status !== 'playing' || !hole.up) return;
+    if (status !== 'playing') return;
     const now = Date.now();
+    if (now - g.lastSwingAt < SWING_COOLDOWN_MS) return; // still recovering from the last swing
+    g.lastSwingAt = now;
+
+    const hole = g.holes[idx];
+    if (!hole.up) return; // swung at empty ground — still consumed the cooldown above
+
     hole.up = false;
     hole.retreatMode = 'whacked'; // instant vanish + puff, not the normal slide-down
     hole.poofKey += 1;
@@ -303,14 +321,19 @@ export default function WhackAMouseGame({ onGameEnd, playerName }) {
                 />
 
                 {/* Puff of smoke — plays once per whack (remounted via
-                    poofKey), replacing the normal retreat for a hit. */}
+                    poofKey), replacing the normal retreat for a hit. The
+                    rotation lives on an inner span so it doesn't fight the
+                    poof animation's own transform (scale/translateY) on
+                    the outer div. */}
                 {hole.poofKey > 0 && (
                   <div
                     key={hole.poofKey}
                     className="absolute inset-0 flex items-center justify-center pointer-events-none animate-poof"
-                    style={{ fontSize: '2.1rem', zIndex: 5 }}
+                    style={{ zIndex: 5 }}
                   >
-                    💨
+                    <span style={{ fontSize: '3.15rem', display: 'inline-block', transform: 'rotate(-90deg)' }}>
+                      💨
+                    </span>
                   </div>
                 )}
               </div>

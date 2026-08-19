@@ -9,7 +9,9 @@
  * device wipe, the leaderboard resets — low stakes.
  */
 
-const SCORES_KEY  = 'pudge_whack_scores_v1';
+// Bumped to v2 to reset the board after the swing-cooldown fix — old scores
+// were set under mashable conditions and aren't a fair comparison anymore.
+const SCORES_KEY  = 'pudge_whack_scores_v2';
 const MAX_ENTRIES = 10;
 
 export function loadLeaderboard() {
