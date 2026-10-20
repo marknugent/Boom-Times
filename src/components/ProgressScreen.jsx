@@ -11,7 +11,7 @@ import { VISIBLE_PLAYERS, TEST_PLAYER } from '../players.js';
 import { getLevelFromPct } from '../levels.js';
 import { downloadBackup, validateBackup, restoreBackup } from '../backup.js';
 import { allowSync } from '../sync.js';
-import { syncAllToServer } from '../serverBackup.js';
+import { syncAllToServer, reconcileWithServer } from '../serverBackup.js';
 import { getCorrectStats } from '../playStats.js';
 import { APP_VERSION } from 'virtual:build-info';
 
@@ -170,10 +170,25 @@ export default function ProgressScreen({ state, dispatch, onTestUserViewChange }
   // Always start un-armed — only the explicit "Test User" tap arms dev mode.
   useEffect(() => { onTestUserViewChange?.(false); }, []);
 
-  // Load viewed player's data fresh from localStorage each time they switch.
-  // localStorage is always in sync (every answer + round-end saves immediately).
-  const viewedSrsState   = useMemo(() => loadSRSState(viewedPlayer),   [viewedPlayer]);
-  const viewedProgression = useMemo(() => loadProgression(viewedPlayer), [viewedPlayer]);
+  // This screen can be reached without ever selecting a player to play as
+  // (e.g. tapping "Progress" straight from the home screen) — on a device
+  // or browser that hasn't played as `viewedPlayer`, local storage is stale
+  // or empty, even though the server has that player's real progress. Pull
+  // the latest before rendering so this never shows out-of-date numbers.
+  const [syncTick, setSyncTick] = useState(0);
+  useEffect(() => {
+    if (viewedPlayer === TEST_PLAYER) return;
+    let cancelled = false;
+    reconcileWithServer(viewedPlayer).then(() => {
+      if (!cancelled) setSyncTick(t => t + 1);
+    });
+    return () => { cancelled = true; };
+  }, [viewedPlayer]);
+
+  // Load viewed player's data fresh from localStorage each time they switch,
+  // or once reconciliation above has pulled in any newer server copy.
+  const viewedSrsState   = useMemo(() => loadSRSState(viewedPlayer),   [viewedPlayer, syncTick]);
+  const viewedProgression = useMemo(() => loadProgression(viewedPlayer), [viewedPlayer, syncTick]);
 
   // Overall mastery: percentage of all 144 facts mastered
   const totalFacts    = 144;

@@ -108,6 +108,13 @@ export default function HomeScreen({ state, dispatch }) {
           })}
         </div>
 
+        <button
+          className="font-body text-xs text-lab-chalk/35 hover:text-lab-chalk/60 transition-colors py-1"
+          onClick={() => selectPlayer(TEST_PLAYER)}
+        >
+          Play as Guest
+        </button>
+
       </div>
 
       {/* ── Progress link ── */}
