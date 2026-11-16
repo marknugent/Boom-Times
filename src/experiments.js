@@ -20,6 +20,7 @@ export const EXPERIMENTS = [
     payoffText: 'FART BOMB COMPLETE',
     ingredient: '🫧',
     emoji: '💨',
+    disabled: true, // temporarily out of rotation
   },
   {
     id: 'slime-explosion',
@@ -28,7 +29,7 @@ export const EXPERIMENTS = [
     payoffText: 'SLIME EXPLOSION!',
     ingredient: '💚',
     emoji: '🟢',
-    disabled: true,
+    disabled: true, // temporarily out of rotation
   },
   {
     id: 'fuzz-bomb',
@@ -138,6 +139,20 @@ export const EXPERIMENTS = [
     // safe no-op) — WhackAMouseGame self-manages all audio, same pattern as
     // pudge-man / mouse-invaders.
     bgMusic:    'whack-a-mouse',
+    hideCat:    true,
+    interactive: true, // PayoffScreen renders the game instead of a passive animation
+  },
+  {
+    id: 'laser-chase',
+    name: 'LASER CHASE',
+    brewingLabel: 'Brewing: LASER CHASE 🔴',
+    payoffText: 'LASER CHASE!',
+    ingredient: '🔴',
+    emoji: '🔴',
+    // bgMusic is a fake ID (matches no LOOP_URLS/SOUNDS entry, so this is a
+    // safe no-op) — LaserChaseGame self-manages all audio, same pattern as
+    // the other interactive games.
+    bgMusic:    'laser-chase',
     hideCat:    true,
     interactive: true, // PayoffScreen renders the game instead of a passive animation
   },

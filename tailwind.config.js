@@ -91,6 +91,16 @@ export default {
           '55%':  { transform: 'scale(1.25) translateY(-8%)', opacity: '0.9' },
           '100%': { transform: 'scale(1.6) translateY(-18%)', opacity: '0' },
         },
+        'float-up': {
+          '0%':   { transform: 'translateY(0) scale(0.5)',      opacity: '0' },
+          '15%':  { transform: 'translateY(-10px) scale(1.2)',  opacity: '1' },
+          '70%':  { opacity: '1' },
+          '100%': { transform: 'translateY(-70px) scale(1)',    opacity: '0' },
+        },
+        'laser-pulse': {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%':      { transform: 'scale(1.35)' },
+        },
       },
       animation: {
         'pop-in': 'pop-in 150ms ease-out',
@@ -107,6 +117,8 @@ export default {
         'screen-flash': 'screen-flash 3s ease-out forwards',
         'score-bump': 'score-bump 280ms cubic-bezier(0.34, 1.56, 0.64, 1)',
         'poof': 'poof 380ms ease-out forwards',
+        'float-up': 'float-up 800ms ease-out forwards',
+        'laser-pulse': 'laser-pulse 500ms ease-in-out infinite',
       },
     },
   },

@@ -25,6 +25,8 @@ import MouseInvadersGame   from './MouseInvadersGame.jsx';
 import MouseInvadersResult from './MouseInvadersResult.jsx';
 import WhackAMouseGame     from './WhackAMouseGame.jsx';
 import WhackAMouseResult   from './WhackAMouseResult.jsx';
+import LaserChaseGame      from './LaserChaseGame.jsx';
+import LaserChaseResult    from './LaserChaseResult.jsx';
 import { TABLE_GROUPS }  from '../progression.js';
 
 // Experiments flagged `interactive: true` render one of these full-screen
@@ -33,6 +35,7 @@ const INTERACTIVE_GAMES = {
   'pudge-man':       { Game: PudgeManGame,       Result: PudgeManResult },
   'mouse-invaders':  { Game: MouseInvadersGame,  Result: MouseInvadersResult },
   'whack-a-mouse':   { Game: WhackAMouseGame,    Result: WhackAMouseResult },
+  'laser-chase':     { Game: LaserChaseGame,     Result: LaserChaseResult },
 };
 
 const ANIMATION_MAP = {

@@ -22,6 +22,7 @@ import DadJokeCameo from './DadJokeCameo.jsx';
 import PudgeManGame from './PudgeManGame.jsx';
 import MouseInvadersGame from './MouseInvadersGame.jsx';
 import WhackAMouseGame from './WhackAMouseGame.jsx';
+import LaserChaseGame from './LaserChaseGame.jsx';
 import { LEVELS } from '../levels.js';
 import FireworksEffect from './FireworksEffect.jsx';
 import Beaker       from './Beaker.jsx';
@@ -50,8 +51,8 @@ const MOCK_BREWING_STATE = {
 };
 
 const EXPERIMENTS = [
-  { id: 'fart-bomb',       label: 'FART BOMB 💨',       Anim: FartBombAnimation       },
-  { id: 'slime-explosion', label: 'SLIME EXPLOSION 🟢', Anim: SlimeExplosionAnimation },
+  { id: 'fart-bomb',       label: 'FART BOMB 💨',       Anim: FartBombAnimation,       disabled: true },
+  { id: 'slime-explosion', label: 'SLIME EXPLOSION 🟢', Anim: SlimeExplosionAnimation, disabled: true },
   { id: 'fuzz-bomb',       label: 'FUZZ BOMB 🧶',       Anim: FuzzBombAnimation,  disabled: true },
   { id: 'smoke-bomb',      label: 'SMOKE BOMB 🌫️',      Anim: SmokeBombAnimation, disabled: true },
   { id: 'toilet-attack',   label: 'TOILET ATTACK 🚽',   Anim: ToiletAttackAnimation   },
@@ -162,6 +163,7 @@ export default function DevScreen({ dispatch }) {
   const [showPudgeMan, setShowPudgeMan] = useState(false);
   const [showMouseInvaders, setShowMouseInvaders] = useState(false);
   const [showWhackAMouse, setShowWhackAMouse] = useState(false);
+  const [showLaserChase, setShowLaserChase] = useState(false);
   // 'Louisa' | 'Marjorie' | null — which player's "is awesome" cameo to preview
   const [showAwesomeCameo, setShowAwesomeCameo] = useState(null);
 
@@ -396,6 +398,13 @@ export default function DevScreen({ dispatch }) {
         >
           WHACK-A-MOUSE 🔨
         </button>
+
+        <button
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-red-900 hover:bg-red-800 active:bg-red-950"
+          onClick={() => setShowLaserChase(true)}
+        >
+          LASER CHASE 🔴
+        </button>
       </div>
 
       {showCameo && (
@@ -432,6 +441,11 @@ export default function DevScreen({ dispatch }) {
       {showWhackAMouse && (
         <div className="fixed inset-0 z-[250]">
           <WhackAMouseGame playerName={TEST_PLAYER} onGameEnd={() => setShowWhackAMouse(false)} />
+        </div>
+      )}
+      {showLaserChase && (
+        <div className="fixed inset-0 z-[250]">
+          <LaserChaseGame playerName={TEST_PLAYER} onGameEnd={() => setShowLaserChase(false)} />
         </div>
       )}
 

@@ -955,3 +955,112 @@ export async function playWhackRoundEnd() {
     osc.stop(start + 0.22);
   });
 }
+
+/**
+ * LASER CHASE — synthesised 8-bit SFX and loop. Round end reuses
+ * playWhackRoundEnd (same "timer hit zero" moment), and being caught by the
+ * dog reuses playPudgeDeath.
+ */
+
+// Bouncier and higher than PUDGE-MAN's bassline — C4 E4 G4 E4 A4 G4 E4 D4.
+const laserChaseLoop = createPudgeManLoop(
+  [261.63, 329.63, 392.00, 329.63, 440.00, 392.00, 329.63, 293.66],
+  0.17, 0.07,
+);
+
+export function startLaserChaseMusic() { return laserChaseLoop.start(); }
+export function stopLaserChaseMusic()  { laserChaseLoop.stop(); }
+
+/** Rising chirp for a caught mouse — pitched up a step per link of a combo. */
+export async function playLaserCatch(chain = 1) {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+
+  const t    = ctx.currentTime;
+  const base = 520 * Math.pow(1.19, Math.min(chain, 6) - 1);
+  osc.frequency.setValueAtTime(base, t);
+  osc.frequency.exponentialRampToValueAtTime(base * 1.9, t + 0.09);
+  gain.gain.setValueAtTime(0.18, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.14);
+}
+
+/** Slide-whistle swoop down and back up — Pudge hits a puddle. */
+export async function playLaserSlip() {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+
+  const t = ctx.currentTime;
+  osc.frequency.setValueAtTime(1100, t);
+  osc.frequency.exponentialRampToValueAtTime(280, t + 0.45);
+  osc.frequency.exponentialRampToValueAtTime(700, t + 0.8);
+  gain.gain.setValueAtTime(0.22, t);
+  gain.gain.setValueAtTime(0.22, t + 0.65);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.85);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.85);
+}
+
+/** Soft low thud — Pudge meets a wall at speed. */
+export async function playLaserBonk() {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+
+  const t = ctx.currentTime;
+  osc.frequency.setValueAtTime(170, t);
+  osc.frequency.exponentialRampToValueAtTime(70, t + 0.1);
+  gain.gain.setValueAtTime(0.2, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.12);
+}
+
+/** Two gruff barks — the dog gets up to chase, or snaps at a Pudge who shot past. */
+export async function playLaserBark() {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+  const t = ctx.currentTime;
+  [0, 0.16].forEach((offset) => {
+    const osc    = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain   = ctx.createGain();
+    osc.type = 'sawtooth';
+    filter.type = 'lowpass';
+    filter.frequency.value = 900;
+
+    const start = t + offset;
+    osc.frequency.setValueAtTime(260, start);
+    osc.frequency.exponentialRampToValueAtTime(110, start + 0.1);
+    gain.gain.setValueAtTime(0.001, start);
+    gain.gain.exponentialRampToValueAtTime(0.3, start + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.12);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.12);
+  });
+}
