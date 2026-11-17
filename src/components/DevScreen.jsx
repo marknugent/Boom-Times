@@ -19,6 +19,7 @@ import DadIsWatchingCameo from './DadIsWatchingCameo.jsx';
 import AwesomeCameo from './AwesomeCameo.jsx';
 import TrainDogCameo from './TrainDogCameo.jsx';
 import DadJokeCameo from './DadJokeCameo.jsx';
+import TPFrenzyCameo from './TPFrenzyCameo.jsx';
 import PudgeManGame from './PudgeManGame.jsx';
 import MouseInvadersGame from './MouseInvadersGame.jsx';
 import WhackAMouseGame from './WhackAMouseGame.jsx';
@@ -160,6 +161,7 @@ export default function DevScreen({ dispatch }) {
   const [showDadCameo, setShowDadCameo] = useState(false);
   const [showTrainDogCameo, setShowTrainDogCameo] = useState(false);
   const [showDadJokeCameo, setShowDadJokeCameo] = useState(false);
+  const [showTPFrenzy, setShowTPFrenzy] = useState(false);
   const [showPudgeMan, setShowPudgeMan] = useState(false);
   const [showMouseInvaders, setShowMouseInvaders] = useState(false);
   const [showWhackAMouse, setShowWhackAMouse] = useState(false);
@@ -379,6 +381,13 @@ export default function DevScreen({ dispatch }) {
         </button>
 
         <button
+          className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-sky-800 hover:bg-sky-700 active:bg-sky-900"
+          onClick={() => setShowTPFrenzy(true)}
+        >
+          TP FRENZY 🧻
+        </button>
+
+        <button
           className="btn-primary w-full text-sm py-2 min-h-0 leading-tight bg-orange-800 hover:bg-orange-700 active:bg-orange-900"
           onClick={() => setShowPudgeMan(true)}
         >
@@ -427,6 +436,9 @@ export default function DevScreen({ dispatch }) {
       )}
       {showDadJokeCameo && (
         <DadJokeCameo onDismiss={() => setShowDadJokeCameo(false)} />
+      )}
+      {showTPFrenzy && (
+        <TPFrenzyCameo playerName={TEST_PLAYER} onDismiss={() => setShowTPFrenzy(false)} />
       )}
       {showPudgeMan && (
         <div className="fixed inset-0 z-[250]">

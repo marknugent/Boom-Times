@@ -21,6 +21,7 @@ import DadIsWatchingCameo   from './DadIsWatchingCameo.jsx';
 import AwesomeCameo         from './AwesomeCameo.jsx';
 import TrainDogCameo        from './TrainDogCameo.jsx';
 import DadJokeCameo         from './DadJokeCameo.jsx';
+import TPFrenzyCameo        from './TPFrenzyCameo.jsx';
 import HotStreakBanner from './HotStreakBanner.jsx';
 import { TEST_PLAYER, VISIBLE_PLAYERS } from '../players.js';
 import Keypad       from './Keypad.jsx';
@@ -89,11 +90,13 @@ export default function QuestionScreen({ state, dispatch }) {
         playSound('success-beep');
       }
 
-      // Bonus cameo chance — 18% baseline, with a "pity timer" floor that
-      // ramps up the odds the longer the player goes without one.
+      // Bonus cameo chance — 21% baseline (about 1 in 5; raised from 18% when
+      // the pool grew from seven cameos to eight, so each of the originals
+      // turns up as often as before), with a "pity timer" floor that ramps up
+      // the odds the longer the player goes without one.
       sinceBonusRef.current += 1;
       const bonusChance =
-        sinceBonusRef.current < 8  ? 0.18 :
+        sinceBonusRef.current < 8  ? 0.21 :
         sinceBonusRef.current < 15 ? 0.30 :
         0.75;
 
@@ -101,14 +104,15 @@ export default function QuestionScreen({ state, dispatch }) {
         sinceBonusRef.current = 0;
         // "<player> is awesome" is only valid for Louisa/Marjorie, not the test profile
         const cameoPool = VISIBLE_PLAYERS.includes(currentPlayer)
-          ? ['spongebob', 'cat', 'doggie', 'dad', 'awesome', 'traindog', 'dadjoke']
-          : ['spongebob', 'cat', 'doggie', 'dad', 'traindog', 'dadjoke'];
+          ? ['spongebob', 'cat', 'doggie', 'dad', 'awesome', 'traindog', 'dadjoke', 'tpfrenzy']
+          : ['spongebob', 'cat', 'doggie', 'dad', 'traindog', 'dadjoke', 'tpfrenzy'];
         const pick = cameoPool[Math.floor(Math.random() * cameoPool.length)];
         setActiveCameo(pick);
         // traindog's video track is muted for reliable iOS autoplay, so its
         // audio is the extracted track played through the SFX system instead.
         // dadjoke has no sting here — it starts its own looping bgMusic in
-        // its own mount effect instead (see DadJokeCameo.jsx).
+        // its own mount effect instead (see DadJokeCameo.jsx). tpfrenzy
+        // likewise runs all its own audio.
         const sfx  = { spongebob: 'fanfare', cat: 'meow', doggie: 'barking', dad: 'creepy', awesome: 'awesome', traindog: 'traindog' };
         playSound(sfx[pick]);
         return; // cameo's onDismiss fires NEXT_QUESTION when it ends
@@ -334,6 +338,12 @@ export default function QuestionScreen({ state, dispatch }) {
       )}
       {activeCameo === 'dadjoke' && (
         <DadJokeCameo
+          onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
+        />
+      )}
+      {activeCameo === 'tpfrenzy' && (
+        <TPFrenzyCameo
+          playerName={currentPlayer}
           onDismiss={() => { setActiveCameo(null); dispatch({ type: A.NEXT_QUESTION }); }}
         />
       )}

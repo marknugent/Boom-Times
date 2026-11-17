@@ -1064,3 +1064,61 @@ export async function playLaserBark() {
     osc.stop(start + 0.12);
   });
 }
+
+/**
+ * TP FRENZY — synthesised SFX and loop for the toilet-paper bonus screen.
+ * Milestones reuse playLaserCatch, and the ending is the real flush
+ * (playSound('toilet-attack')).
+ */
+
+// Quicker and busier than the mini-game loops — E4 G4 A4 G4 E4 G4 B4 G4.
+const tpFrenzyLoop = createPudgeManLoop(
+  [329.63, 392.00, 440.00, 392.00, 329.63, 392.00, 493.88, 392.00],
+  0.12, 0.05,
+);
+
+export function startTpFrenzyMusic() { return tpFrenzyLoop.start(); }
+export function stopTpFrenzyMusic()  { tpFrenzyLoop.stop(); }
+
+/**
+ * One ratchet click as a perforation passes. `speedFrac` (0–1) raises the
+ * pitch, so a fast roll whirrs and a slow one ticks.
+ */
+export async function playTpTick(speedFrac = 0) {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+
+  const t = ctx.currentTime;
+  osc.frequency.setValueAtTime(620 + 900 * Math.max(0, Math.min(1, speedFrac)), t);
+  gain.gain.setValueAtTime(0.07, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.03);
+}
+
+/** Quick rising arpeggio — a roll is finished and a fresh one drops in. */
+export async function playTpNewRoll() {
+  const ctx = getAudioCtx();
+  await ensureRunning(ctx);
+  const t = ctx.currentTime;
+  [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    const start = t + i * 0.07;
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.22, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.16);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.16);
+  });
+}
